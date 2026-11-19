@@ -71,6 +71,8 @@ def env_int(name, default):
 TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
 GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "").strip() or "gemini-flash-lite-latest"
+GROQ_KEY = os.environ.get("GROQ_API_KEY", "").strip()      # AI dự phòng khi Gemini hết lượt miễn phí
+GROQ_MODEL = os.environ.get("GROQ_MODEL", "").strip() or "llama-3.3-70b-versatile"
 ALLOWED_USERS = {x.strip() for x in os.environ.get("ALLOWED_USERS", "").split(",") if x.strip()}
 CHECK_INTERVAL = env_int("CHECK_INTERVAL", 60)       # giây giữa 2 lần quét
 RSS_EVERY = env_int("RSS_EVERY", 60)                 # RSS báo: tải lại tối đa mỗi 60 giây (nhanh nhất)
@@ -1292,19 +1294,67 @@ class urgent_ai:
             _urgent[0] -= 1
 
 
+_gem_cool = [0.0]    # Gemini nghỉ đến lúc này (chỉ dùng khi có AI dự phòng)
+_groq = {"off_until": 0.0, "last": 0.0}
+
+
+def _groq_call(prompt):
+    """AI dự phòng (Groq, tương thích OpenAI). Trả về văn bản hoặc None."""
+    if not GROQ_KEY or time.time() < _groq["off_until"]:
+        return None
+    wait = _groq["last"] + 2.5 - time.time()
+    if wait > 0:
+        time.sleep(wait)
+    _groq["last"] = time.time()
+    body = {"model": GROQ_MODEL, "temperature": 0.2,
+            "messages": [{"role": "user", "content": prompt + "\n\nChỉ trả lời bằng JSON hợp lệ, không thêm chữ nào khác."}]}
+    try:
+        r = requests.post("https://api.groq.com/openai/v1/chat/completions",
+                          headers={"Authorization": "Bearer " + GROQ_KEY}, json=body, timeout=40)
+    except Exception as e:
+        log.warning("Groq lỗi mạng: %s", e)
+        return None
+    if r.status_code == 200:
+        try:
+            ai_set(True, f"hoạt động tốt (Groq dự phòng, {GROQ_MODEL})")
+            return r.json()["choices"][0]["message"]["content"]
+        except Exception:
+            return None
+    if r.status_code == 429:
+        try:
+            ra = float(r.headers.get("retry-after", "30"))
+        except ValueError:
+            ra = 30.0
+        _groq["off_until"] = time.time() + min(max(ra, 10), 300)
+    elif r.status_code in (401, 403):
+        _groq["off_until"] = time.time() + 3600
+        log.warning("Khóa Groq bị từ chối (HTTP %s)", r.status_code)
+    else:
+        log.warning("Groq trả lỗi %s: %s", r.status_code, r.text[:150])
+    return None
+
+
 def gemini(prompt):
-    if not GEMINI_KEY or time.time() < AI["disabled_until"]:
+    """Gọi AI: Gemini trước, hết lượt thì chuyển sang Groq (nếu có khóa). Tên hàm giữ nguyên cho các chỗ gọi cũ."""
+    if not GEMINI_KEY and not GROQ_KEY:
         return None
     if not getattr(_tls, "urgent", False):
         t0 = time.time()
         while _urgent[0] > 0 and time.time() - t0 < 120:   # nhường cho thao tác người dùng
             time.sleep(0.3)
     with _ai_lock:
-        wait = _ai_last[0] + AI_GAP - time.time()
-        if wait > 0:
-            time.sleep(wait)
-        _ai_last[0] = time.time()
-        return _gemini_call(prompt)
+        out = None
+        if GEMINI_KEY and time.time() >= AI["disabled_until"] and time.time() >= _gem_cool[0]:
+            wait = _ai_last[0] + AI_GAP - time.time()
+            if wait > 0:
+                time.sleep(wait)
+            _ai_last[0] = time.time()
+            out = _gemini_call(prompt)
+            if out is None and GROQ_KEY:
+                _gem_cool[0] = time.time() + 300    # Gemini đang hết lượt: 5 phút tới đi thẳng Groq
+        if out is None and GROQ_KEY:
+            out = _groq_call(prompt)
+        return out
 
 
 # Danh sách model tự cập nhật: Google hay ngừng model cũ ("no longer available") -> bot tự đọc gợi ý trong
