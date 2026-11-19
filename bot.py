@@ -1726,38 +1726,32 @@ def item_info(it):
     return _summary_cache.get(it["id"]) or STATE["items"].get(it["id"], {})
 
 
+def short_ago(ts):
+    m = int((time.time() - ts) // 60)
+    if m < 1:
+        return "vừa xong"
+    if m < 60:
+        return f"{m}p trước"
+    if m < 24 * 60:
+        return f"{m // 60}h trước"
+    return f"{m // 1440} ngày trước"
+
+
 def fmt_item(it, tags, want_summary):
+    """Tin nhắn đơn giản như người bạn nhắn: '5h30 (3p trước) Báo Fresh News đăng tin: ...' + link bài gốc."""
     e = html.escape
     info = item_info(it)
-    hot = info.get("hot", 0)
-    head = "🚨 " if hot >= 5 else "🔥 " if hot >= 4 else "📰 "
-    badge = []
-    if is_statement(it):
-        badge.append("📜 <b>THÔNG CÁO CHÍNH THỨC</b>")
-    if item_tier(it) == 1:
-        badge.append("🏛 Nguồn chính thức")
-    title_vi = info.get("title_vi")
-    if title_vi and title_vi.lower() != it["title"].lower():
-        lines = [f"{head}<b>{e(title_vi)}</b>", f"<i>{e(it['title'])}</i>"]
-    else:
-        lines = [f"{head}<b>{e(it['title'])}</b>"]
-    flag = LANG_FLAGS.get(it.get("lang")) or ("🇻🇳" if it.get("vn", True) else "🌍")
-    meta = flag + " " + e(it["source"])
-    if badge:
-        lines.insert(0, " · ".join(badge))
-    if it["ts"]:
-        meta += f"  ·  🕒 {fmt_time(it['ts'])} ({ago(it['ts'])})"
-    lines.append(meta)
-    if tags:
-        lines.append("🏷 " + e(" · ".join(sorted(show_tag(t) for t in tags))))
-    if want_summary:
-        s = info.get("summary") or it["desc"]
-        if s:
-            lines.append("")
-            lines.append("📝 " + e(s[:700]))
+    title = (info.get("title_vi") or it["title"]).strip().rstrip(".")
+    when = ""
+    if it.get("ts"):
+        dt = datetime.fromtimestamp(it["ts"], VN_TZ)
+        when = f"{dt.hour}h{dt.minute:02d} ({short_ago(it['ts'])}) "
+    src = it["source"]
+    official = item_tier(it) == 1 or is_statement(it)
+    who = src if official else ("Báo " + src if not src.lower().startswith(("báo", "bao")) else src)
+    kind = "đăng thông cáo" if is_statement(it) else "đăng tin"
     link = it.get("real_link") or it["link"]
-    lines.append(f'\n🔗 <a href="{e(link, quote=True)}">Đọc bài gốc</a>')
-    return "\n".join(lines)
+    return f'{e(when)}{e(who)} {kind}: {e(title)}.\n{e(link)}'
 
 
 def show_tag(t):
@@ -1765,10 +1759,7 @@ def show_tag(t):
 
 
 def item_kb(it):
-    i = it["id"]
-    return {"inline_keyboard": [[{"text": "⭐ Lưu", "callback_data": "sv:" + i},
-                                 {"text": "🧠 Phân tích", "callback_data": "an:" + i},
-                                 {"text": "➕ Theo dõi", "callback_data": "fw:" + i}]]}
+    return None   # không nút bấm dưới tin
 
 
 def store_item(it, cid=None, tags=None):
@@ -1826,34 +1817,10 @@ def topic_keyboard(cid):
     return {"inline_keyboard": rows}
 
 
-HELP = (
-    "<b>🤖 3X – Săn tin nóng từ báo chính thống</b>\n\n"
-    "Dùng các <b>nút ở cuối màn hình</b>:\n"
-    "📰 <b>Tin mới nhất</b> – 10 tin mới nhất bạn đang theo dõi\n"
-    "🔥 <b>Tin nóng hôm nay</b> – 10 tin quan trọng nhất 24 giờ qua\n"
-    "📋 <b>Chủ đề</b> – bật/tắt Chiến sự, Kinh tế, Ngoại giao…\n"
-    "🔎 <b>Từ khoá</b> – thêm, xem, <b>xoá nhiều / xoá hết</b> từ khoá\n"
-    "⭐ <b>Đã lưu</b> – các tin bạn bấm ⭐ Lưu\n"
-    "📊 <b>Xuất Excel</b> – file tin hôm nay / 24h / 7 ngày / đã lưu: tiêu đề, tóm tắt, nguồn, từ khoá, link…\n"
-    "⚙️ <b>Cài đặt</b> – nguồn báo, chuông, giờ yên lặng, bản tin sáng/tối\n\n"
-    "<b>Dưới mỗi tin</b>: ⭐ Lưu · 🧠 Phân tích (AI phân tích sâu, bối cảnh, tác động) · "
-    "➕ Theo dõi vụ này (tự tạo từ khoá theo dõi diễn biến)\n\n"
-    "<b>Cách viết từ khoá</b>\n"
-    "• Gõ bình thường, có dấu hay không dấu đều được: <code>nguyen duc anh</code>\n"
-    "• 🧠 Gõ cả câu cũng được, AI tự hiểu: <code>tình hình xung đột tại biên giới Campuchia Thái Lan</code>\n"
-    "• Dấu phẩy = HOẶC: <code>iran, israel</code>\n"
-    "• Dấu cộng = VÀ: <code>chiến sự + iran</code>\n"
-    "• AI tự thêm cách viết khác (Ukraina/Ukraine…) và bản tiếng Anh để tìm báo quốc tế.\n\n"
-    "<b>🗣 Báo tiếng Khmer, Trung, Thái…</b>: ⚙️ Cài đặt → 🗣 Ngôn ngữ báo. Muốn thêm báo bất kỳ: "
-    "<b>gửi link trang báo</b> vào ô chat.\n\n"
-    "Lệnh gõ tay: /tim &lt;từ khoá&gt; (tìm 7 ngày) · /ngonngu · /nguonbao · /nguon (tình trạng nguồn, AI)"
-)
+HELP = ("Mình tự gửi tin Campuchia cho bạn từ 6h đến 16h hằng ngày, không cần bấm gì.\n"
+        "Gõ /tat để tắt, /bat để mở lại.")
 
-MAIN_KB = {"keyboard": [[{"text": "📰 Tin mới nhất"}, {"text": "🔥 Tin nóng hôm nay"}],
-                        [{"text": "📋 Chủ đề"}, {"text": "🔎 Từ khoá"}],
-                        [{"text": "⭐ Đã lưu"}, {"text": "📊 Xuất Excel"}],
-                        [{"text": "⏸ Tắt bot"}, {"text": "▶️ Mở bot"}, {"text": "⚙️ Cài đặt"}]],
-           "resize_keyboard": True, "is_persistent": True}
+MAIN_KB = {"remove_keyboard": True}
 BUTTONS = {"📰 Tin mới nhất": "/moi", "🔥 Tin nóng hôm nay": "/nong", "📋 Chủ đề": "/menu",
            "🔎 Từ khoá": "/tukhoa", "⭐ Đã lưu": "/daluu", "⚙️ Cài đặt": "/caidat", "📊 Xuất Excel": "/excel", "⏸ Tắt bot": "/tat", "▶️ Mở bot": "/bat",
            # nút của bản cũ (bàn phím cũ có thể còn trên máy)
@@ -2795,7 +2762,7 @@ def handle_message(msg):
             send(cid, "⏸ Bot đang <b>TẠM DỪNG</b> nên chưa gửi tin.", {"inline_keyboard": [[
                 {"text": "▶️ Nhận tin lại", "callback_data": "s:pause"}]]})
         if cmd == "/start" and not c["topics"] and not c["keywords"]:
-            send(cid, "Chọn chủ đề bạn muốn theo dõi:", topic_keyboard(cid))
+            pass
     elif cmd == "/moi":
         latest_now(cid)
     elif cmd == "/nong":
@@ -2885,7 +2852,7 @@ def handle_message(msg):
         with state_lock:
             c["paused"] = cmd in ("/pause", "/tat")
             save_state()
-        send(cid, "⏸ Đã TẮT bot. Bấm ▶️ Mở bot (hoặc gõ /bat) để bật lại." if c["paused"] else "▶️ Đã MỞ bot, tin sẽ về ngay khi có.")
+        send(cid, "Đã tắt bot. Gõ /bat để mở lại." if c["paused"] else "Đã mở bot, có tin mình gửi ngay.")
         WAKE.set()
     elif cmd.startswith("/"):
         send(cid, "Không hiểu lệnh này. Gõ /help để xem hướng dẫn.", MAIN_KB)
@@ -3598,7 +3565,7 @@ def latest_now(cid, n=10):
 
 
 def check_digest():
-    """Bản tin tổng hợp lúc 7h sáng và 21h tối (giờ Việt Nam)."""
+    return   # bỏ bản tin tổng hợp: chỉ gửi tin thời gian thực
     now = datetime.now(VN_TZ)
     slot = None
     if now.hour == 7 or (now.hour == 8 and now.minute < 30):
@@ -3639,21 +3606,8 @@ def worker():
 def setup_profile():
     """Đặt tên hiển thị, mô tả và menu lệnh cho bot (ảnh đại diện thì đặt qua @BotFather)."""
     tg("setMyCommands", commands=[
-        {"command": "moi", "description": "📰 10 tin mới nhất ngay bây giờ"},
-        {"command": "nong", "description": "🔥 Tin nóng nhất 24 giờ qua"},
-        {"command": "menu", "description": "📋 Chọn chủ đề theo dõi"},
-        {"command": "tukhoa", "description": "🔎 Quản lý từ khoá (thêm / xoá nhiều)"},
-        {"command": "tim", "description": "Tìm tin 7 ngày qua theo từ khoá"},
-        {"command": "daluu", "description": "⭐ Tin đã lưu"},
-        {"command": "excel", "description": "📊 Xuất file Excel tin hôm nay / 7 ngày"},
-        {"command": "caidat", "description": "⚙️ Nguồn báo, chuông, bản tin sáng/tối"},
-        {"command": "ngonngu", "description": "🗣 Báo tiếng Khmer, Trung, Thái…"},
-        {"command": "nguonbao", "description": "📡 Thêm / xoá nguồn báo riêng"},
-        {"command": "nguon", "description": "📡 Tình trạng nguồn tin & AI"},
-        {"command": "daloc", "description": "🗑 Xem tin đã bị lọc"},
-        {"command": "kenh", "description": "📣 Kênh Telegram chính thức"},
-        {"command": "thuatngu", "description": "📖 Bảng thuật ngữ cho AI dịch"},
-        {"command": "help", "description": "❓ Hướng dẫn"},
+        {"command": "tat", "description": "Tắt bot"},
+        {"command": "bat", "description": "Mở bot"},
     ])
     try:
         cur = (tg("getMyName") or {}).get("name", "")
@@ -3665,7 +3619,7 @@ def setup_profile():
         tg("setMyDescription", description=(
             "🔴 3X – Săn tin nóng\n\n• Theo dõi chủ đề hoặc từ khoá bất kỳ\n• Quét báo chính thống VN & quốc tế "
             "mỗi phút\n• AI tóm tắt, dịch tin nước ngoài, chấm điểm tin nóng\n• Lọc tin trùng & lạc đề\n"
-            "• Bản tin sáng 7h / tối 21h\n\nBấm BẮT ĐẦU để dùng.")[:512])
+            "\nBấm BẮT ĐẦU là tin tự về.")[:512])
     except Exception as e:
         log.warning("Không đặt được tên/mô tả bot: %s", e)
 
@@ -3727,11 +3681,11 @@ def main():
                 continue
             note = None
             if c["paused"]:
-                note = "✅ 3X đã khởi động nhưng đang <b>⏸ TẮT</b> – bấm ▶️ Mở bot (hoặc gõ /bat) để nhận tin lại."
+                note = "Bot đang tắt. Gõ /bat để mở lại."
             elif not c["topics"] and not c["keywords"]:
-                note = "✅ 3X đã khởi động. Bạn chưa theo dõi gì – bấm 📋 Chủ đề hoặc 🔎 Từ khoá."
+                note = None
             elif time.time() - c.get("last_notice", 0) > 6 * 3600:
-                note = "✅ <b>3X đã khởi động</b> và đang săn tin."
+                note = None
             if note:
                 send(cid, note, MAIN_KB, silent=True)
                 with state_lock:

@@ -181,13 +181,19 @@ TOPICS = {
                    "Hun Sen", "Funan Techo", "Ream", "Preah Vihear", "Siem Reap", "กัมพูชา", "เขมร", "ฮุน มาเนต",
                    "ฮุน เซน", "柬埔寨", "柬国", "洪玛奈", "洪森", "金边", "កម្ពុជា"],
         "gnews": ["Campuchia", "Thủ tướng Hun Manet", "Hun Sen", "biên giới Campuchia Thái Lan",
-                  "Campuchia quân sự", "kinh tế Campuchia", "kênh Funan Techo"],
+                  "Campuchia quân sự", "kinh tế Campuchia", "kênh Funan Techo", "biên giới Việt Nam Campuchia",
+                  "Campuchia vốn vay viện trợ", "Campuchia ngừng bắn Thái Lan"],
         "gnews_en": ["Cambodia politics", "Cambodia military", "Cambodia Thailand border", "Hun Manet",
-                     "Hun Sen", "Cambodia economy", "Cambodia foreign minister", "Cambodia China", "Ream naval base"],
-        "gnews_th": ["กัมพูชา", "ชายแดนไทยกัมพูชา", "ฮุน มาเนต", "ฮุน เซน", "ทหารกัมพูชา"],
+                     "Hun Sen", "Cambodia economy", "Cambodia foreign minister", "Cambodia China", "Ream naval base",
+                     "Thailand Cambodia ceasefire", "ASEAN observers Cambodia Thailand", "Thai army Cambodia",
+                     "Cambodia Thailand mediation Malaysia", "ADB Cambodia loan", "World Bank Cambodia financing",
+                     "Cambodia Vietnam border", "Cambodia trade customs"],
+        "gnews_th": ["กัมพูชา", "ชายแดนไทยกัมพูชา", "ฮุน มาเนต", "ฮุน เซน", "ทหารกัมพูชา", "หยุดยิง กัมพูชา",
+                     "GBC RBC JBC กัมพูชา", "กองทัพภาคที่ 2 กัมพูชา", "ช่องบก ด่านชายแดน", "ทุ่นระเบิด ชายแดน"],
         "gnews_zh": ["柬埔寨", "洪玛奈", "洪森", "柬泰边境", "柬埔寨 经济"],
-        "ai_desc": "tin CẤP QUỐC GIA về chính trị, quân sự – quốc phòng – an ninh biên giới, ngoại giao, kinh tế – "
-                   "tài chính – thương mại của Campuchia (kể cả quan hệ với Thái Lan, Việt Nam, Trung Quốc, Mỹ…). "
+        "ai_desc": "tin CẤP QUỐC GIA về chính trị, quân sự – quốc phòng – an ninh biên giới (Việt Nam–Campuchia và "
+                   "Campuchia–Thái Lan, gồm ngừng bắn, GBC/RBC/JBC, ASEAN, nước thứ ba), ngoại giao, kinh tế – "
+                   "tài chính – thương mại, vốn vay và viện trợ quốc tế, thuế, hải quan của Campuchia (kể cả quan hệ với Thái Lan, Việt Nam, Trung Quốc, Mỹ…). "
                    "LOẠI: tin xã hội / địa phương (dọn vệ sinh phường xã, lễ hội, triển lãm du học, giáo dục, y tế "
                    "thường ngày), tai nạn giao thông, cháy nổ, trọng án dân sự, thời tiết, thể thao, giải trí",
         "hint": "Campuchia",
@@ -295,6 +301,12 @@ LANG_SOURCES = {
         {"name": "Matichon", "url": "https://www.matichon.co.th/"},
         {"name": "Thai PBS", "url": "https://www.thaipbs.or.th/news"},
         {"name": "Khaosod", "url": "https://www.khaosod.co.th/"},
+        {"name": "Manager Online (MGR)", "url": "https://mgronline.com/"},
+        {"name": "Naewna", "url": "https://www.naewna.com/"},
+        {"name": "Krungthep Turakij", "url": "https://www.bangkokbiznews.com/"},
+        {"name": "The Standard", "url": "https://thestandard.co/"},
+        {"name": "Bangkok Post", "url": "https://www.bangkokpost.com/"},
+        {"name": "The Nation", "url": "https://www.nationthailand.com/"},
     ],
     "lo": [  # 🇱🇦 Báo tiếng Lào
         {"name": "KPL (Thông tấn xã Lào)", "url": "https://kpl.gov.la/"},
@@ -323,8 +335,19 @@ OFFICIAL_SITES = [   # tầng 1 – bot tự dò RSS, không có thì theo dõi 
     {"name": "Quốc hội Campuchia", "url": "https://www.national-assembly.org.kh/"},
     {"name": "Thượng viện Campuchia", "url": "https://www.senate.gov.kh/"},
     {"name": "AKP – Thông tấn xã Campuchia", "url": "https://www.akp.gov.kh/"},
+    {"name": "Truyền hình quốc gia TVK", "url": "https://www.tvk.gov.kh/"},
+    {"name": "Tổng cục Xuất nhập cảnh", "url": "https://www.immigration.gov.kh/"},
+    {"name": "Tổng cục Thuế", "url": "https://www.tax.gov.kh/"},
+    {"name": "Ủy ban Bầu cử Quốc gia (NEC)", "url": "https://www.nec.gov.kh/"},
+    {"name": "Bộ Công chính", "url": "https://www.mpwt.gov.kh/"},
+    {"name": "Bộ Nông nghiệp", "url": "https://www.maff.gov.kh/"},
+    {"name": "Bộ Lao động", "url": "https://www.mlvt.gov.kh/"},
+    {"name": "Bộ Ngoại giao Thái Lan", "url": "https://www.mfa.go.th/en/page/news"},
+    {"name": "ASEAN", "url": "https://asean.org/"},
+    {"name": "ADB – tin Campuchia", "url": "https://www.adb.org/countries/cambodia/main"},
+    {"name": "Ngân hàng Thế giới – Campuchia", "url": "https://www.worldbank.org/en/country/cambodia"},
 ]
-OFFICIAL_DOMAINS = ["gov.kh", "national-assembly.org.kh", "senate.gov.kh"]   # mọi trang .gov.kh = chính thức
+OFFICIAL_DOMAINS = ["gov.kh", "national-assembly.org.kh", "senate.gov.kh", "mfa.go.th", "asean.org", "adb.org", "worldbank.org"]   # mọi trang .gov.kh = chính thức
 MAINSTREAM_KH = ["freshnewsasia.com", "dap-news.com", "kampucheathmey.com", "thmeythmey.com",
                  "kohsantepheapdaily.com.kh", "postkhmer.com", "cnc.com.kh", "khmertimeskh.com",
                  "phnompenhpost.com", "cambodianess.com", "cambojanews.com", "kiripost.com", "tvk.gov.kh",
