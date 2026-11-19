@@ -2,7 +2,8 @@ name: NewsBot
 
 on:
   schedule:
-    - cron: "*/20 * * * *"   # cứ 20 phút GitHub gọi 1 lần; mỗi phiên bot chạy liên tục 55 phút
+    - cron: "*/20 23,0-7 * * *"
+    - cron: "0 8 * * *"
   workflow_dispatch:          # cho phép bấm "Run workflow" để chạy tay
 
 concurrency:
