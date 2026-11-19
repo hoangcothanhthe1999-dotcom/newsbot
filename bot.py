@@ -32,10 +32,11 @@ try:
 except ImportError:
     LANG_SOURCES = {}
 try:
-    from sources import (OFFICIAL_SITES, OFFICIAL_DOMAINS, MAINSTREAM_KH, STATEMENT_WORDS, BLOCK_DOMAINS,
+    from sources import (PROBATION_UNTIL, PROBATION_URLS, OFFICIAL_SITES, OFFICIAL_DOMAINS, MAINSTREAM_KH, STATEMENT_WORDS, BLOCK_DOMAINS,
                          TG_PRESET_SEARCHES, GLOSSARY)
 except ImportError:
     OFFICIAL_SITES, OFFICIAL_DOMAINS, MAINSTREAM_KH, STATEMENT_WORDS = [], [], [], []
+    PROBATION_UNTIL, PROBATION_URLS = 0, []
     BLOCK_DOMAINS, TG_PRESET_SEARCHES, GLOSSARY = [], [], {}
 try:
     import tg_reader
@@ -3331,6 +3332,8 @@ def check_alerts():
     newly = []
     with state_lock:
         for u, h in STATE["health"].items():
+            if now < PROBATION_UNTIL and u[4:] in PROBATION_URLS:
+                continue   # nguồn mới thêm: chưa báo lỗi, đợi bot tự thử
             if h["fail"] and h["since"] and now - h["since"] > 3 * 3600 and not h.get("alerted"):
                 h["alerted"] = True
                 newly.append(u)

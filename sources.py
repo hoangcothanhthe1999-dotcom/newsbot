@@ -349,11 +349,24 @@ OFFICIAL_SITES = [   # tầng 1 – bot tự dò RSS, không có thì theo dõi 
     {"name": "Lục quân Hoàng gia Thái", "url": "https://www.rta.mi.th/"},
     {"name": "Bộ Ngoại giao Việt Nam", "url": "https://www.mofa.gov.vn/"},
     {"name": "Cổng thông tin Chính phủ Việt Nam", "url": "https://chinhphu.vn/"},
+    {"name": "Bộ Tư pháp", "url": "https://moj.gov.kh/"},
+    {"name": "Hội đồng Hiến pháp", "url": "https://ccc.gov.kh/"},
+    {"name": "Cơ quan Chống tham nhũng (ACU)", "url": "https://acu.gov.kh/"},
+    {"name": "Ủy ban Quốc gia chống ma túy", "url": "https://nacd.gov.kh/"},
+    {"name": "Ủy ban Quản lý thiên tai", "url": "https://ncdm.gov.kh/"},
+    {"name": "Bộ Kế hoạch", "url": "https://mop.gov.kh/"},
+    {"name": "Bộ Mỏ & Năng lượng", "url": "https://mme.gov.kh/"},
+    {"name": "Bộ Bưu chính & Viễn thông", "url": "https://mptc.gov.kh/"},
+    {"name": "Ủy ban Chứng khoán (SECC)", "url": "https://secc.gov.kh/"},
+    {"name": "Bộ Quản lý đất đai", "url": "https://mlmupc.gov.kh/"},
+    {"name": "Bộ Công nghiệp, Khoa học & Đổi mới", "url": "https://misti.gov.kh/"},
+    {"name": "Chính phủ Thái Lan (thailand.go.th)", "url": "https://www.thailand.go.th/"},
+    {"name": "Cục Quan hệ công chúng Thái Lan (PRD)", "url": "https://thailand.prd.go.th/en"},
     {"name": "ASEAN", "url": "https://asean.org/"},
     {"name": "ADB – tin Campuchia", "url": "https://www.adb.org/countries/cambodia/main"},
     {"name": "Ngân hàng Thế giới – Campuchia", "url": "https://www.worldbank.org/en/country/cambodia"},
 ]
-OFFICIAL_DOMAINS = ["gov.kh", "national-assembly.org.kh", "nac.org.kh", "senate.gov.kh", "mfa.go.th", "mod.go.th", "thaigov.go.th", "rta.mi.th", "mofa.gov.vn", "chinhphu.vn", "asean.org", "adb.org", "worldbank.org"]   # mọi trang .gov.kh = chính thức
+OFFICIAL_DOMAINS = ["gov.kh", "thailand.go.th", "prd.go.th", "national-assembly.org.kh", "nac.org.kh", "senate.gov.kh", "mfa.go.th", "mod.go.th", "thaigov.go.th", "rta.mi.th", "mofa.gov.vn", "chinhphu.vn", "asean.org", "adb.org", "worldbank.org"]   # mọi trang .gov.kh = chính thức
 MAINSTREAM_KH = ["freshnewsasia.com", "dap-news.com", "kampucheathmey.com", "thmeythmey.com",
                  "kohsantepheapdaily.com.kh", "postkhmer.com", "cnc.com.kh", "khmertimeskh.com",
                  "phnompenhpost.com", "cambodianess.com", "cambojanews.com", "kiripost.com", "tvk.gov.kh",
@@ -392,3 +405,8 @@ GLOSSARY = {
     "กองทัพภาคที่ 2": "Quân khu 2 của Thái (phụ trách biên giới Campuchia)",
     "ฉก.": "lực lượng đặc nhiệm",
 }
+
+
+# Nguồn mới thêm 19/11/2026: chưa báo "nguồn lỗi" trước thời điểm này (cho bot tự thử rồi mới lọc bỏ trang hỏng)
+PROBATION_UNTIL = 1795194000
+PROBATION_URLS = ['https://moj.gov.kh/', 'https://ccc.gov.kh/', 'https://acu.gov.kh/', 'https://nacd.gov.kh/', 'https://ncdm.gov.kh/', 'https://mop.gov.kh/', 'https://mme.gov.kh/', 'https://mptc.gov.kh/', 'https://secc.gov.kh/', 'https://mlmupc.gov.kh/', 'https://misti.gov.kh/', 'https://www.thailand.go.th/', 'https://thailand.prd.go.th/en']
