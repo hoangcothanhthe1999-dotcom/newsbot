@@ -19,6 +19,8 @@ jobs:
     timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main             # lấy bản MỚI NHẤT lúc phiên bắt đầu chạy (không dùng bản lúc xếp hàng -> tránh gửi trùng)
 
       - uses: actions/setup-python@v5
         with:
