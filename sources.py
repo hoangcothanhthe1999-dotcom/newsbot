@@ -187,7 +187,7 @@ TOPICS = {
                      "Hun Sen", "Cambodia economy", "Cambodia foreign minister", "Cambodia China", "Ream naval base",
                      "Thailand Cambodia ceasefire", "ASEAN observers Cambodia Thailand", "Thai army Cambodia",
                      "Cambodia Thailand mediation Malaysia", "ADB Cambodia loan", "World Bank Cambodia financing",
-                     "Cambodia Vietnam border", "Cambodia trade customs", "Cambodia scam centers", "Cambodia human trafficking report", "Cambodia Tier 3 trafficking", "Cambodia sanctions Treasury", "US State Department Cambodia", "Cambodia cyber scam crackdown", "Cambodia European Union", "Cambodia UN human rights", "Cambodia FATF", "ADB approves Cambodia", "ADB Cambodia grant", "Cambodia development assistance aid"],
+                     "Cambodia Vietnam border", "Cambodia trade customs", "Cambodia scam centers", "Cambodia human trafficking report", "Cambodia Tier 3 trafficking", "Cambodia sanctions Treasury", "US State Department Cambodia", "Cambodia cyber scam crackdown", "Cambodia European Union", "Cambodia UN human rights", "Cambodia FATF", "ADB approves Cambodia", "ADB Cambodia grant", "Cambodia development assistance aid", "Cambodia (site:state.gov OR site:treasury.gov OR site:justice.gov OR site:fincen.gov OR site:usembassy.gov OR site:whitehouse.gov OR site:congress.gov)", "Cambodia (site:un.org OR site:ohchr.org OR site:unodc.org OR site:icj-cij.org OR site:interpol.int OR site:fatf-gafi.org)", "Cambodia (site:adb.org OR site:imf.org OR site:worldbank.org OR site:aiib.org)", "Cambodia (site:eeas.europa.eu OR site:europa.eu OR site:europarl.europa.eu OR site:gov.uk OR site:diplomatie.gouv.fr OR site:auswaertiges-amt.de)", "Cambodia (site:fmprc.gov.cn OR site:gov.cn OR site:mofa.go.jp OR site:go.jp OR site:mofa.go.kr OR site:dfat.gov.au OR site:mea.gov.in OR site:kln.gov.my OR site:mfa.gov.sg OR site:mfa.go.th OR site:thaigov.go.th OR site:mofa.gov.vn)"],
         "gnews_th": ["กัมพูชา", "ชายแดนไทยกัมพูชา", "ฮุน มาเนต", "ฮุน เซน", "ทหารกัมพูชา", "หยุดยิง กัมพูชา",
                      "GBC RBC JBC กัมพูชา", "กองทัพภาคที่ 2 กัมพูชา", "ช่องบก ด่านชายแดน", "ทุ่นระเบิด ชายแดน"],
         "gnews_zh": ["柬埔寨", "洪玛奈", "洪森", "柬泰边境", "柬埔寨 经济"],
@@ -367,7 +367,7 @@ OFFICIAL_SITES = [   # tầng 1 – bot tự dò RSS, không có thì theo dõi 
     {"name": "ADB – tin Campuchia", "url": "https://www.adb.org/countries/cambodia/main"},
     {"name": "Ngân hàng Thế giới – Campuchia", "url": "https://www.worldbank.org/en/country/cambodia"},
 ]
-OFFICIAL_DOMAINS = ["gov.kh", "kh.usembassy.gov", "thailand.go.th", "prd.go.th", "national-assembly.org.kh", "nac.org.kh", "senate.gov.kh", "mfa.go.th", "mod.go.th", "thaigov.go.th", "rta.mi.th", "mofa.gov.vn", "chinhphu.vn", "asean.org", "adb.org", "worldbank.org"]   # mọi trang .gov.kh = chính thức
+OFFICIAL_DOMAINS = ["gov.kh", "usembassy.gov", "state.gov", "treasury.gov", "justice.gov", "un.org", "ohchr.org", "unodc.org", "icj-cij.org", "adb.org", "imf.org", "eeas.europa.eu", "fmprc.gov.cn", "mofa.go.jp", "dfat.gov.au", "kln.gov.my", "mea.gov.in", "kh.usembassy.gov", "thailand.go.th", "prd.go.th", "national-assembly.org.kh", "nac.org.kh", "senate.gov.kh", "mfa.go.th", "mod.go.th", "thaigov.go.th", "rta.mi.th", "mofa.gov.vn", "chinhphu.vn", "asean.org", "adb.org", "worldbank.org"]   # mọi trang .gov.kh = chính thức
 MAINSTREAM_KH = ["freshnewsasia.com", "dap-news.com", "kampucheathmey.com", "thmeythmey.com",
                  "kohsantepheapdaily.com.kh", "postkhmer.com", "cnc.com.kh", "khmertimeskh.com",
                  "phnompenhpost.com", "cambodianess.com", "cambojanews.com", "kiripost.com", "tvk.gov.kh",
@@ -411,3 +411,7 @@ GLOSSARY = {
 # Nguồn mới thêm 19/11/2026: chưa báo "nguồn lỗi" trước thời điểm này (cho bot tự thử rồi mới lọc bỏ trang hỏng)
 PROBATION_UNTIL = 1795194000
 PROBATION_URLS = ['https://kh.usembassy.gov/', 'https://moj.gov.kh/', 'https://ccc.gov.kh/', 'https://acu.gov.kh/', 'https://nacd.gov.kh/', 'https://ncdm.gov.kh/', 'https://mop.gov.kh/', 'https://mme.gov.kh/', 'https://mptc.gov.kh/', 'https://secc.gov.kh/', 'https://mlmupc.gov.kh/', 'https://misti.gov.kh/', 'https://www.thailand.go.th/', 'https://thailand.prd.go.th/en']
+
+
+# Cơ quan / tổ chức NƯỚC NGOÀI: tin của họ nói về Campuchia luôn được gửi (không qua bộ lọc "lạc đề" của AI)
+FOREIGN_OFFICIAL_DOMAINS = ['state.gov', 'treasury.gov', 'justice.gov', 'fincen.gov', 'usembassy.gov', 'whitehouse.gov', 'congress.gov', 'un.org', 'ohchr.org', 'unodc.org', 'icj-cij.org', 'interpol.int', 'fatf-gafi.org', 'adb.org', 'imf.org', 'worldbank.org', 'aiib.org', 'eeas.europa.eu', 'europa.eu', 'europarl.europa.eu', 'gov.uk', 'diplomatie.gouv.fr', 'auswaertiges-amt.de', 'fmprc.gov.cn', 'gov.cn', 'mofa.go.jp', 'go.jp', 'mofa.go.kr', 'dfat.gov.au', 'mea.gov.in', 'kln.gov.my', 'mfa.gov.sg', 'mfa.go.th', 'thaigov.go.th', 'mofa.gov.vn']

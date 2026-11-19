@@ -32,11 +32,12 @@ try:
 except ImportError:
     LANG_SOURCES = {}
 try:
-    from sources import (PROBATION_UNTIL, PROBATION_URLS, OFFICIAL_SITES, OFFICIAL_DOMAINS, MAINSTREAM_KH, STATEMENT_WORDS, BLOCK_DOMAINS,
+    from sources import (FOREIGN_OFFICIAL_DOMAINS, PROBATION_UNTIL, PROBATION_URLS, OFFICIAL_SITES, OFFICIAL_DOMAINS, MAINSTREAM_KH, STATEMENT_WORDS, BLOCK_DOMAINS,
                          TG_PRESET_SEARCHES, GLOSSARY)
 except ImportError:
     OFFICIAL_SITES, OFFICIAL_DOMAINS, MAINSTREAM_KH, STATEMENT_WORDS = [], [], [], []
     PROBATION_UNTIL, PROBATION_URLS = 0, []
+    FOREIGN_OFFICIAL_DOMAINS = []
     BLOCK_DOMAINS, TG_PRESET_SEARCHES, GLOSSARY = [], [], {}
 try:
     import tg_reader
@@ -1647,17 +1648,22 @@ def strong_match(tag, it):
     return any(keyword_match(t, text) for t in terms if t)
 
 
+def foreign_official(it):
+    """Tin do cơ quan / tổ chức nước ngoài (Mỹ, LHQ, ADB, EU, Trung Quốc…) đăng: luôn giữ, không để AI loại."""
+    return domain_in(it.get("domain", ""), FOREIGN_OFFICIAL_DOMAINS)
+
+
 def drop_irrelevant(entries):
     """entries = [(item, tags)]. Bỏ tag mà AI cho là lạc đề; bỏ hẳn bài nếu hết tag."""
     pairs = [(it, tag_criterion(t)) for it, tags in entries for t in tags
-             if tag_criterion(t) and not strong_match(t, it)]
+             if tag_criterion(t) and not strong_match(t, it) and not foreign_official(it)]
     if not pairs:
         return entries, []
     ok, unknown = ai_relevant(pairs)
 
     def keep(it, t):
         crit = tag_criterion(t)
-        if not crit or strong_match(t, it):
+        if not crit or strong_match(t, it) or foreign_official(it):
             return True
         if (it["id"], crit) in unknown:
             return strict_ok(t, it)
