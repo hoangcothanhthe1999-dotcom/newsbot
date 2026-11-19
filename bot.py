@@ -75,6 +75,8 @@ GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "").strip() or "gemini-flash-lite-latest"
 GROQ_KEY = os.environ.get("GROQ_API_KEY", "").strip()      # AI dự phòng khi Gemini hết lượt miễn phí
 GROQ_MODEL = os.environ.get("GROQ_MODEL", "").strip() or "llama-3.3-70b-versatile"
+OPENROUTER_KEY = os.environ.get("OPENROUTER_API_KEY", "").strip()   # AI dự phòng thứ ba (chỉ dùng khi Gemini và Groq đều hết lượt)
+OPENROUTER_MODEL = os.environ.get("OPENROUTER_MODEL", "").strip() or "meta-llama/llama-3.3-70b-instruct:free"
 ALLOWED_USERS = {x.strip() for x in os.environ.get("ALLOWED_USERS", "").split(",") if x.strip()}
 CHECK_INTERVAL = env_int("CHECK_INTERVAL", 60)       # giây giữa 2 lần quét
 RSS_EVERY = env_int("RSS_EVERY", 60)                 # RSS báo: tải lại tối đa mỗi 60 giây (nhanh nhất)
@@ -1328,6 +1330,44 @@ class urgent_ai:
 
 _gem_cool = [0.0]    # Gemini nghỉ đến lúc này (chỉ dùng khi có AI dự phòng)
 _groq = {"off_until": 0.0, "last": 0.0}
+_orr = {"off_until": 0.0, "last": 0.0}
+
+
+def _openrouter_call(prompt):
+    """AI dự phòng thứ ba (OpenRouter, tương thích OpenAI). Chỉ chạy khi có OPENROUTER_API_KEY."""
+    if not OPENROUTER_KEY or time.time() < _orr["off_until"]:
+        return None
+    wait = _orr["last"] + 3.0 - time.time()
+    if wait > 0:
+        time.sleep(wait)
+    _orr["last"] = time.time()
+    body = {"model": OPENROUTER_MODEL, "temperature": 0.2,
+            "messages": [{"role": "user", "content": prompt + "\n\nChỉ trả lời bằng JSON hợp lệ, không thêm chữ nào khác."}]}
+    try:
+        r = requests.post("https://openrouter.ai/api/v1/chat/completions",
+                          headers={"Authorization": "Bearer " + OPENROUTER_KEY}, json=body, timeout=60)
+    except Exception as e:
+        log.warning("OpenRouter lỗi mạng: %s", e)
+        return None
+    if r.status_code == 200:
+        try:
+            out = r.json()["choices"][0]["message"]["content"]
+            ai_set(True, f"hoạt động tốt (OpenRouter dự phòng, {OPENROUTER_MODEL})")
+            return out
+        except Exception:
+            return None
+    if r.status_code == 429:
+        try:
+            ra = float(r.headers.get("retry-after", "30"))
+        except ValueError:
+            ra = 30.0
+        _orr["off_until"] = time.time() + min(max(ra, 10), 300)
+    elif r.status_code in (401, 402, 403):
+        _orr["off_until"] = time.time() + 3600
+        log.warning("Khóa OpenRouter bị từ chối (HTTP %s)", r.status_code)
+    else:
+        log.warning("OpenRouter trả lỗi %s: %s", r.status_code, r.text[:150])
+    return None
 
 
 def _groq_call(prompt):
@@ -1368,7 +1408,7 @@ def _groq_call(prompt):
 
 def gemini(prompt):
     """Gọi AI: Gemini trước, hết lượt thì chuyển sang Groq (nếu có khóa). Tên hàm giữ nguyên cho các chỗ gọi cũ."""
-    if not GEMINI_KEY and not GROQ_KEY:
+    if not GEMINI_KEY and not GROQ_KEY and not OPENROUTER_KEY:
         return None
     if not getattr(_tls, "urgent", False):
         t0 = time.time()
@@ -1382,10 +1422,12 @@ def gemini(prompt):
                 time.sleep(wait)
             _ai_last[0] = time.time()
             out = _gemini_call(prompt)
-            if out is None and GROQ_KEY:
+            if out is None and (GROQ_KEY or OPENROUTER_KEY):
                 _gem_cool[0] = time.time() + 300    # Gemini đang hết lượt: 5 phút tới đi thẳng Groq
         if out is None and GROQ_KEY:
             out = _groq_call(prompt)
+        if out is None and OPENROUTER_KEY:
+            out = _openrouter_call(prompt)
         return out
 
 
@@ -1577,7 +1619,7 @@ def truthy(v):
 def ai_relevant(pairs):
     """Nhờ AI loại bài lạc đề. pairs = [(item, tiêu chí)]. Trả về (tập hợp lệ, tập AI chưa chấm được)."""
     todo = [(it, kw) for it, kw in pairs if (it["id"], kw) not in _relevance_cache]
-    if GEMINI_KEY:
+    if GEMINI_KEY or GROQ_KEY or OPENROUTER_KEY:
         for i in range(0, len(todo), 20):
             chunk = todo[i:i + 20]
             lines = [f"{n}. Theo dõi: «{kw}» | Tiêu đề: {it['title']} | Mô tả: {it['desc'][:250]}"
@@ -1653,17 +1695,32 @@ def foreign_official(it):
     return domain_in(it.get("domain", ""), FOREIGN_OFFICIAL_DOMAINS)
 
 
+HARD_WORDS = ["biên giới", "bien gioi", "cột mốc", "cửa khẩu", "việt nam", "viet nam", "thái lan", "thailand", "thai-cambodia",
+              "border", "vietnam", "trừng phạt", "sanction", "hun manet", "hun sen", "samdech", "cpp", "quốc hội", "senate",
+              "national assembly", "ព្រំដែន", "វៀតណាម", "ថៃ", "ទណ្ឌកម្ម"]
+
+
+def hard_official(it):
+    """Tin của trang cơ quan chính thức có chứa từ khóa cốt lõi (biên giới, Việt Nam, Thái, trừng phạt…): chắc chắn
+    liên quan, khỏi hỏi AI (tiết kiệm lượt AI). Tin chính thức không có từ cốt lõi vẫn qua AI như cũ."""
+    d = it.get("domain", "")
+    if not (domain_in(d, OFFICIAL_DOMAINS) and not domain_in(d, ["tvk.gov.kh"])):
+        return False
+    text = (it["title"] + " " + it.get("desc", "")).lower()
+    return any(w in text for w in HARD_WORDS)
+
+
 def drop_irrelevant(entries):
     """entries = [(item, tags)]. Bỏ tag mà AI cho là lạc đề; bỏ hẳn bài nếu hết tag."""
     pairs = [(it, tag_criterion(t)) for it, tags in entries for t in tags
-             if tag_criterion(t) and not strong_match(t, it) and not foreign_official(it)]
+             if tag_criterion(t) and not strong_match(t, it) and not foreign_official(it) and not hard_official(it)]
     if not pairs:
         return entries, []
     ok, unknown = ai_relevant(pairs)
 
     def keep(it, t):
         crit = tag_criterion(t)
-        if not crit or strong_match(t, it) or foreign_official(it):
+        if not crit or strong_match(t, it) or foreign_official(it) or hard_official(it):
             return True
         if (it["id"], crit) in unknown:
             return strict_ok(t, it)
