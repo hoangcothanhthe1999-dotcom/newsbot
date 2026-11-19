@@ -1,0 +1,273 @@
+{
+ "offset": 626104989,
+ "owner": "8022487801",
+ "chats": {
+  "8022487801": {
+   "_id": "8022487801",
+   "topics": [],
+   "keywords": [],
+   "paused": false,
+   "summary": true,
+   "init": {},
+   "sent": {},
+   "titles": [],
+   "pending": {
+    "608": "@BotFather"
+   },
+   "scope": {
+    "vn": true,
+    "intl": true,
+    "trusted": true
+   },
+   "hot_only": false,
+   "notify": "all",
+   "quiet": true,
+   "digest": true,
+   "saved": [],
+   "kmsel": [],
+   "langs": [],
+   "lang_order": [
+    "vi",
+    "en"
+   ],
+   "sources": []
+  }
+ },
+ "health": {},
+ "tr": {},
+ "kx": {},
+ "items": {},
+ "meta": {},
+ "channels": [],
+ "glossary": {},
+ "kt": {},
+ "resolved": {
+  "http://www.news.cn/": {
+   "type": "page",
+   "url": "http://www.news.cn/",
+   "name": "新华网_让新闻离你更近",
+   "at": 1795084419.2515328
+  },
+  "http://www.people.com.cn/rss/politics.xml": {
+   "type": "rss",
+   "url": "http://www.people.com.cn/rss/politics.xml",
+   "name": "时政频道",
+   "at": 1795084424.6464012
+  },
+  "https://cambodianess.com/": {
+   "type": "page",
+   "url": "https://cambodianess.com/",
+   "name": "Cambodianess",
+   "at": 1795084425.304059
+  },
+  "https://cambojanews.com/": {
+   "type": "rss",
+   "url": "https://cambojanews.com/feed/",
+   "name": "CamboJA News | Reporting Without Wavering",
+   "at": 1795084431.7698913
+  },
+  "https://jianhuadaily.com/": {
+   "type": "rss",
+   "url": "https://www.jianhuadaily.com/feed",
+   "name": "首页",
+   "at": 1795084432.849402
+  },
+  "https://kiripost.com/": {
+   "type": "page",
+   "url": "https://kiripost.com/",
+   "name": "Kiripost | Cambodia News, Business, Tech & More",
+   "at": 1795084435.8036904
+  },
+  "https://kohsantepheapdaily.com.kh/": {
+   "type": "rss",
+   "url": "https://kohsantepheapdaily.com.kh/feed",
+   "name": "Koh Santepheap Daily",
+   "at": 1795084450.8575559
+  },
+  "https://kpl.gov.la/": {
+   "type": "page",
+   "url": "https://kpl.gov.la/",
+   "name": "ຂ່າວສານປະເທດລາວ",
+   "at": 1795084452.6407604
+  },
+  "https://mef.gov.kh/": {
+   "type": "page",
+   "url": "https://mef.gov.kh/",
+   "name": "",
+   "at": 1795084457.8721945
+  },
+  "https://news.sabay.com.kh/": {
+   "type": "page",
+   "url": "https://news.sabay.com.kh/",
+   "name": "Sabay News",
+   "at": 1795084457.9445574
+  },
+  "https://pressocm.gov.kh/": {
+   "type": "rss",
+   "url": "https://pressocm.gov.kh/feed",
+   "name": "PRU I អង្គភាព​ព័ត៌មាន​ និងប្រតិកម្មរហ័ស | PRU",
+   "at": 1795084468.0775108
+  },
+  "https://thmeythmey.com/": {
+   "type": "page",
+   "url": "https://thmeythmey.com/",
+   "name": "Thmey Thmey",
+   "at": 1795084474.2353518
+  },
+  "https://www.akp.gov.kh/": {
+   "type": "page",
+   "url": "https://www.akp.gov.kh/",
+   "name": "Agence Kampuchea Presse - AKP",
+   "at": 1795084482.1070397
+  },
+  "https://www.cc-times.com/": {
+   "type": "page",
+   "url": "https://www.cc-times.com/",
+   "name": "柬中時報",
+   "at": 1795084486.0453444
+  },
+  "https://www.cdc.gov.kh/": {
+   "type": "rss",
+   "url": "https://cdc.gov.kh/feed/",
+   "name": "The Council for the Development of Cambodia (CDC)",
+   "at": 1795084490.0018997
+  },
+  "https://www.cnc.com.kh/": {
+   "type": "page",
+   "url": "https://www.cnc.com.kh/",
+   "name": "CNC News",
+   "at": 1795084494.4890249
+  },
+  "https://www.customs.gov.kh/": {
+   "type": "page",
+   "url": "https://www.customs.gov.kh/",
+   "name": "អគ្គនាយកដ្ឋានគយនិងរដ្ឋាករកម្ពុជា",
+   "at": 1795084509.5171618
+  },
+  "https://www.dap-news.com/": {
+   "type": "rss",
+   "url": "https://dap-news.com/feed/",
+   "name": "DAP News - The Best Breaking News in Cambodia, Breaking By Soy Sopheap",
+   "at": 1795084520.9991117
+  },
+  "https://www.freshnewsasia.com/": {
+   "type": "page",
+   "url": "https://www.freshnewsasia.com/",
+   "name": "",
+   "at": 1795084525.1731293
+  },
+  "https://www.information.gov.kh/": {
+   "type": "page",
+   "url": "https://www.information.gov.kh/",
+   "name": "ក្រសួងព័ត៌មាន",
+   "at": 1795084525.252853
+  },
+  "https://www.interior.gov.kh/": {
+   "type": "page",
+   "url": "https://www.interior.gov.kh/",
+   "name": "",
+   "at": 1795084528.9023197
+  },
+  "https://www.kampucheathmey.com/": {
+   "type": "rss",
+   "url": "https://www.kampucheathmey.com/feed",
+   "name": "Kampuchea Thmey Daily",
+   "at": 1795084529.2846665
+  },
+  "https://www.khaosod.co.th/": {
+   "type": "rss",
+   "url": "https://www.khaosod.co.th/feed",
+   "name": "ข่าวสด",
+   "at": 1795084530.401752
+  },
+  "https://www.khmertimeskh.com/": {
+   "type": "page",
+   "url": "https://www.khmertimeskh.com/",
+   "name": "",
+   "at": 1795084532.9871309
+  },
+  "https://www.matichon.co.th/": {
+   "type": "rss",
+   "url": "https://www.matichon.co.th/feed",
+   "name": "Home",
+   "at": 1795084533.0570164
+  },
+  "https://www.mfaic.gov.kh/": {
+   "type": "page",
+   "url": "https://www.mfaic.gov.kh/",
+   "name": "Request Rejected",
+   "at": 1795084533.7772338
+  },
+  "https://www.moc.gov.kh/": {
+   "type": "page",
+   "url": "https://www.moc.gov.kh/",
+   "name": "ក្រសួងពាណិជ្ជកម្ម | moc.gov.kh",
+   "at": 1795084534.5977879
+  },
+  "https://www.mod.gov.kh/": {
+   "type": "page",
+   "url": "https://www.mod.gov.kh/",
+   "name": "",
+   "at": 1795084542.4075098,
+   "error": "HTTPSConnectionPool(host='mod.gov.kh', port=443): Read timed out. (read timeout=20)"
+  },
+  "https://www.national-assembly.org.kh/": {
+   "type": "page",
+   "url": "https://www.national-assembly.org.kh/",
+   "name": "",
+   "at": 1795084563.9256814,
+   "error": "HTTPSConnectionPool(host='www.national-assembly.org.kh', port=443): Max retries exceeded with url: /"
+  },
+  "https://www.nbc.gov.kh/": {
+   "type": "page",
+   "url": "https://www.nbc.gov.kh/",
+   "name": "ទំព័រដើម | National Bank of Cambodia",
+   "at": 1795084563.9545004
+  },
+  "https://www.pasaxon.org.la/": {
+   "type": "rss",
+   "url": "https://pasaxon.org.la/rss/home.rss",
+   "name": "ໜັງສືພິມ ປະຊາຊົນ",
+   "at": 1795084574.7329638
+  },
+  "https://www.phnompenhpost.com/": {
+   "type": "page",
+   "url": "https://www.phnompenhpost.com/",
+   "name": "",
+   "at": 1795084581.8102443
+  },
+  "https://www.postkhmer.com/": {
+   "type": "rss",
+   "url": "https://postkhmer.com/feed",
+   "name": "Post Khmer Insights: Accurate Cambodia National News",
+   "at": 1795084581.9625406
+  },
+  "https://www.senate.gov.kh/": {
+   "type": "page",
+   "url": "https://www.senate.gov.kh/",
+   "name": "Rejected Request",
+   "at": 1795084584.021255
+  },
+  "https://www.thaipbs.or.th/news": {
+   "type": "page",
+   "url": "https://www.thaipbs.or.th/news",
+   "name": "ข่าวเด่นวันนี้ | Thai PBS News ข่าวไทยพีบีเอส",
+   "at": 1795084584.5452583
+  },
+  "https://www.thairath.co.th/": {
+   "type": "page",
+   "url": "https://www.thairath.co.th/",
+   "name": "",
+   "at": 1795084592.088949
+  },
+  "https://www.zaobao.com.sg/": {
+   "type": "page",
+   "url": "https://www.zaobao.com.sg/",
+   "name": "首页 | 联合早报 - 享誉新加坡与国际的新闻媒体",
+   "at": 1795084592.4218476
+  }
+ },
+ "pg": {},
+ "users": {},
+ "requests": {}
+}
