@@ -328,12 +328,13 @@ OFFICIAL_SITES = [   # tầng 1 – bot tự dò RSS, không có thì theo dõi 
     {"name": "Bộ Kinh tế & Tài chính (MEF)", "url": "https://mef.gov.kh/"},
     {"name": "Ngân hàng Quốc gia (NBC)", "url": "https://www.nbc.gov.kh/"},
     {"name": "Tổng cục Hải quan (GDCE)", "url": "https://www.customs.gov.kh/"},
-    {"name": "Bộ Nội vụ", "url": "https://www.interior.gov.kh/"},
+    {"name": "Bộ Nội vụ", "url": "https://www.interior.gov.kh/en"},
     {"name": "Bộ Thông tin", "url": "https://www.information.gov.kh/"},
     {"name": "Bộ Thương mại", "url": "https://www.moc.gov.kh/"},
     {"name": "Hội đồng Phát triển Campuchia (CDC)", "url": "https://www.cdc.gov.kh/"},
-    {"name": "Quốc hội Campuchia", "url": "https://www.national-assembly.org.kh/"},
+    {"name": "Quốc hội Campuchia", "url": "https://en.nac.org.kh/"},
     {"name": "Thượng viện Campuchia", "url": "https://www.senate.gov.kh/"},
+    {"name": "ODC – tổng hợp thông cáo các bộ (thay cho MEF bị chặn)", "url": "https://opendevelopmentcambodia.net/en/public_announcement_source/government"},
     {"name": "AKP – Thông tấn xã Campuchia", "url": "https://www.akp.gov.kh/"},
     {"name": "Truyền hình quốc gia TVK", "url": "https://www.tvk.gov.kh/"},
     {"name": "Tổng cục Xuất nhập cảnh", "url": "https://www.immigration.gov.kh/"},
@@ -352,7 +353,7 @@ OFFICIAL_SITES = [   # tầng 1 – bot tự dò RSS, không có thì theo dõi 
     {"name": "ADB – tin Campuchia", "url": "https://www.adb.org/countries/cambodia/main"},
     {"name": "Ngân hàng Thế giới – Campuchia", "url": "https://www.worldbank.org/en/country/cambodia"},
 ]
-OFFICIAL_DOMAINS = ["gov.kh", "national-assembly.org.kh", "senate.gov.kh", "mfa.go.th", "mod.go.th", "thaigov.go.th", "rta.mi.th", "mofa.gov.vn", "chinhphu.vn", "asean.org", "adb.org", "worldbank.org"]   # mọi trang .gov.kh = chính thức
+OFFICIAL_DOMAINS = ["gov.kh", "national-assembly.org.kh", "nac.org.kh", "senate.gov.kh", "mfa.go.th", "mod.go.th", "thaigov.go.th", "rta.mi.th", "mofa.gov.vn", "chinhphu.vn", "asean.org", "adb.org", "worldbank.org"]   # mọi trang .gov.kh = chính thức
 MAINSTREAM_KH = ["freshnewsasia.com", "dap-news.com", "kampucheathmey.com", "thmeythmey.com",
                  "kohsantepheapdaily.com.kh", "postkhmer.com", "cnc.com.kh", "khmertimeskh.com",
                  "phnompenhpost.com", "cambodianess.com", "cambojanews.com", "kiripost.com", "tvk.gov.kh",
