@@ -1652,9 +1652,11 @@ def ai_dedupe(entries, sent_titles):
         a = "\n".join(f"A{n}. {t}" for n, t in enumerate(prev[-60:], 1)) or "(chưa có)"
         b = "\n".join(f"B{n}. {it['title']} ({it['source']})" for n, (it, _) in enumerate(chunk, 1))
         prompt = ("Bạn lọc tin trùng cho một bot tin tức.\nA. Các tin ĐÃ GỬI:\n" + a + "\n\nB. Các tin MỚI:\n" + b +
-                  "\n\nVới mỗi tin B, cho biết nó có TRÙNG không: trùng = cùng một sự kiện với một tin A hoặc một "
-                  "tin B đứng trước nó, và KHÔNG có diễn biến/thông tin mới đáng kể. Diễn biến mới của cùng câu "
-                  "chuyện (số liệu mới, phản ứng mới, kết quả mới) thì KHÔNG trùng.\n"
+                  "\n\nVới mỗi tin B, cho biết nó có TRÙNG không: trùng = cùng một sự kiện / cùng một câu chuyện với một tin A hoặc một "
+                  "tin B đứng trước nó (dù khác báo, khác tiêu đề, khác ngôn ngữ, hay chỉ thêm chi tiết nhỏ, "
+                  "lời bình luận, phản ứng). Người dùng CHỈ cần bản đến sớm nhất của mỗi sự kiện, nên các bản "
+                  "sau đều là trùng. Chỉ coi là KHÔNG trùng khi đó là một sự kiện hoàn toàn khác (hành động mới "
+                  "xảy ra, quyết định mới, nhân vật hoặc địa điểm khác).\n"
                   'Trả JSON: [{"i": 1, "dup": false}, ...]')
         data = ai_json(gemini(prompt))
         dups = set()
