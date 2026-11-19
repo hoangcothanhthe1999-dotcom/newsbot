@@ -182,18 +182,18 @@ TOPICS = {
                    "ฮุน เซน", "柬埔寨", "柬国", "洪玛奈", "洪森", "金边", "កម្ពុជា"],
         "gnews": ["Campuchia", "Thủ tướng Hun Manet", "Hun Sen", "biên giới Campuchia Thái Lan",
                   "Campuchia quân sự", "kinh tế Campuchia", "kênh Funan Techo", "biên giới Việt Nam Campuchia",
-                  "Campuchia vốn vay viện trợ", "Campuchia ngừng bắn Thái Lan"],
+                  "Campuchia vốn vay viện trợ", "Campuchia ngừng bắn Thái Lan", "Campuchia lừa đảo trực tuyến", "Campuchia buôn người", "Mỹ Campuchia trừng phạt", "ADB viện trợ Campuchia"],
         "gnews_en": ["Cambodia politics", "Cambodia military", "Cambodia Thailand border", "Hun Manet",
                      "Hun Sen", "Cambodia economy", "Cambodia foreign minister", "Cambodia China", "Ream naval base",
                      "Thailand Cambodia ceasefire", "ASEAN observers Cambodia Thailand", "Thai army Cambodia",
                      "Cambodia Thailand mediation Malaysia", "ADB Cambodia loan", "World Bank Cambodia financing",
-                     "Cambodia Vietnam border", "Cambodia trade customs"],
+                     "Cambodia Vietnam border", "Cambodia trade customs", "Cambodia scam centers", "Cambodia human trafficking report", "Cambodia Tier 3 trafficking", "Cambodia sanctions Treasury", "US State Department Cambodia", "Cambodia cyber scam crackdown", "Cambodia European Union", "Cambodia UN human rights", "Cambodia FATF", "ADB approves Cambodia", "ADB Cambodia grant", "Cambodia development assistance aid"],
         "gnews_th": ["กัมพูชา", "ชายแดนไทยกัมพูชา", "ฮุน มาเนต", "ฮุน เซน", "ทหารกัมพูชา", "หยุดยิง กัมพูชา",
                      "GBC RBC JBC กัมพูชา", "กองทัพภาคที่ 2 กัมพูชา", "ช่องบก ด่านชายแดน", "ทุ่นระเบิด ชายแดน"],
         "gnews_zh": ["柬埔寨", "洪玛奈", "洪森", "柬泰边境", "柬埔寨 经济"],
         "ai_desc": "tin CẤP QUỐC GIA về chính trị, quân sự – quốc phòng – an ninh biên giới (Việt Nam–Campuchia và "
                    "Campuchia–Thái Lan, gồm ngừng bắn, GBC/RBC/JBC, ASEAN, nước thứ ba), ngoại giao, kinh tế – "
-                   "tài chính – thương mại, vốn vay và viện trợ quốc tế, thuế, hải quan của Campuchia (kể cả quan hệ với Thái Lan, Việt Nam, Trung Quốc, Mỹ…). "
+                   "tài chính – thương mại, vốn vay và viện trợ quốc tế, thuế, hải quan của Campuchia (kể cả quan hệ với Thái Lan, Việt Nam, Trung Quốc, Mỹ…); báo cáo, xếp hạng, trừng phạt, cáo buộc của nước ngoài hoặc tổ chức quốc tế (Mỹ, EU, LHQ, FATF…) nhắm vào Campuchia; khoản viện trợ, vốn vay, tài trợ mới của nước ngoài và tổ chức quốc tế (ADB, Ngân hàng Thế giới, Nhật, Trung Quốc, EU…) cho Campuchia; tội phạm lừa đảo trực tuyến và buôn người ở tầm quốc gia hoặc quốc tế (khu lừa đảo, truy quét, dẫn độ). "
                    "LOẠI: tin xã hội / địa phương (dọn vệ sinh phường xã, lễ hội, triển lãm du học, giáo dục, y tế "
                    "thường ngày), tai nạn giao thông, cháy nổ, trọng án dân sự, thời tiết, thể thao, giải trí",
         "hint": "Campuchia",
@@ -362,11 +362,12 @@ OFFICIAL_SITES = [   # tầng 1 – bot tự dò RSS, không có thì theo dõi 
     {"name": "Bộ Công nghiệp, Khoa học & Đổi mới", "url": "https://misti.gov.kh/"},
     {"name": "Chính phủ Thái Lan (thailand.go.th)", "url": "https://www.thailand.go.th/"},
     {"name": "Cục Quan hệ công chúng Thái Lan (PRD)", "url": "https://thailand.prd.go.th/en"},
+    {"name": "Đại sứ quán Mỹ tại Campuchia", "url": "https://kh.usembassy.gov/"},
     {"name": "ASEAN", "url": "https://asean.org/"},
     {"name": "ADB – tin Campuchia", "url": "https://www.adb.org/countries/cambodia/main"},
     {"name": "Ngân hàng Thế giới – Campuchia", "url": "https://www.worldbank.org/en/country/cambodia"},
 ]
-OFFICIAL_DOMAINS = ["gov.kh", "thailand.go.th", "prd.go.th", "national-assembly.org.kh", "nac.org.kh", "senate.gov.kh", "mfa.go.th", "mod.go.th", "thaigov.go.th", "rta.mi.th", "mofa.gov.vn", "chinhphu.vn", "asean.org", "adb.org", "worldbank.org"]   # mọi trang .gov.kh = chính thức
+OFFICIAL_DOMAINS = ["gov.kh", "kh.usembassy.gov", "thailand.go.th", "prd.go.th", "national-assembly.org.kh", "nac.org.kh", "senate.gov.kh", "mfa.go.th", "mod.go.th", "thaigov.go.th", "rta.mi.th", "mofa.gov.vn", "chinhphu.vn", "asean.org", "adb.org", "worldbank.org"]   # mọi trang .gov.kh = chính thức
 MAINSTREAM_KH = ["freshnewsasia.com", "dap-news.com", "kampucheathmey.com", "thmeythmey.com",
                  "kohsantepheapdaily.com.kh", "postkhmer.com", "cnc.com.kh", "khmertimeskh.com",
                  "phnompenhpost.com", "cambodianess.com", "cambojanews.com", "kiripost.com", "tvk.gov.kh",
@@ -409,4 +410,4 @@ GLOSSARY = {
 
 # Nguồn mới thêm 19/11/2026: chưa báo "nguồn lỗi" trước thời điểm này (cho bot tự thử rồi mới lọc bỏ trang hỏng)
 PROBATION_UNTIL = 1795194000
-PROBATION_URLS = ['https://moj.gov.kh/', 'https://ccc.gov.kh/', 'https://acu.gov.kh/', 'https://nacd.gov.kh/', 'https://ncdm.gov.kh/', 'https://mop.gov.kh/', 'https://mme.gov.kh/', 'https://mptc.gov.kh/', 'https://secc.gov.kh/', 'https://mlmupc.gov.kh/', 'https://misti.gov.kh/', 'https://www.thailand.go.th/', 'https://thailand.prd.go.th/en']
+PROBATION_URLS = ['https://kh.usembassy.gov/', 'https://moj.gov.kh/', 'https://ccc.gov.kh/', 'https://acu.gov.kh/', 'https://nacd.gov.kh/', 'https://ncdm.gov.kh/', 'https://mop.gov.kh/', 'https://mme.gov.kh/', 'https://mptc.gov.kh/', 'https://secc.gov.kh/', 'https://mlmupc.gov.kh/', 'https://misti.gov.kh/', 'https://www.thailand.go.th/', 'https://thailand.prd.go.th/en']
