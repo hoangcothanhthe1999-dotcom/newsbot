@@ -1,0 +1,17 @@
+QUẢN LÝ BOT 3X TRÊN MÁY CHỦ
+===========================
+Mở PowerShell trên máy tính, đăng nhập máy chủ:
+    ssh root@<IP-máy-chủ>
+
+Rồi dùng các lệnh:
+    systemctl status 3x-bot          xem bot có đang chạy không
+    systemctl restart 3x-bot         khởi động lại bot
+    systemctl stop 3x-bot            tắt bot
+    journalctl -u 3x-bot -f          xem nhật ký trực tiếp (Ctrl+C để thoát)
+    nano /opt/3x/.env                sửa token / API key (sửa xong: systemctl restart 3x-bot)
+
+CẬP NHẬT BOT (khi có bản mới):
+    Chép file mới vào thư mục NewsBot trên máy tính, rồi nháy đúp DUA_LEN_MAY_CHU.bat lần nữa.
+    Danh sách chủ đề / từ khoá / tin đã gửi trên máy chủ được GIỮ NGUYÊN.
+
+LƯU Ý: Chỉ chạy bot ở MỘT nơi. Khi bot đã chạy trên máy chủ thì KHÔNG mở run_windows.bat nữa.
