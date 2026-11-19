@@ -343,11 +343,16 @@ OFFICIAL_SITES = [   # tầng 1 – bot tự dò RSS, không có thì theo dõi 
     {"name": "Bộ Nông nghiệp", "url": "https://www.maff.gov.kh/"},
     {"name": "Bộ Lao động", "url": "https://www.mlvt.gov.kh/"},
     {"name": "Bộ Ngoại giao Thái Lan", "url": "https://www.mfa.go.th/en/page/news"},
+    {"name": "Bộ Quốc phòng Thái Lan", "url": "https://www.mod.go.th/"},
+    {"name": "Văn phòng Thủ tướng Thái Lan", "url": "https://www.thaigov.go.th/"},
+    {"name": "Lục quân Hoàng gia Thái", "url": "https://www.rta.mi.th/"},
+    {"name": "Bộ Ngoại giao Việt Nam", "url": "https://www.mofa.gov.vn/"},
+    {"name": "Cổng thông tin Chính phủ Việt Nam", "url": "https://chinhphu.vn/"},
     {"name": "ASEAN", "url": "https://asean.org/"},
     {"name": "ADB – tin Campuchia", "url": "https://www.adb.org/countries/cambodia/main"},
     {"name": "Ngân hàng Thế giới – Campuchia", "url": "https://www.worldbank.org/en/country/cambodia"},
 ]
-OFFICIAL_DOMAINS = ["gov.kh", "national-assembly.org.kh", "senate.gov.kh", "mfa.go.th", "asean.org", "adb.org", "worldbank.org"]   # mọi trang .gov.kh = chính thức
+OFFICIAL_DOMAINS = ["gov.kh", "national-assembly.org.kh", "senate.gov.kh", "mfa.go.th", "mod.go.th", "thaigov.go.th", "rta.mi.th", "mofa.gov.vn", "chinhphu.vn", "asean.org", "adb.org", "worldbank.org"]   # mọi trang .gov.kh = chính thức
 MAINSTREAM_KH = ["freshnewsasia.com", "dap-news.com", "kampucheathmey.com", "thmeythmey.com",
                  "kohsantepheapdaily.com.kh", "postkhmer.com", "cnc.com.kh", "khmertimeskh.com",
                  "phnompenhpost.com", "cambodianess.com", "cambojanews.com", "kiripost.com", "tvk.gov.kh",
