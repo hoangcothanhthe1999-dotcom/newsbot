@@ -2756,13 +2756,15 @@ def handle_message(msg):
     if text in BUTTONS:
         cmd, arg = BUTTONS[text], ""
 
+    if cmd not in ("/start", "/help", "/tat", "/bat", "/pause", "/resume"):
+        # bản rút gọn: chỉ còn tự gửi tin + tắt/mở bot; mọi chức năng khác đã bỏ
+        send(cid, "Mình chỉ có 2 lệnh: /tat để tắt bot, /bat để mở lại.")
+        return
+
     if cmd in ("/start", "/help"):
         send(cid, HELP, MAIN_KB)
         if c["paused"]:
-            send(cid, "⏸ Bot đang <b>TẠM DỪNG</b> nên chưa gửi tin.", {"inline_keyboard": [[
-                {"text": "▶️ Nhận tin lại", "callback_data": "s:pause"}]]})
-        if cmd == "/start" and not c["topics"] and not c["keywords"]:
-            pass
+            send(cid, "Bot đang tắt nên chưa gửi tin. Gõ /bat để mở lại.")
     elif cmd == "/moi":
         latest_now(cid)
     elif cmd == "/nong":
@@ -2891,6 +2893,9 @@ def handle_callback(cq):
     cid = msg.get("chat", {}).get("id")
     data = cq.get("data", "")
     data0 = cq.get("data", "")
+    if data0[:3] not in ("ua:", "ud:", "ur:"):
+        tg("answerCallbackQuery", callback_query_id=cq["id"])   # nút cũ: bỏ qua
+        return
     if data0[:3] in ("ua:", "ud:", "ur:") and cid and is_owner(uid):
         target = data0[3:]
         with state_lock:
