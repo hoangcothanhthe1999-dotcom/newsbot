@@ -576,6 +576,31 @@ def fetch_page(url, name=""):
              "vn": is_vn(dom), "lang": detect_lang(label)} for link, label in list(links.items())[:120]]
 
 
+SESSION_STATS = {"src": {}, "sent": 0, "ai_offtopic": 0, "ai_dup": 0}
+
+
+def stat_src(key, items=None, err=None):
+    """Ghi số bài đọc được / số lần lỗi của từng nguồn trong phiên (để in tổng kết cuối phiên)."""
+    with state_lock:
+        d = SESSION_STATS["src"].setdefault(key, {"n": 0, "ok": 0, "fail": 0, "err": ""})
+        if err is None:
+            d["ok"] += 1
+            d["n"] = max(d["n"], len(items or []))
+        else:
+            d["fail"] += 1
+            d["err"] = str(err)[:60]
+
+
+def log_session_summary():
+    S = SESSION_STATS
+    log.info("=== TỔNG KẾT PHIÊN: gửi %d tin; AI loại %d lạc đề, %d trùng ===", S["sent"], S["ai_offtopic"], S["ai_dup"])
+    rows = sorted(S["src"].items(), key=lambda kv: (kv[1]["n"] > 0, kv[1]["ok"] == 0, kv[0]))
+    for k, d in rows:
+        name = SRC_NAMES.get(k) or k
+        tag = "ĐỌC ĐƯỢC" if d["n"] > 0 else ("TRANG TRỐNG" if d["ok"] else "LỖI")
+        log.info("NGUỒN | %s | %s | bài=%d | ok=%d lỗi=%d %s", tag, name[:40], d["n"], d["ok"], d["fail"], d["err"])
+
+
 def fetch_source(home, name=""):
     """Nguồn dạng 'src:<trang chủ>' (gói báo theo ngôn ngữ, nguồn người dùng thêm)."""
     key = "src:" + home
@@ -597,8 +622,10 @@ def fetch_source(home, name=""):
             for it in items:
                 it["source"] = name
         mark_ok(key)
+        stat_src(key, items=items)
     except Exception as e:
         mark_fail(key, e)
+        stat_src(key, err=e)
         log.warning("Lỗi nguồn %s: %s", home, e)
         items = cache.get("items", [])
     _feed_cache[key] = {"items": items, "at": time.time()}
@@ -1735,6 +1762,7 @@ def drop_irrelevant(entries):
             dropped.append(it)
     if dropped:
         log.info("AI loại %d bài lạc đề", len(dropped))
+        SESSION_STATS["ai_offtopic"] += len(dropped)
     return kept, dropped
 
 
@@ -1772,6 +1800,7 @@ def ai_dedupe(entries, sent_titles):
                 prev.append(it["title"])
     if dropped:
         log.info("AI loại %d tin trùng sự kiện", len(dropped))
+        SESSION_STATS["ai_dup"] += len(dropped)
     return kept, dropped
 
 
@@ -2564,6 +2593,7 @@ def find_articles(cid, kw, n=10, days=7):
 def send_articles(cid, entries):
     """Gửi NGAY (chưa có tóm tắt) cho nhanh, rồi bổ sung tóm tắt tiếng Việt vào từng tin khi AI xong."""
     c = chat_state(cid)
+    SESSION_STATS["sent"] += len(entries) if hasattr(entries, "__len__") else 0
     sent_msgs = []
     for it, tags in entries:
         claim_send(c, it)          # đánh dấu đã gửi (vòng quét sau không gửi lại); kết quả tìm vẫn hiện đủ
@@ -3886,6 +3916,10 @@ def main():
         while True:
             if deadline and time.time() >= deadline:
                 log.info("Hết thời gian phiên (%d phút), dừng.", RUN_MINUTES)
+                try:
+                    log_session_summary()
+                except Exception as e:
+                    log.warning("Không in được tổng kết phiên: %s", e)
                 break
             timeout = 25
             if deadline:
