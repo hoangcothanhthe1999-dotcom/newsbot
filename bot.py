@@ -960,10 +960,6 @@ def ensure_expansions(kws):
         log.info("Mở rộng từ khoá '%s' -> %s", kw, STATE["kx"][kw])
 
 
-def ensure_translations(kws):  # tương thích bản cũ
-    ensure_expansions(kws)
-
-
 LANG_FLAGS = {"km": "🇰🇭", "zh": "🇨🇳", "th": "🇹🇭", "lo": "🇱🇦", "ja": "🇯🇵", "ko": "🇰🇷", "ru": "🇷🇺",
               "fr": "🇫🇷", "de": "🇩🇪", "es": "🇪🇸", "id": "🇮🇩", "ms": "🇲🇾", "my": "🇲🇲", "ar": "🇸🇦", "hi": "🇮🇳"}
 EXTRA_LANGS = ["km", "zh", "th", "lo", "ja", "ko", "ru", "fr"]   # hiện trong menu 🗣 Ngôn ngữ báo
@@ -3331,22 +3327,6 @@ def lang_rank(it, c):
     order = c.get("lang_order") or ["vi", "en"]
     l = item_lang(it)
     return order.index(l) if l in order else len(order)
-
-
-def pick_by_priority(entries, n, c):
-    """Chọn n tin: ưu tiên ngôn ngữ theo thứ tự (vd Khmer > Anh > Thái > Trung > Việt) nhưng vẫn đa dạng:
-    suất 1: 40%, 2: 30%, 3: 20%, 4: 10%; còn trống thì lấp bằng tin mới nhất bất kỳ."""
-    order = c.get("lang_order") or ["vi", "en"]
-    quotas = [max(1, round(n * q)) for q in (0.4, 0.3, 0.2, 0.1)] + [1] * max(0, len(order) - 4)
-    by = {}
-    for e in sorted(entries, key=lambda e: e[0]["ts"] or 0, reverse=True):
-        by.setdefault(lang_rank(e[0], c), []).append(e)
-    pick = []
-    for r, q in enumerate(quotas[:len(order)]):
-        pick += by.get(r, [])[:q]
-    rest = [e for e in sorted(entries, key=lambda e: (lang_rank(e[0], c), -(e[0]["ts"] or 0))) if e not in pick]
-    pick += rest[:max(0, n - len(pick))]
-    return sorted(pick[:n], key=lambda e: (lang_rank(e[0], c), e[0]["ts"] or 0))
 
 
 _send_locks = {}
