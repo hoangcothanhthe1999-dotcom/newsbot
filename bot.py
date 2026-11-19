@@ -495,33 +495,67 @@ def resolve_source(url, force=False):
     return res
 
 
-def fetch_page(url, name=""):
-    """Theo dõi trang chủ báo không có RSS: lấy các link bài viết, bài nào MỚI xuất hiện thì coi là tin mới."""
-    if not robots_allows(url):
-        mark_fail("src:" + url, "robots.txt không cho phép theo dõi")
-        return []
-    with domain_slot(url):
-        r = HTTP.get(url, timeout=20, headers={"Accept": "text/html,*/*;q=0.8"})
-    if r.status_code in BLOCK_CODES:
-        raise RuntimeError(f"HTTP {r.status_code} (bị từ chối)")
-    r.raise_for_status()
-    text = r.text
-    dom = domain_of(r.url)
+READER_FALLBACK = os.environ.get("READER_FALLBACK", "1") != "0"   # trang chặn / dùng JavaScript -> đọc qua dịch vụ trung gian
+
+
+def _page_links(text, base_url):
+    """Lấy các link bài viết (cùng tên miền) từ HTML của trang chủ."""
+    dom = domain_of(base_url)
     links = {}
     for m in re.finditer(r'<a\s[^>]*href=["\']([^"\'#]+)["\'][^>]*>(.*?)</a>', text, re.S | re.I):
         href, label = m.group(1), strip_html(m.group(2))
-        full = requests.compat.urljoin(r.url, href)
+        full = requests.compat.urljoin(base_url, href)
         if domain_of(full).split(".")[-2:] != dom.split(".")[-2:]:
             continue
         n = len(compact(label))
-        if n < 12 or n > 300 or full.rstrip("/") == r.url.rstrip("/"):
+        if n < 12 or n > 300 or full.rstrip("/") == base_url.rstrip("/"):
             continue
         if re.search(r"/(tag|tags|category|categories|author|page|search|login|contact|about)(/|$|\?)", full, re.I):
             continue
         if full not in links or len(label) > len(links[full]):
             links[full] = label
-    if len(links) < 3:
-        raise RuntimeError(f"chỉ đọc được {len(links)} bài trên trang chủ (trang dùng JavaScript hoặc chặn)")
+    return links
+
+
+def _reader_links(url):
+    """Dự phòng: nhờ r.jina.ai tải và dựng sẵn trang (vượt chặn IP, chạy được JavaScript) rồi lấy link như thường."""
+    if not READER_FALLBACK:
+        return None, None
+    try:
+        with domain_slot("https://r.jina.ai/"):
+            r = HTTP.get("https://r.jina.ai/" + url, timeout=60,
+                         headers={"X-Return-Format": "html", "Accept": "text/html,*/*;q=0.8"})
+        if r.status_code != 200:
+            return None, None
+        links = _page_links(r.text, url)
+        return (links, r.text) if len(links) >= 3 else (None, None)
+    except Exception as e:
+        log.warning("Đọc qua dịch vụ trung gian lỗi %s: %s", url, e)
+        return None, None
+
+
+def fetch_page(url, name=""):
+    """Theo dõi trang chủ báo không có RSS: lấy các link bài viết, bài nào MỚI xuất hiện thì coi là tin mới."""
+    if not robots_allows(url):
+        mark_fail("src:" + url, "robots.txt không cho phép theo dõi")
+        return []
+    links, text, dom, err = None, "", domain_of(url), None
+    try:
+        with domain_slot(url):
+            r = HTTP.get(url, timeout=20, headers={"Accept": "text/html,*/*;q=0.8"})
+        if r.status_code in BLOCK_CODES:
+            raise RuntimeError(f"HTTP {r.status_code} (bị từ chối)")
+        r.raise_for_status()
+        text, dom = r.text, domain_of(r.url)
+        links = _page_links(text, r.url)
+        if len(links) < 3:
+            raise RuntimeError(f"chỉ đọc được {len(links)} bài trên trang chủ (trang dùng JavaScript hoặc chặn)")
+    except Exception as e:
+        err = e
+        links, text = _reader_links(url)
+        if links is None:
+            raise err
+        dom = domain_of(url)
     now = time.time()
     with state_lock:
         seen = STATE["pg"].setdefault(url, {})
