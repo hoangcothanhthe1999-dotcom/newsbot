@@ -337,7 +337,7 @@ OFFICIAL_SITES = [   # tầng 1 – bot tự dò RSS, không có thì theo dõi 
     {"name": "ODC – tổng hợp thông cáo các bộ (thay cho MEF bị chặn)", "url": "https://opendevelopmentcambodia.net/en/public_announcement_source/government"},
     {"name": "AKP – Thông tấn xã Campuchia", "url": "https://www.akp.gov.kh/"},
     {"name": "Truyền hình quốc gia TVK", "url": "https://www.tvk.gov.kh/"},
-    {"name": "Tổng cục Xuất nhập cảnh", "url": "https://www.immigration.gov.kh/"},
+    {"name": "Tổng cục Xuất nhập cảnh", "url": "https://immigration.gov.kh/"},
     {"name": "Tổng cục Thuế", "url": "https://www.tax.gov.kh/"},
     {"name": "Ủy ban Bầu cử Quốc gia (NEC)", "url": "https://www.nec.gov.kh/"},
     {"name": "Bộ Công chính", "url": "https://www.mpwt.gov.kh/"},
@@ -364,7 +364,7 @@ OFFICIAL_SITES = [   # tầng 1 – bot tự dò RSS, không có thì theo dõi 
     {"name": "Cục Quan hệ công chúng Thái Lan (PRD)", "url": "https://thailand.prd.go.th/en"},
     {"name": "Đại sứ quán Mỹ tại Campuchia", "url": "https://kh.usembassy.gov/"},
     {"name": "ASEAN", "url": "https://asean.org/"},
-    {"name": "ADB – tin Campuchia", "url": "https://www.adb.org/countries/cambodia/main"},
+    {"name": "ADB – tin Campuchia", "url": "https://www.adb.org/where-we-work/cambodia"},
     {"name": "Ngân hàng Thế giới – Campuchia", "url": "https://www.worldbank.org/en/country/cambodia"},
 ]
 OFFICIAL_DOMAINS = ["gov.kh", "usembassy.gov", "state.gov", "treasury.gov", "justice.gov", "un.org", "ohchr.org", "unodc.org", "icj-cij.org", "adb.org", "imf.org", "eeas.europa.eu", "fmprc.gov.cn", "mofa.go.jp", "dfat.gov.au", "kln.gov.my", "mea.gov.in", "kh.usembassy.gov", "thailand.go.th", "prd.go.th", "national-assembly.org.kh", "nac.org.kh", "senate.gov.kh", "mfa.go.th", "mod.go.th", "thaigov.go.th", "rta.mi.th", "mofa.gov.vn", "chinhphu.vn", "asean.org", "adb.org", "worldbank.org"]   # mọi trang .gov.kh = chính thức
