@@ -1787,6 +1787,16 @@ def short_ago(ts):
     return f"{m // 1440} ngày trước"
 
 
+_BORDER_A = ("biên giới", "border", "ព្រំដែន", "ชายแดน", "边境", "边界", "frontière", "frontera")
+_BORDER_B = ("thái", "thai", "ថៃ", "ไทย", "泰国", "泰國", "thailand", "siam", "campuchia", "cambodia", "កម្ពុជា", "柬埔寨")
+
+
+def is_border_news(it):
+    """Tin biên giới Campuchia–Thái: có từ 'biên giới' (mọi ngôn ngữ) và nhắc tới Thái hoặc Campuchia."""
+    text = (it.get("title", "") + " " + it.get("desc", "")[:300]).lower()
+    return any(a in text for a in _BORDER_A) and any(b in text for b in _BORDER_B)
+
+
 def fmt_item(it, tags, want_summary):
     """Tin nhắn đơn giản như người bạn nhắn: '5h30 (3p trước) Báo Fresh News đăng tin: ...' + link bài gốc."""
     e = html.escape
@@ -1801,7 +1811,8 @@ def fmt_item(it, tags, want_summary):
     who = src if official else ("Báo " + src if not src.lower().startswith(("báo", "bao")) else src)
     kind = "đăng thông cáo" if is_statement(it) else "đăng tin"
     link = it.get("real_link") or it["link"]
-    return f'{e(when)}{e(who)} {kind}: {e(title)}.\n{e(link)}'
+    mark = "[Biên giới] " if is_border_news(it) else ""
+    return f'{mark}{e(when)}{e(who)} {kind}: {e(title)}.\n{e(link)}'
 
 
 def show_tag(t):
