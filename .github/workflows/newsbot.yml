@@ -33,7 +33,8 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ALLOWED_USERS: ${{ secrets.ALLOWED_USERS }}
           RUN_MINUTES: "55"
-          CHECK_INTERVAL: "180"
+          CHECK_INTERVAL: "90"
+          MAX_AGE_HOURS: "6"
         run: python bot.py
 
       - name: Lưu trạng thái

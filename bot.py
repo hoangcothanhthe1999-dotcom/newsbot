@@ -1852,10 +1852,10 @@ HELP = (
 MAIN_KB = {"keyboard": [[{"text": "📰 Tin mới nhất"}, {"text": "🔥 Tin nóng hôm nay"}],
                         [{"text": "📋 Chủ đề"}, {"text": "🔎 Từ khoá"}],
                         [{"text": "⭐ Đã lưu"}, {"text": "📊 Xuất Excel"}],
-                        [{"text": "⚙️ Cài đặt"}]],
+                        [{"text": "⏸ Tắt bot"}, {"text": "▶️ Mở bot"}, {"text": "⚙️ Cài đặt"}]],
            "resize_keyboard": True, "is_persistent": True}
 BUTTONS = {"📰 Tin mới nhất": "/moi", "🔥 Tin nóng hôm nay": "/nong", "📋 Chủ đề": "/menu",
-           "🔎 Từ khoá": "/tukhoa", "⭐ Đã lưu": "/daluu", "⚙️ Cài đặt": "/caidat", "📊 Xuất Excel": "/excel",
+           "🔎 Từ khoá": "/tukhoa", "⭐ Đã lưu": "/daluu", "⚙️ Cài đặt": "/caidat", "📊 Xuất Excel": "/excel", "⏸ Tắt bot": "/tat", "▶️ Mở bot": "/bat",
            # nút của bản cũ (bàn phím cũ có thể còn trên máy)
            "🔎 Thêm từ khoá": "/tukhoa", "📊 Đang theo dõi": "/list", "❓ Hướng dẫn": "/help"}
 
@@ -2881,11 +2881,11 @@ def handle_message(msg):
             c["summary"] = not c["summary"]
             save_state()
         send(cid, ("✅ Đã BẬT" if c["summary"] else "Đã TẮT") + " tóm tắt AI.")
-    elif cmd in ("/pause", "/resume"):
+    elif cmd in ("/pause", "/resume", "/tat", "/bat"):
         with state_lock:
-            c["paused"] = cmd == "/pause"
+            c["paused"] = cmd in ("/pause", "/tat")
             save_state()
-        send(cid, "⏸ Đã tạm dừng. Vào ⚙️ Cài đặt để bật lại." if c["paused"] else "▶️ Tiếp tục nhận tin.")
+        send(cid, "⏸ Đã TẮT bot. Bấm ▶️ Mở bot (hoặc gõ /bat) để bật lại." if c["paused"] else "▶️ Đã MỞ bot, tin sẽ về ngay khi có.")
         WAKE.set()
     elif cmd.startswith("/"):
         send(cid, "Không hiểu lệnh này. Gõ /help để xem hướng dẫn.", MAIN_KB)
@@ -3714,6 +3714,11 @@ def main():
                 pass
         save_state()
     threading.Thread(target=prewarm, daemon=True).start()
+    # TỰ ĐỘNG: chat nào chưa theo dõi gì thì bật sẵn Chế độ Campuchia (không cần bấm chủ đề / gõ lệnh)
+    for cid in list(STATE["chats"]):
+        c0 = chat_state(cid)
+        if not c0.get("revoked") and not c0["topics"] and not c0["keywords"]:
+            apply_cambodia_preset(cid)
     if not RUN_MINUTES:
         # báo bot đã chạy (tối đa 1 lần / 6 giờ cho đỡ phiền) + nhắc nếu đang tạm dừng / chưa theo dõi gì
         for cid in list(STATE["chats"]):
@@ -3722,7 +3727,7 @@ def main():
                 continue
             note = None
             if c["paused"]:
-                note = "✅ 3X đã khởi động nhưng đang <b>⏸ TẠM DỪNG</b> – vào ⚙️ Cài đặt để bật nhận tin lại."
+                note = "✅ 3X đã khởi động nhưng đang <b>⏸ TẮT</b> – bấm ▶️ Mở bot (hoặc gõ /bat) để nhận tin lại."
             elif not c["topics"] and not c["keywords"]:
                 note = "✅ 3X đã khởi động. Bạn chưa theo dõi gì – bấm 📋 Chủ đề hoặc 🔎 Từ khoá."
             elif time.time() - c.get("last_notice", 0) > 6 * 3600:
