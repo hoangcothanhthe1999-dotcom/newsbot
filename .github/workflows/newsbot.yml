@@ -2,8 +2,8 @@ name: NewsBot
 
 on:
   schedule:
-    - cron: "*/20 23,0-7 * * *"
-    - cron: "0 8 * * *"
+    - cron: "*/20 23,0-8 * * *"   # 06:00–15:40 giờ VN, 20 phút một lần
+    - cron: "0 9 * * *"           # 16:00 giờ VN
   workflow_dispatch:          # cho phép bấm "Run workflow" để chạy tay
 
 concurrency:

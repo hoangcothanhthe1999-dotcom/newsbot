@@ -75,7 +75,7 @@ ALLOWED_USERS = {x.strip() for x in os.environ.get("ALLOWED_USERS", "").split(",
 CHECK_INTERVAL = env_int("CHECK_INTERVAL", 60)       # giây giữa 2 lần quét
 RSS_EVERY = env_int("RSS_EVERY", 60)                 # RSS báo: tải lại tối đa mỗi 60 giây (nhanh nhất)
 GNEWS_EVERY = env_int("GNEWS_EVERY", 240)            # Google News: mỗi 4 phút (tránh bị Google chặn)
-BOT_NAME = os.environ.get("BOT_NAME", "").strip() or "3X – Săn tin nóng"
+BOT_NAME = os.environ.get("BOT_NAME", "").strip() or "Hoang"
 MAX_AGE_HOURS = env_int("MAX_AGE_HOURS", 12)         # chỉ gửi bài đăng trong N giờ gần nhất
 RUN_MINUTES = env_int("RUN_MINUTES", 0)              # 0 = chạy mãi; >0 = tự dừng sau N phút
 TRUSTED_ONLY = env_int("TRUSTED_ONLY", 1)            # 1 = chỉ lấy báo chính thống từ Google News
@@ -3594,16 +3594,56 @@ def check_digest():
             send(cid, v)
 
 
+def _owner_target():
+    return STATE.get("owner") or (sorted(ALLOWED_USERS)[0] if ALLOWED_USERS else None)
+
+
+def heartbeat():
+    """6h sáng (giờ VN): 1 dòng báo bot đang chạy bình thường, mỗi ngày 1 lần."""
+    now = datetime.now(VN_TZ)
+    tag = now.strftime("%Y-%m-%d")
+    if now.hour != 6 or STATE.get("hb_day") == tag:
+        return
+    target = _owner_target()
+    if not target:
+        return
+    with state_lock:
+        STATE["hb_day"] = tag
+        save_state()
+    send(target, f"{now.strftime('%H:%M')} Bot đã chạy, bình thường.", silent=True)
+
+
+def error_alert():
+    """Lỗi vòng quét liên tiếp >= 3 lần thì báo chủ bot 1 lần (cách nhau tối thiểu 6 giờ)."""
+    target = _owner_target()
+    if not target or time.time() - STATE.get("err_alert_at", 0) < 6 * 3600:
+        return
+    with state_lock:
+        STATE["err_alert_at"] = time.time()
+        save_state()
+    send(target, "Bot đang gặp lỗi liên tục khi quét tin (có thể hết hạn mức Gemini hoặc nguồn bị chặn). "
+                 "Boss kiểm tra tab Actions của kho newsbot giúp.")
+
+
 def worker():
+    fails = 0
     while not STOP.is_set():
         try:
+            heartbeat()
             run_cycle()
             process_pending_summaries()
             check_alerts()
             check_digest()
             save_state()
+            fails = 0
         except Exception:
             log.exception("Lỗi trong vòng quét")
+            fails += 1
+            if fails >= 3:
+                try:
+                    error_alert()
+                except Exception:
+                    log.exception("Không gửi được báo lỗi")
         WAKE.wait(CHECK_INTERVAL)
         WAKE.clear()
 
@@ -3619,10 +3659,10 @@ def setup_profile():
         if cur != BOT_NAME:
             tg("setMyName", name=BOT_NAME[:64])
         tg("setMyShortDescription", short_description=(
-            "3X – radar săn tin nóng: quét liên tục báo chính thống trong & ngoài nước, AI tóm tắt, "
+            "Hoang – radar săn tin nóng: quét liên tục báo chính thống trong & ngoài nước, AI tóm tắt, "
             "lọc trùng, lọc lạc đề.")[:120])
         tg("setMyDescription", description=(
-            "🔴 3X – Săn tin nóng\n\n• Theo dõi chủ đề hoặc từ khoá bất kỳ\n• Quét báo chính thống VN & quốc tế "
+            "🔴 Hoang – Săn tin nóng\n\n• Theo dõi chủ đề hoặc từ khoá bất kỳ\n• Quét báo chính thống VN & quốc tế "
             "mỗi phút\n• AI tóm tắt, dịch tin nước ngoài, chấm điểm tin nóng\n• Lọc tin trùng & lạc đề\n"
             "\nBấm BẮT ĐẦU là tin tự về.")[:512])
     except Exception as e:
