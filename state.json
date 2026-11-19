@@ -946,7 +946,7 @@
    "err": "HTTP 403 (bị từ chối)",
    "skip_until": 1795093275.8215702,
    "since": 1795086347.7753527,
-   "alerted": false
+   "alerted": true
   },
   "src:https://www.akp.gov.kh/": {
    "fail": 2,
@@ -1054,7 +1054,7 @@
    "err": "HTTP 403 (bị từ chối)",
    "skip_until": 1795093276.3131115,
    "since": 1795086348.2573066,
-   "alerted": false
+   "alerted": true
   },
   "src:https://www.phnompenhpost.com/": {
    "fail": 4,
@@ -1063,7 +1063,7 @@
    "err": "HTTP 403 (bị từ chối)",
    "skip_until": 1795093276.3678133,
    "since": 1795086348.3099654,
-   "alerted": false
+   "alerted": true
   },
   "src:https://cambodianess.com/": {
    "fail": 2,
@@ -1099,7 +1099,7 @@
    "err": "chỉ đọc được 2 bài trên trang chủ (trang dùng JavaScript hoặc chặn)",
    "skip_until": 1795093278.337386,
    "since": 1795086350.696844,
-   "alerted": false
+   "alerted": true
   },
   "src:https://www.cc-times.com/": {
    "fail": 0,
@@ -1153,7 +1153,7 @@
    "err": "Không phải RSS (có thể là trang chặn bot)",
    "skip_until": 1795093277.6883297,
    "since": 1795086349.176887,
-   "alerted": false
+   "alerted": true
   },
   "https://www.straitstimes.com/news/asia/rss.xml": {
    "fail": 0,
@@ -1171,7 +1171,7 @@
    "err": "HTTP 403 (bị từ chối)",
    "skip_until": 1795093277.2797418,
    "since": 1795086349.0220368,
-   "alerted": false
+   "alerted": true
   },
   "https://www.phnompenhpost.com/rss": {
    "fail": 4,
@@ -1180,7 +1180,7 @@
    "err": "HTTP 403 (bị từ chối)",
    "skip_until": 1795093277.36362,
    "since": 1795086349.339234,
-   "alerted": false
+   "alerted": true
   },
   "https://feeds.bbci.co.uk/news/world/rss.xml": {
    "fail": 0,
@@ -1279,7 +1279,7 @@
    "err": "chỉ đọc được 0 bài trên trang chủ (trang dùng JavaScript hoặc chặn)",
    "skip_until": 1795093278.0156934,
    "since": 1795086349.5659292,
-   "alerted": false
+   "alerted": true
   },
   "src:https://www.mod.gov.kh/": {
    "fail": 0,
@@ -1297,7 +1297,7 @@
    "err": "HTTP 403 (bị từ chối)",
    "skip_until": 1795093277.8341858,
    "since": 1795086349.4013238,
-   "alerted": false
+   "alerted": true
   },
   "src:https://www.nbc.gov.kh/": {
    "fail": 0,
@@ -1324,7 +1324,7 @@
    "err": "HTTP 403 (bị từ chối)",
    "skip_until": 1795093278.1664028,
    "since": 1795086350.2170477,
-   "alerted": false
+   "alerted": true
   },
   "src:https://www.information.gov.kh/": {
    "fail": 0,
@@ -1369,7 +1369,7 @@
    "err": "HTTPSConnectionPool(host='www.national-assembly.org.kh', port=443): Max retries exceeded with url: / (Caused by NameReso",
    "skip_until": 1795093277.9053304,
    "since": 1795086349.566454,
-   "alerted": false
+   "alerted": true
   },
   "src:https://www.senate.gov.kh/": {
    "fail": 4,
@@ -1378,7 +1378,7 @@
    "err": "chỉ đọc được 0 bài trên trang chủ (trang dùng JavaScript hoặc chặn)",
    "skip_until": 1795093278.1220794,
    "since": 1795086349.681739,
-   "alerted": false
+   "alerted": true
   },
   "https://news.google.com/rss/search?q=ch%C3%ADnh+tr%E1%BB%8B+campuchia+when%3A1d&hl=vi&gl=VN&ceid=VN:vi": {
    "fail": 0,
@@ -2301,6 +2301,156 @@
    "url": "https://www.nationthailand.com/",
    "name": "Nation Thailand news website, thai news, thailand news, Bangkok thailand, aec, b",
    "at": 1795090919.241288
+  },
+  "https://acu.gov.kh/": {
+   "type": "page",
+   "url": "https://acu.gov.kh/",
+   "name": "Untitled Document",
+   "at": 1795094188.5125077
+  },
+  "https://ccc.gov.kh/": {
+   "type": "page",
+   "url": "https://ccc.gov.kh/",
+   "name": "Request Rejected",
+   "at": 1795094192.6367483
+  },
+  "https://chinhphu.vn/": {
+   "type": "page",
+   "url": "https://chinhphu.vn/",
+   "name": "Cổng Thông tin điện tử Chính phủ",
+   "at": 1795094193.1683478
+  },
+  "https://en.nac.org.kh/": {
+   "type": "page",
+   "url": "https://en.nac.org.kh/",
+   "name": "The National Assembly of The Kingdom of Cambodia",
+   "at": 1795094197.891502
+  },
+  "https://immigration.gov.kh/": {
+   "type": "page",
+   "url": "https://immigration.gov.kh/",
+   "name": "អគ្គនាយកដ្ឋានអន្តោប្រវេសន៍",
+   "at": 1795094198.554952
+  },
+  "https://kh.usembassy.gov/": {
+   "type": "page",
+   "url": "https://kh.usembassy.gov/",
+   "name": "",
+   "at": 1795094207.7566206
+  },
+  "https://misti.gov.kh/": {
+   "type": "page",
+   "url": "https://misti.gov.kh/",
+   "name": "Rejected Request",
+   "at": 1795094207.8189998
+  },
+  "https://mlmupc.gov.kh/": {
+   "type": "rss",
+   "url": "https://mlmupc.gov.kh/feed/",
+   "name": "ក្រសួងរៀបចំដែនដី នគរូបនីយកម្ម និងសំណង់ – Ministry of Land Management, Urban Plan",
+   "at": 1795094208.4780662
+  },
+  "https://mme.gov.kh/": {
+   "type": "page",
+   "url": "https://mme.gov.kh/",
+   "name": "Home: Ministry of Mines and Energy",
+   "at": 1795094211.808058
+  },
+  "https://moj.gov.kh/": {
+   "type": "page",
+   "url": "https://moj.gov.kh/",
+   "name": "Request Rejected",
+   "at": 1795094223.9622557
+  },
+  "https://mop.gov.kh/": {
+   "type": "rss",
+   "url": "https://mop.gov.kh/kh/feed/",
+   "name": "MoP",
+   "at": 1795094224.6339872
+  },
+  "https://mptc.gov.kh/": {
+   "type": "page",
+   "url": "https://mptc.gov.kh/",
+   "name": "Request Rejected",
+   "at": 1795094231.9724824
+  },
+  "https://nacd.gov.kh/": {
+   "type": "page",
+   "url": "https://nacd.gov.kh/",
+   "name": "",
+   "at": 1795094232.6730254,
+   "error": "HTTPSConnectionPool(host='nacd.gov.kh', port=443): Max retries exceeded with url: / (Caused by Conne"
+  },
+  "https://ncdm.gov.kh/": {
+   "type": "page",
+   "url": "https://ncdm.gov.kh/",
+   "name": "",
+   "at": 1795094252.930342,
+   "error": "HTTPSConnectionPool(host='ncdm.gov.kh', port=443): Read timed out. (read timeout=20)"
+  },
+  "https://opendevelopmentcambodia.net/en/public_announcement_source/government": {
+   "type": "rss",
+   "url": "https://opendevelopmentcambodia.net/feed/",
+   "name": "Government | Open Development Cambodia (ODC)",
+   "at": 1795094273.7818918
+  },
+  "https://secc.gov.kh/": {
+   "type": "page",
+   "url": "https://secc.gov.kh/",
+   "name": "",
+   "at": 1795094277.487412,
+   "error": "HTTPSConnectionPool(host='secc.gov.kh', port=443): Max retries exceeded with url: / (Caused by NameR"
+  },
+  "https://thailand.prd.go.th/en": {
+   "type": "page",
+   "url": "https://thailand.prd.go.th/en",
+   "name": "Foreign Office, The Government Public Relations Department",
+   "at": 1795094278.001265
+  },
+  "https://www.adb.org/where-we-work/cambodia": {
+   "type": "page",
+   "url": "https://www.adb.org/where-we-work/cambodia",
+   "name": "",
+   "at": 1795094285.0589888
+  },
+  "https://www.interior.gov.kh/en": {
+   "type": "page",
+   "url": "https://www.interior.gov.kh/en",
+   "name": "",
+   "at": 1795094285.1109235
+  },
+  "https://www.mod.go.th/": {
+   "type": "page",
+   "url": "https://www.mod.go.th/",
+   "name": "",
+   "at": 1795094285.430426,
+   "error": "HTTPSConnectionPool(host='www.mod.go.th', port=443): Max retries exceeded with url: / (Caused by New"
+  },
+  "https://www.mofa.gov.vn/": {
+   "type": "page",
+   "url": "https://www.mofa.gov.vn/",
+   "name": "Trang chủ - Cổng thông tin Bộ Ngoại Giao",
+   "at": 1795094305.7218482
+  },
+  "https://www.rta.mi.th/": {
+   "type": "page",
+   "url": "https://www.rta.mi.th/",
+   "name": "",
+   "at": 1795094313.489472,
+   "error": "HTTPSConnectionPool(host='www.rta.mi.th', port=443): Max retries exceeded with url: / (Caused by Con"
+  },
+  "https://www.thaigov.go.th/": {
+   "type": "page",
+   "url": "https://www.thaigov.go.th/",
+   "name": "",
+   "at": 1795094333.7786894
+  },
+  "https://www.thailand.go.th/": {
+   "type": "page",
+   "url": "https://www.thailand.go.th/",
+   "name": "",
+   "at": 1795094336.4392507,
+   "error": "HTTPSConnectionPool(host='www.thailand.go.th', port=443): Max retries exceeded with url: / (Caused b"
   }
  },
  "pg": {
