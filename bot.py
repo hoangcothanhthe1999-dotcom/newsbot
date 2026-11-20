@@ -89,6 +89,17 @@ GNEWS_EVERY = env_int("GNEWS_EVERY", 240)            # Google News: mỗi 4 phú
 BOT_NAME = os.environ.get("BOT_NAME", "").strip() or "Hoang"
 MAX_AGE_HOURS = env_int("MAX_AGE_HOURS", 12)         # chỉ gửi bài đăng trong N giờ gần nhất
 RUN_MINUTES = env_int("RUN_MINUTES", 0)              # 0 = chạy mãi; >0 = tự dừng sau N phút
+END_TIME_VN = os.environ.get("END_TIME_VN", "").strip()   # vd "16:15": quá giờ này (giờ VN) thì phiên tự dừng / phiên mới thoát ngay
+
+
+def end_ts_today():
+    """Mốc kết thúc trong ngày (giờ VN) theo END_TIME_VN, hoặc None nếu không đặt/sai định dạng."""
+    try:
+        hh, mm = END_TIME_VN.split(":")
+        now = datetime.now(VN_TZ)
+        return now.replace(hour=int(hh), minute=int(mm), second=0, microsecond=0).timestamp()
+    except Exception:
+        return None
 TRUSTED_ONLY = env_int("TRUSTED_ONLY", 1)            # 1 = chỉ lấy báo chính thống từ Google News
 INIT_COUNT = env_int("INIT_COUNT", 5)                # số tin gửi ngay khi vừa đăng ký chủ đề/từ khoá
 MAX_PER_CYCLE = env_int("MAX_PER_CYCLE", 40)         # quá số này -> gộp phần dư thành 1 tin danh sách
@@ -4101,6 +4112,10 @@ def main():
     if not RUN_MINUTES and not single_instance():
         print("⚠️ Bot ĐANG CHẠY ở một cửa sổ khác rồi. Đóng cửa sổ này lại.")
         sys.exit(2)
+    _end = end_ts_today() if (RUN_MINUTES and END_TIME_VN) else None
+    if _end and datetime.now(VN_TZ).hour >= 12 and time.time() >= _end:
+        log.info("Đã quá %s giờ VN – hết giờ làm việc, phiên này thoát ngay.", END_TIME_VN)
+        return
     me = tg("getMe")
     if not me:
         print("❌ Token Telegram không hợp lệ hoặc máy chưa có mạng. Kiểm tra lại file .env / Internet.")
@@ -4150,6 +4165,11 @@ def main():
                     c["last_notice"] = time.time()
         save_state()
     deadline = time.time() + RUN_MINUTES * 60 if RUN_MINUTES > 0 else None
+    if deadline and END_TIME_VN:
+        _e = end_ts_today()
+        if _e and datetime.now(VN_TZ).hour >= 12 and _e < deadline:
+            deadline = max(_e, time.time() + 60)
+            log.info("Phiên sẽ dừng lúc %s giờ VN.", END_TIME_VN)
     th = threading.Thread(target=worker, daemon=True)
     th.start()
     try:

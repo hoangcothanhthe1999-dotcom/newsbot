@@ -2,7 +2,8 @@ name: NewsBot
 
 on:
   schedule:
-    - cron: "*/20 23,0-8 * * *"   # 06:00–15:40 giờ VN, 20 phút một lần
+    - cron: "*/20 23,0-7 * * *"   # 06:00–14:40 giờ VN, 20 phút một lần
+    - cron: "0,20 8 * * *"          # 15:00 và 15:20 giờ VN (phiên cuối bắt đầu 15:20)
   workflow_dispatch:          # cho phép bấm "Run workflow" để chạy tay
 
 concurrency:
@@ -39,6 +40,7 @@ jobs:
           ALLOWED_USERS: ${{ secrets.ALLOWED_USERS }}
           RUN_MINUTES: "55"
           CHECK_INTERVAL: "300"
+          END_TIME_VN: "16:15"      # hết 16:15 giờ VN: phiên đang chạy tự dừng, phiên xếp hàng thoát ngay
           MAX_AGE_HOURS: "6"
           FETCH_FULLTEXT: "0"       # Boss chỉ cần tiêu đề + link: không mở nội dung bài báo
           APPS_PROXY_URL: "https://script.google.com/macros/s/AKfycbx1qCrjcomLAKbdw_7S9TD3rqhQoVjR20dN_GWTUB0txtlQV2IqBWUPKQGp74tiZbogbg/exec"   
