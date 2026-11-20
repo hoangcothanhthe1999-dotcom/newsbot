@@ -1,0 +1,10 @@
+name: probe
+on: workflow_dispatch
+jobs:
+  p:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          for u in https://www.interior.gov.kh/news https://www.mod.gov.kh/ https://mef.gov.kh/; do
+            echo "== $u"; curl -s -m 40 -o /tmp/o.txt -w "%{http_code}\n" "https://newsbot-cf.hoangcothanhthe1999.workers.dev/?u=$u"; head -c 300 /tmp/o.txt; echo
+          done
