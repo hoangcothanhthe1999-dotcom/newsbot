@@ -183,7 +183,7 @@ TOPICS = {
         "gnews": ["Campuchia", "Thủ tướng Hun Manet", "Hun Sen", "biên giới Campuchia Thái Lan",
                   "Campuchia quân sự", "kinh tế Campuchia", "kênh Funan Techo", "biên giới Việt Nam Campuchia",
                   "Campuchia vốn vay viện trợ", "Campuchia ngừng bắn Thái Lan", "Campuchia lừa đảo trực tuyến", "Campuchia buôn người", "Mỹ Campuchia trừng phạt", "ADB viện trợ Campuchia"],
-        "gnews_en": ["Cambodia politics", "Cambodia military", "Cambodia Thailand border", "Hun Manet",
+        "gnews_en": ["site:khmertimeskh.com", "site:phnompenhpost.com", "site:freshnewsasia.com", "site:freshnews.com.kh", "Cambodia site:asean.org", "Cambodia site:nationthailand.com", "Cambodia site:adb.org", "Cambodia politics", "Cambodia military", "Cambodia Thailand border", "Hun Manet",
                      "Hun Sen", "Cambodia economy", "Cambodia foreign minister", "Cambodia China", "Ream naval base",
                      "Thailand Cambodia ceasefire", "ASEAN observers Cambodia Thailand", "Thai army Cambodia",
                      "Cambodia Thailand mediation Malaysia", "ADB Cambodia loan", "World Bank Cambodia financing",
