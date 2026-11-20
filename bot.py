@@ -694,6 +694,11 @@ def official_urls():
 APPS_PROXY_URL = os.environ.get("APPS_PROXY_URL", "").strip()   # web app Apps Script "đọc hộ" (IP của Google) cho các trang chặn IP máy chủ Actions
 
 
+_KH_WORDS = ["cambodia", "khmer", "phnom penh", "hun manet", "hun sen", "campuchia", "កម្ពុជា", "กัมพูชา", "เขมร", "柬埔寨"]
+PX_NEED = {"ADB": _KH_WORDS, "ASEAN": _KH_WORDS + ["thailand-cambodia", "cambodia-thailand", "observer team", "border"],
+           "MOD Thailand": _KH_WORDS + ["ชายแดน", "ชายแดนไทย", "cambodia"]}
+
+
 def fetch_proxy(url):
     """Nguồn 'px:docho': hỏi web app Apps Script đọc hộ vài trang bị chặn IP Actions, trả về danh sách (nguồn, tiêu đề, link).
     Mỗi trang là một nguồn riêng; trang nào lỗi thì chỉ ghi log, các trang khác vẫn dùng bình thường."""
@@ -739,6 +744,9 @@ def fetch_proxy(url):
             title = strip_html(str(d.get("title", ""))).strip()
             if not title:
                 continue
+            need = PX_NEED.get(src)
+            if need and not any(w in title.lower() for w in need):
+                continue   # nguồn đọc rộng (ADB, ASEAN, Quốc phòng Thái): chỉ giữ bài có nhắc Campuchia/biên giới
             items.append({"id": hashlib.sha1(link.encode()).hexdigest()[:16], "title": title, "link": link, "desc": "",
                           "source": src, "domain": dom, "ts": ts, "gnews": False, "vn": is_vn(dom), "lang": detect_lang(title)})
         for src in {str(d.get("source", "")) for d in data}:
