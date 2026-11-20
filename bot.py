@@ -1766,6 +1766,8 @@ def tag_criterion(tag):
 def strict_ok(tag, it):
     """Bộ lọc dự phòng khi AI không chấm được: với yêu cầu dạng câu (🧠) chỉ giữ bài khớp biểu thức
     có ≥ 2 cụm (vd campuchia + thái lan + xung đột) hoặc cụm ngôn ngữ gốc; từ khoá thường thì giữ."""
+    if tag == CAMBO_TAG:
+        return fallback_ok(it)
     if not tag.startswith("🔎 "):
         return True
     x = kw_expansion(tag[2:])
@@ -1809,10 +1811,51 @@ def hard_official(it):
     return any(w in text for w in HARD_WORDS)
 
 
+CAMBO_TAG = TOPICS["campuchia"]["name"]
+# Chủ đề Campuchia: bước lọc bằng chữ TRƯỚC khi hỏi AI (tiết kiệm lượt AI, không đụng tới độ phủ).
+CORE_WORDS = ["biên giới", "cửa khẩu", "ngừng bắn", "trừng phạt", "border", "ceasefire", "cease-fire", "sanction",
+              "hun manet", "hun sen", "senate", "national assembly", "ព្រំដែន", "ទណ្ឌកម្ម", "ឈប់បាញ់", "ชายแดน",
+              "หยุดยิง", "边境", "制裁", "停火", "洪玛奈", "洪森"]
+THEME_WORDS = CORE_WORDS + ["kinh tế", "vốn vay", "viện trợ", "thương mại", "thuế", "hải quan", "quân sự", "quốc phòng",
+                            "ngoại giao", "lừa đảo", "buôn người", "economy", "economic", "loan", "aid", "tariff",
+                            "trade", "investment", "gdp", "military", "army", "defense", "defence", "diplomat",
+                            "foreign minister", "scam", "trafficking", "politic", "election", "prime minister",
+                            "เศรษฐกิจ", "ทหาร", "การทูต", "经济", "军事", "外交", "诈骗", "សេដ្ឋកិច្ច", "យោធា", "ការទូត"]
+JUNK_TITLE_WORDS = ["football", "soccer", "sea games", "bóng đá", "ฟุตบอล", "足球", "boxing", "muay thai", "miss grand",
+                    "miss universe", "concert", "horoscope", "lottery", "recipe", "ហ្វុតបុល"]
+
+
+def _cambo_text(it):
+    return (it["title"] + " " + it.get("desc", "")[:300]).lower()
+
+
+def pre_decide(tag, it):
+    """Chủ đề Campuchia: True = chắc chắn giữ, False = chắc chắn bỏ (tin thể thao/giải trí rõ ràng), None = hỏi AI.
+    Chỉ áp dụng cho bài có nhắc Campuchia để không giữ nhầm tin về nước khác."""
+    if tag != CAMBO_TAG:
+        return None
+    text = _cambo_text(it)
+    has_core = any(w in text for w in CORE_WORDS)
+    if not has_core and any(w in it["title"].lower() for w in JUNK_TITLE_WORDS):
+        return False
+    if has_core and any(w in text for w in _KH_WORDS):
+        return True
+    return None
+
+
+def fallback_ok(it):
+    """AI hết lượt: nguồn chuyên Campuchia (tầng 1-2) thì giữ; nguồn khác giữ khi có chữ thuộc 4 chủ đề."""
+    if item_tier(it) <= 2:
+        return True
+    text = _cambo_text(it)
+    return any(w in text for w in THEME_WORDS) and any(w in text for w in _KH_WORDS)
+
+
 def drop_irrelevant(entries):
     """entries = [(item, tags)]. Bỏ tag mà AI cho là lạc đề; bỏ hẳn bài nếu hết tag."""
     pairs = [(it, tag_criterion(t)) for it, tags in entries for t in tags
-             if tag_criterion(t) and not strong_match(t, it) and not foreign_official(it) and not hard_official(it)]
+             if tag_criterion(t) and not strong_match(t, it) and not foreign_official(it) and not hard_official(it)
+             and pre_decide(t, it) is None]
     if not pairs:
         return entries, []
     ok, unknown = ai_relevant(pairs)
@@ -1821,6 +1864,9 @@ def drop_irrelevant(entries):
         crit = tag_criterion(t)
         if not crit or strong_match(t, it) or foreign_official(it) or hard_official(it):
             return True
+        pd = pre_decide(t, it)
+        if pd is not None:
+            return pd
         if (it["id"], crit) in unknown:
             return strict_ok(t, it)
         return (it["id"], crit) in ok
