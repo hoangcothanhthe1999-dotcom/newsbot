@@ -706,7 +706,7 @@ def fetch_proxy(url):
         return cache.get("items", [])
     try:
         with domain_slot("https://script.google.com/"):
-            r = HTTP.get(APPS_PROXY_URL, timeout=90)
+            r = HTTP.get(APPS_PROXY_URL, timeout=170)
         r.raise_for_status()
         data = r.json()
         if not isinstance(data, list):
