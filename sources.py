@@ -164,7 +164,7 @@ TOPICS = {
     "campuchia": {
         "name": "🇰🇭 Campuchia: chính trị – quân sự – ngoại giao – kinh tế",
         # Nguồn chuyên về Campuchia: lấy HẾT, để AI lọc đúng 4 mảng (không lọc bằng chữ -> không sót)
-        "feeds": ["src:https://www.freshnewsasia.com/", "src:https://www.akp.gov.kh/",
+        "feeds": ["src:https://www.freshnewsasia.com/", "src:https://freshnews.com.kh/", "src:https://www.akp.gov.kh/",
                   "src:https://www.dap-news.com/", "src:https://www.kampucheathmey.com/",
                   "src:https://thmeythmey.com/", "src:https://kohsantepheapdaily.com.kh/",
                   "src:https://www.postkhmer.com/", "src:https://www.cnc.com.kh/",
@@ -252,7 +252,7 @@ TRUSTED_DOMAINS = [
     "time.com", "newsweek.com", "usnews.com", "ukrinform.net", "tass.com",
     "globaltimes.cn", "xinhuanet.com", "news.cn",
     # Campuchia, Thái Lan, Lào, Đông Nam Á
-    "rfa.org", "khmertimeskh.com", "phnompenhpost.com", "freshnewsasia.com", "akp.gov.kh", "cambodianess.com",
+    "rfa.org", "khmertimeskh.com", "phnompenhpost.com", "freshnewsasia.com", "freshnews.com.kh", "akp.gov.kh", "cambodianess.com",
     "kohsantepheapdaily.com.kh", "postkhmer.com", "camboja.news", "bangkokpost.com", "nationthailand.com",
     "thaipbs.or.th", "thairath.co.th", "matichon.co.th", "khaosodenglish.com", "khaosod.co.th", "mfa.go.th",
     "laotiantimes.com", "kpl.gov.la", "vientianetimes.org.la", "irrawaddy.com", "inquirer.net", "rappler.com",
@@ -368,7 +368,7 @@ OFFICIAL_SITES = [   # tầng 1 – bot tự dò RSS, không có thì theo dõi 
     {"name": "Ngân hàng Thế giới – Campuchia", "url": "https://www.worldbank.org/en/country/cambodia"},
 ]
 OFFICIAL_DOMAINS = ["gov.kh", "usembassy.gov", "state.gov", "treasury.gov", "justice.gov", "un.org", "ohchr.org", "unodc.org", "icj-cij.org", "adb.org", "imf.org", "eeas.europa.eu", "fmprc.gov.cn", "mofa.go.jp", "dfat.gov.au", "kln.gov.my", "mea.gov.in", "kh.usembassy.gov", "thailand.go.th", "prd.go.th", "national-assembly.org.kh", "nac.org.kh", "senate.gov.kh", "mfa.go.th", "mod.go.th", "thaigov.go.th", "rta.mi.th", "mofa.gov.vn", "chinhphu.vn", "asean.org", "adb.org", "worldbank.org"]   # mọi trang .gov.kh = chính thức
-MAINSTREAM_KH = ["freshnewsasia.com", "dap-news.com", "kampucheathmey.com", "thmeythmey.com",
+MAINSTREAM_KH = ["freshnewsasia.com", "freshnews.com.kh", "dap-news.com", "kampucheathmey.com", "thmeythmey.com",
                  "kohsantepheapdaily.com.kh", "postkhmer.com", "cnc.com.kh", "khmertimeskh.com",
                  "phnompenhpost.com", "cambodianess.com", "cambojanews.com", "kiripost.com", "tvk.gov.kh",
                  "cc-times.com", "jianhuadaily.com", "sabay.com.kh"]
@@ -409,8 +409,8 @@ GLOSSARY = {
 
 
 # Nguồn mới thêm 19/11/2026: chưa báo "nguồn lỗi" trước thời điểm này (cho bot tự thử rồi mới lọc bỏ trang hỏng)
-PROBATION_UNTIL = 1795194000
-PROBATION_URLS = ['https://kh.usembassy.gov/', 'https://moj.gov.kh/', 'https://ccc.gov.kh/', 'https://acu.gov.kh/', 'https://nacd.gov.kh/', 'https://ncdm.gov.kh/', 'https://mop.gov.kh/', 'https://mme.gov.kh/', 'https://mptc.gov.kh/', 'https://secc.gov.kh/', 'https://mlmupc.gov.kh/', 'https://misti.gov.kh/', 'https://www.thailand.go.th/', 'https://thailand.prd.go.th/en']
+PROBATION_UNTIL = 1795280400
+PROBATION_URLS = ['https://freshnews.com.kh/', 'https://kh.usembassy.gov/', 'https://moj.gov.kh/', 'https://ccc.gov.kh/', 'https://acu.gov.kh/', 'https://nacd.gov.kh/', 'https://ncdm.gov.kh/', 'https://mop.gov.kh/', 'https://mme.gov.kh/', 'https://mptc.gov.kh/', 'https://secc.gov.kh/', 'https://mlmupc.gov.kh/', 'https://misti.gov.kh/', 'https://www.thailand.go.th/', 'https://thailand.prd.go.th/en']
 
 
 # Cơ quan / tổ chức NƯỚC NGOÀI: tin của họ nói về Campuchia luôn được gửi (không qua bộ lọc "lạc đề" của AI)

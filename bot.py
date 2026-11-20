@@ -635,7 +635,7 @@ def fetch_source(home, name=""):
 SRC_NAMES = {"src:" + s["url"]: s["name"] for pack in LANG_SOURCES.values() for s in pack}
 SRC_NAMES.update({"src:" + s["url"]: s["name"] for s in OFFICIAL_SITES})
 SRC_NAMES.update({"src:https://www.khmertimeskh.com/": "Khmer Times", "src:https://www.phnompenhpost.com/": "Phnom Penh Post",
-                  "src:https://cambodianess.com/": "Cambodianess", "src:https://cambojanews.com/": "CamboJA News",
+                  "src:https://freshnews.com.kh/": "Fresh News", "src:https://cambodianess.com/": "Cambodianess", "src:https://cambojanews.com/": "CamboJA News",
                   "src:https://kiripost.com/": "Kiripost", "src:https://www.cc-times.com/": "柬中时报",
                   "src:https://jianhuadaily.com/": "柬华日报"})
 
