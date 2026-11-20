@@ -40,6 +40,7 @@ jobs:
           CHECK_INTERVAL: "90"
           MAX_AGE_HOURS: "6"
           FETCH_FULLTEXT: "0"       # Boss chỉ cần tiêu đề + link: không mở nội dung bài báo
+          APPS_PROXY_URL: "https://script.google.com/macros/s/AKfycbx1qCrjcomLAKbdw_7S9TD3rqhQoVjR20dN_GWTUB0txtlQV2IqBWUPKQGp74tiZbogbg/exec"   
         run: python bot.py
 
       - name: Lưu trạng thái

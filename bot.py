@@ -15,6 +15,7 @@ import time
 import random
 import html
 import hashlib
+import email.utils
 import logging
 import calendar
 import threading
@@ -690,9 +691,72 @@ def official_urls():
     return ["src:" + s["url"] for s in OFFICIAL_SITES]
 
 
+APPS_PROXY_URL = os.environ.get("APPS_PROXY_URL", "").strip()   # web app Apps Script "đọc hộ" (IP của Google) cho các trang chặn IP máy chủ Actions
+
+
+def fetch_proxy(url):
+    """Nguồn 'px:docho': hỏi web app Apps Script đọc hộ vài trang bị chặn IP Actions, trả về danh sách (nguồn, tiêu đề, link).
+    Mỗi trang là một nguồn riêng; trang nào lỗi thì chỉ ghi log, các trang khác vẫn dùng bình thường."""
+    if not APPS_PROXY_URL:
+        return []
+    cache = _feed_cache.get(url, {})
+    if time.time() < health(url)["skip_until"]:
+        return cache.get("items", [])
+    if cache and time.time() - cache.get("at", 0) < max(RSS_EVERY, 120) - 5:
+        return cache.get("items", [])
+    try:
+        with domain_slot("https://script.google.com/"):
+            r = HTTP.get(APPS_PROXY_URL, timeout=90)
+        r.raise_for_status()
+        data = r.json()
+        if not isinstance(data, list):
+            raise RuntimeError("web app trả về dữ liệu lạ")
+    except Exception as e:
+        mark_fail(url, e)
+        log.warning("Đọc hộ qua Apps Script lỗi: %s", e)
+        return cache.get("items", [])
+    mark_ok(url)
+    now = time.time()
+    items = []
+    with state_lock:
+        for d in data:
+            src = str(d.get("source", ""))
+            if d.get("error") or not d.get("link"):
+                stat_src("px:" + src, err=d.get("error") or "không có bài")
+                continue
+            link = d["link"]
+            seen = STATE["pg"].setdefault("px:" + src, {})
+            first = not seen
+            if link not in seen:
+                seen[link] = now - 3 * 86400 if first else now   # lần đầu: coi như tin cũ, chỉ báo bài mới
+            ts = int(seen[link])
+            if d.get("pub"):
+                try:
+                    ts = int(email.utils.parsedate_to_datetime(d["pub"]).timestamp())
+                except Exception:
+                    pass
+            dom = domain_of(link)
+            title = strip_html(str(d.get("title", ""))).strip()
+            if not title:
+                continue
+            items.append({"id": hashlib.sha1(link.encode()).hexdigest()[:16], "title": title, "link": link, "desc": "",
+                          "source": src, "domain": dom, "ts": ts, "gnews": False, "vn": is_vn(dom), "lang": detect_lang(title)})
+        for src in {str(d.get("source", "")) for d in data}:
+            seen = STATE["pg"].get("px:" + src)
+            if seen and len(seen) > 800:
+                for k in sorted(seen, key=seen.get)[:len(seen) - 800]:
+                    seen.pop(k)
+    for src in {i["source"] for i in items}:
+        stat_src("px:" + src, items=[i for i in items if i["source"] == src])
+    _feed_cache[url] = {"items": items, "at": now}
+    return items
+
+
 def _fetch_feed(url):
     if url.startswith("tgch:"):
         return fetch_channel(url[5:])
+    if url.startswith("px:"):
+        return fetch_proxy(url)
     if url.startswith("src:"):
         name = SRC_NAMES.get(url, "")
         if not name:
@@ -841,7 +905,7 @@ def topic_gnews(key, intl=True):
         if u.startswith("src:") and is_unhealthy(u):
             urls.append(gnews_url(f"site:{domain_of(u[4:])}", "en"))
     for d in sorted({domain_of(u) for u in t.get("feeds", []) + t.get("filtered_feeds", [])
-                     if not u.startswith("src:") and is_unhealthy(u)}):
+                     if not u.startswith(("src:", "px:")) and is_unhealthy(u)}):
         d = d.replace("feeds.bbci.co.uk", "bbc.com").replace("rss.dw.com", "dw.com")
         lang = "en" if key == "quocte_en" else "vi"
         urls.append(gnews_url(f"site:{d} {hint}".strip(), lang))
@@ -3363,6 +3427,8 @@ def feed_label(url):
     if url.startswith("tgch:"):
         conf = next((c for c in STATE["channels"] if c["u"] == url[5:]), {})
         return f"{conf.get('title', '')} (@{url[5:]})"
+    if url.startswith("px:"):
+        return "Đọc hộ qua Apps Script (ADB, ASEAN, Fresh News)"
     if url.startswith("src:"):
         r = STATE["resolved"].get(url[4:], {})
         kind = "RSS" if r.get("type") == "rss" else "theo dõi trang"
