@@ -3786,6 +3786,81 @@ def heartbeat():
     send(target, f"{now.strftime('%H:%M')} Bot đã chạy, bình thường.", silent=True)
 
 
+def _day_stats():
+    """Số liệu cộng dồn trong ngày (giờ VN), lưu trong state.json để các phiên nối nhau cộng tiếp. Gọi khi đang giữ state_lock."""
+    tag = datetime.now(VN_TZ).strftime("%Y-%m-%d")
+    d = STATE.get("day_stats")
+    if not d or d.get("day") != tag:
+        d = {"day": tag, "sent": 0, "off": 0, "dup": 0, "sessions": 0, "max_gap": 0}
+        STATE["day_stats"] = d
+    return d
+
+
+def note_session_start():
+    """Đầu phiên: ghi log chuyển phiên (khoảng hở so với phiên trước)."""
+    now = time.time()
+    with state_lock:
+        d = _day_stats()
+        last = STATE.get("last_end", 0)
+        gap = int((now - last) / 60) if last else 0
+        if 0 < gap < 600:
+            d["max_gap"] = max(d.get("max_gap", 0), gap)
+            log.info("CHUYỂN PHIÊN | phiên mới bắt đầu, hở %d phút so với phiên trước", gap)
+        else:
+            log.info("CHUYỂN PHIÊN | phiên đầu tiên (hoặc cách quá lâu), không tính khoảng hở")
+        save_state()
+
+
+def note_session_end():
+    """Cuối phiên: cộng số liệu của phiên vào tổng ngày."""
+    S = SESSION_STATS
+    with state_lock:
+        d = _day_stats()
+        d["sent"] += S["sent"]
+        d["off"] += S["ai_offtopic"]
+        d["dup"] += S["ai_dup"]
+        d["sessions"] += 1
+        STATE["last_end"] = time.time()
+        S["sent"] = S["ai_offtopic"] = S["ai_dup"] = 0
+        save_state()
+
+
+def health_report():
+    """Cuối ngày (từ 16h giờ VN, mỗi ngày 1 lần): 1 tin tổng kết sức khỏe của bot."""
+    now = datetime.now(VN_TZ)
+    tag = now.strftime("%Y-%m-%d")
+    if not (16 <= now.hour < 20) or STATE.get("hr_day") == tag:
+        return
+    target = _owner_target()
+    if not target:
+        return
+    with state_lock:
+        STATE["hr_day"] = tag
+        d = dict(_day_stats())
+        bad, total = [], 0
+        for k, h in STATE.get("health", {}).items():
+            if not k.startswith("src:"):
+                continue
+            total += 1
+            if h.get("fail", 0) >= 3:
+                bad.append(SRC_NAMES.get(k) or domain_of(k[4:]))
+        save_state()
+    S = SESSION_STATS
+    sent = d["sent"] + S["sent"]
+    off = d["off"] + S["ai_offtopic"]
+    dup = d["dup"] + S["ai_dup"]
+    lines = [f"{now.strftime('%H:%M')} Tổng kết hôm nay: gửi {sent} tin; AI loại {off} lạc đề, {dup} trùng.",
+             f"Phiên chạy: {d['sessions']}; lúc chuyển phiên hở lâu nhất {d['max_gap']} phút.",
+             f"AI: {AI['status']}."]
+    if total:
+        if bad:
+            shown = ", ".join(bad[:8]) + (f" (+{len(bad) - 8} nguồn nữa)" if len(bad) > 8 else "")
+            lines.append(f"Nguồn: {total - len(bad)}/{total} đọc được. Đang hỏng: {shown}.")
+        else:
+            lines.append(f"Nguồn: {total}/{total} đọc được.")
+    send(target, "\n".join(lines), silent=True)
+
+
 def error_alert():
     """Lỗi vòng quét liên tiếp >= 3 lần thì báo chủ bot 1 lần (cách nhau tối thiểu 6 giờ)."""
     target = _owner_target()
@@ -3803,6 +3878,7 @@ def worker():
     while not STOP.is_set():
         try:
             heartbeat()
+            health_report()
             run_cycle()
             process_pending_summaries()
             check_alerts()
@@ -3870,6 +3946,10 @@ def main():
         print("❌ Token Telegram không hợp lệ hoặc máy chưa có mạng. Kiểm tra lại file .env / Internet.")
         sys.exit(1)
     log.info("Bot @%s đã chạy. Gemini: %s", me.get("username"), "BẬT" if GEMINI_KEY else "TẮT")
+    try:
+        note_session_start()
+    except Exception as e:
+        log.warning("Không ghi được log chuyển phiên: %s", e)
     setup_profile()
 
     def prewarm():
@@ -3920,6 +4000,10 @@ def main():
                     log_session_summary()
                 except Exception as e:
                     log.warning("Không in được tổng kết phiên: %s", e)
+                try:
+                    note_session_end()
+                except Exception as e:
+                    log.warning("Không ghi được số liệu cuối phiên: %s", e)
                 break
             timeout = 25
             if deadline:
