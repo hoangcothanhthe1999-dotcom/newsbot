@@ -78,6 +78,10 @@ GROQ_KEY = os.environ.get("GROQ_API_KEY", "").strip()      # AI dự phòng khi 
 GROQ_MODEL = os.environ.get("GROQ_MODEL", "").strip() or "llama-3.3-70b-versatile"
 OPENROUTER_KEY = os.environ.get("OPENROUTER_API_KEY", "").strip()   # AI dự phòng thứ ba (chỉ dùng khi Gemini và Groq đều hết lượt)
 OPENROUTER_MODEL = os.environ.get("OPENROUTER_MODEL", "").strip() or "meta-llama/llama-3.3-70b-instruct:free"
+CF_ACCOUNT = os.environ.get("CF_ACCOUNT_ID", "").strip()      # AI dự phòng thứ tư: Cloudflare Workers AI (gói miễn phí theo ngày)
+CF_TOKEN = os.environ.get("CF_API_TOKEN", "").strip()
+CF_KEY = CF_TOKEN if (CF_ACCOUNT and CF_TOKEN) else ""
+CF_MODEL = os.environ.get("CF_AI_MODEL", "").strip() or "@cf/meta/llama-3.1-8b-instruct"
 ALLOWED_USERS = {x.strip() for x in os.environ.get("ALLOWED_USERS", "").split(",") if x.strip()}
 CHECK_INTERVAL = env_int("CHECK_INTERVAL", 60)       # giây giữa 2 lần quét
 RSS_EVERY = env_int("RSS_EVERY", 60)                 # RSS báo: tải lại tối đa mỗi 60 giây (nhanh nhất)
@@ -1430,6 +1434,7 @@ class urgent_ai:
 _gem_cool = [0.0]    # Gemini nghỉ đến lúc này (chỉ dùng khi có AI dự phòng)
 _groq = {"off_until": 0.0, "last": 0.0}
 _orr = {"off_until": 0.0, "last": 0.0}
+_cf = {"off_until": 0.0, "last": 0.0}
 
 
 def _openrouter_call(prompt):
@@ -1466,6 +1471,39 @@ def _openrouter_call(prompt):
         log.warning("Khóa OpenRouter bị từ chối (HTTP %s)", r.status_code)
     else:
         log.warning("OpenRouter trả lỗi %s: %s", r.status_code, r.text[:150])
+    return None
+
+
+def _cf_call(prompt):
+    """AI dự phòng thứ tư (Cloudflare Workers AI). Trả về văn bản hoặc None."""
+    if not CF_KEY or time.time() < _cf["off_until"]:
+        return None
+    wait = _cf["last"] + 2.5 - time.time()
+    if wait > 0:
+        time.sleep(wait)
+    _cf["last"] = time.time()
+    body = {"messages": [{"role": "user", "content": prompt + "\n\nChỉ trả lời bằng JSON hợp lệ, không thêm chữ nào khác."}]}
+    try:
+        r = requests.post(f"https://api.cloudflare.com/client/v4/accounts/{CF_ACCOUNT}/ai/run/{CF_MODEL}",
+                          headers={"Authorization": "Bearer " + CF_KEY}, json=body, timeout=60)
+    except Exception as e:
+        log.warning("Workers AI lỗi mạng: %s", e)
+        return None
+    if r.status_code == 200:
+        try:
+            out = r.json()["result"]["response"]
+            ai_set(True, f"hoạt động tốt (Cloudflare Workers AI dự phòng, {CF_MODEL})")
+            return out
+        except Exception:
+            return None
+    if r.status_code == 429:
+        _cf["off_until"] = time.time() + 120
+    elif r.status_code in (401, 403):
+        _cf["off_until"] = time.time() + 3600
+        log.warning("Khóa Cloudflare Workers AI bị từ chối (HTTP %s)", r.status_code)
+    else:
+        log.warning("Workers AI trả lỗi %s: %s", r.status_code, r.text[:150])
+        _cf["off_until"] = time.time() + 300
     return None
 
 
@@ -1507,7 +1545,7 @@ def _groq_call(prompt):
 
 def gemini(prompt):
     """Gọi AI: Gemini trước, hết lượt thì chuyển sang Groq (nếu có khóa). Tên hàm giữ nguyên cho các chỗ gọi cũ."""
-    if not GEMINI_KEY and not GROQ_KEY and not OPENROUTER_KEY:
+    if not GEMINI_KEY and not GROQ_KEY and not OPENROUTER_KEY and not CF_KEY:
         return None
     if not getattr(_tls, "urgent", False):
         t0 = time.time()
@@ -1521,12 +1559,14 @@ def gemini(prompt):
                 time.sleep(wait)
             _ai_last[0] = time.time()
             out = _gemini_call(prompt)
-            if out is None and (GROQ_KEY or OPENROUTER_KEY):
+            if out is None and (GROQ_KEY or OPENROUTER_KEY or CF_KEY):
                 _gem_cool[0] = time.time() + 300    # Gemini đang hết lượt: 5 phút tới đi thẳng Groq
         if out is None and GROQ_KEY:
             out = _groq_call(prompt)
         if out is None and OPENROUTER_KEY:
             out = _openrouter_call(prompt)
+        if out is None and CF_KEY:
+            out = _cf_call(prompt)
         return out
 
 
@@ -1718,7 +1758,7 @@ def truthy(v):
 def ai_relevant(pairs):
     """Nhờ AI loại bài lạc đề. pairs = [(item, tiêu chí)]. Trả về (tập hợp lệ, tập AI chưa chấm được)."""
     todo = [(it, kw) for it, kw in pairs if (it["id"], kw) not in _relevance_cache]
-    if GEMINI_KEY or GROQ_KEY or OPENROUTER_KEY:
+    if GEMINI_KEY or GROQ_KEY or OPENROUTER_KEY or CF_KEY:
         for i in range(0, len(todo), 20):
             chunk = todo[i:i + 20]
             lines = [f"{n}. Theo dõi: «{kw}» | Tiêu đề: {it['title']} | Mô tả: {it['desc'][:250]}"
