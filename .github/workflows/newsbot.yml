@@ -39,6 +39,7 @@ jobs:
           RUN_MINUTES: "55"
           CHECK_INTERVAL: "90"
           MAX_AGE_HOURS: "6"
+          FETCH_FULLTEXT: "0"       # Boss chỉ cần tiêu đề + link: không mở nội dung bài báo
         run: python bot.py
 
       - name: Lưu trạng thái
