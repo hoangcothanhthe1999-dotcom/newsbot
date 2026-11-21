@@ -1775,6 +1775,10 @@ def ai_relevant(pairs):
                 "- Trùng chữ khác nghĩa (vd 'Vịnh Thái Lan' khi theo dõi nước Thái Lan; tên người trùng nước Đức) => KHÔNG.\n"
                 "- Có liên quan dù một phần, hoặc không chắc => CÓ.\n"
                 "Bài có thể bằng tiếng Khmer, Thái, Trung, Anh… – hãy đọc hiểu nội dung.\n"
+                "- RIÊNG với dòng có «chủ đề»: chủ đề đó có danh mục LOẠI. Bài thuộc danh mục LOẠI, hoặc chỉ là tin xã hội / "
+                "y tế / giáo dục / văn hoá / du lịch / môi trường / quảng bá doanh nghiệp / hội thảo nhỏ / bình luận chung chung / "
+                "tội phạm địa phương / thể thao / từ thiện / tôn giáo, không phải tin cấp quốc gia thuộc các mảng CẦN => KHÔNG, "
+                "kể cả khi không chắc. Chỉ trả CÓ khi bài RÕ RÀNG thuộc các mảng CẦN.\n"
                 'Trả về JSON: [{"i": 1, "ok": true}, ...]\n\n' + "\n".join(lines))
             data = ai_json(gemini(prompt))
             try:
@@ -1861,11 +1865,15 @@ CORE_WORDS = ["biên giới", "cửa khẩu", "ngừng bắn", "trừng phạt",
               "หยุดยิง", "边境", "制裁", "停火", "洪玛奈", "洪森"]
 THEME_WORDS = CORE_WORDS + ["kinh tế", "vốn vay", "viện trợ", "thương mại", "thuế", "hải quan", "quân sự", "quốc phòng",
                             "ngoại giao", "lừa đảo", "buôn người", "economy", "economic", "loan", "aid", "tariff",
-                            "trade", "investment", "gdp", "military", "army", "defense", "defence", "diplomat",
+                            "trade", "investment", "gdp", "bond", "central bank", "borrow", "debt", "budget", "currency", "tax", "customs", "military", "army", "defense", "defence", "diplomat",
                             "foreign minister", "scam", "trafficking", "politic", "election", "prime minister",
                             "เศรษฐกิจ", "ทหาร", "การทูต", "经济", "军事", "外交", "诈骗", "សេដ្ឋកិច្ច", "យោធា", "ការទូត"]
 JUNK_TITLE_WORDS = ["football", "soccer", "sea games", "bóng đá", "ฟุตบอล", "足球", "boxing", "muay thai", "miss grand",
-                    "miss universe", "concert", "horoscope", "lottery", "recipe", "ហ្វុតបុល"]
+                    "miss universe", "concert", "horoscope", "lottery", "recipe", "ហ្វុតបុល",
+                    "vaccin", "cancer", "hospital", "health", "wellness", "student", "teacher", "school", "festival",
+                    "tourism", "tourist", "painting", "stamps", "exhibition", "wedding", "pagoda", "cuisine", "fashion",
+                    "beauty", "vovinam", "kun khmer", "marathon", "golf", "weather", "temperature", "road accident",
+                    "traffic accident", "drowned", "charity", "donates", "scholarship", "pho ", "mother's", "recipe"]
 
 
 def _cambo_text(it):
@@ -1888,9 +1896,11 @@ def pre_decide(tag, it):
 
 def fallback_ok(it):
     """AI hết lượt: nguồn chuyên Campuchia (tầng 1-2) thì giữ; nguồn khác giữ khi có chữ thuộc 4 chủ đề."""
-    if item_tier(it) <= 2:
+    if item_tier(it) <= 1:
         return True
     text = _cambo_text(it)
+    if any(w in it["title"].lower() for w in JUNK_TITLE_WORDS):
+        return False
     return any(w in text for w in THEME_WORDS) and any(w in text for w in _KH_WORDS)
 
 
