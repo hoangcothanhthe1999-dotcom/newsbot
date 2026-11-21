@@ -1775,7 +1775,7 @@ def ai_relevant(pairs):
                 "- Trùng chữ khác nghĩa (vd 'Vịnh Thái Lan' khi theo dõi nước Thái Lan; tên người trùng nước Đức) => KHÔNG.\n"
                 "- Có liên quan dù một phần, hoặc không chắc => CÓ.\n"
                 "Bài có thể bằng tiếng Khmer, Thái, Trung, Anh… – hãy đọc hiểu nội dung.\n"
-                "- Phát biểu, chỉ đạo, tuyên bố của Thủ tướng / Phó Thủ tướng / Chủ tịch Thượng viện, Quốc hội / Bộ trưởng Campuchia => CÓ, kể cả khi diễn ra ở hội chợ, lễ khai mạc, hội nghị.\n"
+                "- Mọi tin có nhân vật lãnh đạo cấp cao (Quốc vương, Thủ tướng, Phó Thủ tướng, Chủ tịch Thượng viện / Quốc hội, Tổng tư lệnh quân đội, lãnh đạo Thái Lan đề cập Campuchia) phát biểu, gặp gỡ, đi thăm, chỉ đạo hoặc được nhắc tới => CÓ; cả Bộ trưởng Campuchia phát biểu hoặc tuyên bố => CÓ, kể cả khi diễn ra ở hội chợ, lễ khai mạc, hội nghị.\n"
                 "- RIÊNG với dòng có «chủ đề»: chủ đề đó có danh mục LOẠI. Bài thuộc danh mục LOẠI, hoặc chỉ là tin xã hội / "
                 "y tế / giáo dục / văn hoá / du lịch / môi trường / quảng bá doanh nghiệp / hội thảo nhỏ / bình luận chung chung / "
                 "tội phạm địa phương / thể thao / từ thiện / tôn giáo, không phải tin cấp quốc gia thuộc các mảng CẦN => KHÔNG, "
@@ -1862,7 +1862,10 @@ def hard_official(it):
 CAMBO_TAG = TOPICS["campuchia"]["name"]
 # Chủ đề Campuchia: bước lọc bằng chữ TRƯỚC khi hỏi AI (tiết kiệm lượt AI, không đụng tới độ phủ).
 CORE_WORDS = ["biên giới", "cửa khẩu", "ngừng bắn", "trừng phạt", "border", "ceasefire", "cease-fire", "sanction",
-              "hun manet", "hun sen", "prime minister", "samdech", "techo", "thủ tướng", "ហ៊ុន ម៉ាណែត", "ហ៊ុន សែន", "សម្តេច",
+              "hun manet", "hun sen", "prime minister", "deputy prime minister", "samdech", "sar kheng", "prak sokhonn", "sun chanthol",
+              "neth savoeun", "vongsey vissoth", "aun pornmoniroth", "tea seiha", "tea banh", "vong pisen", "khuon sudary",
+              "heng samrin", "say chhum", "sihamoni", "hun many", "hun to", "anutin", "phó thủ tướng", "chủ tịch thượng viện",
+              "chủ tịch quốc hội", "quốc vương", "techo", "thủ tướng", "ហ៊ុន ម៉ាណែត", "ហ៊ុន សែន", "សម្តេច",
               "นายกรัฐมนตรี", "สมเด็จ", "总理", "senate", "national assembly", "ព្រំដែន", "ទណ្ឌកម្ម", "ឈប់បាញ់", "ชายแดน",
               "หยุดยิง", "边境", "制裁", "停火", "洪玛奈", "洪森"]
 THEME_WORDS = CORE_WORDS + ["kinh tế", "vốn vay", "viện trợ", "thương mại", "thuế", "hải quan", "quân sự", "quốc phòng",
