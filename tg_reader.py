@@ -140,21 +140,31 @@ if __name__ == "__main__":
     # Đăng nhập lần đầu: python tg_reader.py
     import sys
     base = os.path.dirname(os.path.abspath(__file__))
-    for line in open(os.path.join(base, ".env"), encoding="utf-8"):
-        if "=" in line and not line.strip().startswith("#"):
-            k, v = line.strip().split("=", 1)
-            os.environ.setdefault(k.strip(), v.strip().strip('"'))
+    if os.path.exists(os.path.join(base, ".env")):
+        for line in open(os.path.join(base, ".env"), encoding="utf-8"):
+            if "=" in line and not line.strip().startswith("#"):
+                k, v = line.strip().split("=", 1)
+                os.environ.setdefault(k.strip(), v.strip().strip('"'))
     if not HAVE_TELETHON:
         print("Thiếu thư viện telethon. Chạy: pip install telethon")
         sys.exit(1)
     api_id, api_hash = os.environ.get("TG_API_ID"), os.environ.get("TG_API_HASH")
+    if "--string" in sys.argv and not (api_id and api_hash):
+        api_id = input("Nhập api_id: ").strip()
+        api_hash = input("Nhập api_hash: ").strip()
     if not api_id or not api_hash:
         print("Hãy điền TG_API_ID và TG_API_HASH (lấy ở https://my.telegram.org) vào file .env trước.")
         sys.exit(1)
     if "--string" in sys.argv:   # tạo chuỗi phiên để dán vào GitHub Secrets (TG_SESSION), không tạo file
         print("ĐĂNG NHẬP TÀI KHOẢN PHỤ - nhập số điện thoại + mã Telegram gửi về")
         with TelegramClient(StringSession(), int(api_id), api_hash) as c:
-            print("\nCHUỖI PHIÊN (giữ kín, chỉ dán vào GitHub Secrets TG_SESSION):\n" + c.session.save())
+            st = c.session.save()
+            try:   # chép sẵn vào clipboard (Windows) để Quản lý dán thẳng vào GitHub Secrets
+                import subprocess
+                subprocess.run("clip", input=st.encode("utf-16le"), check=True)
+                print("\nXONG. Chuỗi phiên đã được CHÉP SẴN vào clipboard (giữ kín, không dán vào chat).")
+            except Exception:
+                print("\nCHUỖI PHIÊN (giữ kín, chỉ dán vào GitHub Secrets TG_SESSION):\n" + st)
         sys.exit(0)
     session = os.path.join(base, os.environ.get("TG_SESSION", "").strip() or "3x_reader")
     print("ĐĂNG NHẬP TÀI KHOẢN TELEGRAM PHỤ (chỉ dùng để đọc kênh tin)")
