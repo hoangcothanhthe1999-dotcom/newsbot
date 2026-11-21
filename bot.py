@@ -1862,7 +1862,7 @@ def hard_official(it):
 CAMBO_TAG = TOPICS["campuchia"]["name"]
 # Chủ đề Campuchia: bước lọc bằng chữ TRƯỚC khi hỏi AI (tiết kiệm lượt AI, không đụng tới độ phủ).
 CORE_WORDS = ["biên giới", "cửa khẩu", "ngừng bắn", "trừng phạt", "border", "ceasefire", "cease-fire", "sanction",
-              "hun manet", "hun sen", "prime minister", "deputy prime minister", "samdech", "sar kheng", "prak sokhonn", "sun chanthol",
+              "hun manet", "hun sen", "minister", "bộ trưởng", "រដ្ឋមន្ត្រី", "รัฐมนตรี", "部长", "deputy prime minister", "samdech", "sar kheng", "prak sokhonn", "sun chanthol",
               "neth savoeun", "vongsey vissoth", "aun pornmoniroth", "tea seiha", "tea banh", "vong pisen", "khuon sudary",
               "heng samrin", "say chhum", "sihamoni", "hun many", "hun to", "anutin", "phó thủ tướng", "chủ tịch thượng viện",
               "chủ tịch quốc hội", "quốc vương", "techo", "thủ tướng", "ហ៊ុន ម៉ាណែត", "ហ៊ុន សែន", "សម្តេច",
