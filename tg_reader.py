@@ -21,6 +21,7 @@ log = logging.getLogger("newsbot")
 
 try:
     from telethon import TelegramClient, functions, types
+    from telethon.sessions import StringSession
     HAVE_TELETHON = True
 except Exception:  # chưa cài telethon
     HAVE_TELETHON = False
@@ -110,7 +111,11 @@ def get_reader():
     with _lock:
         if _reader is None:
             base = os.path.dirname(os.path.abspath(__file__))
-            session = os.path.join(base, os.environ.get("TG_SESSION", "").strip() or "3x_reader")
+            session = os.environ.get("TG_SESSION", "").strip()
+            if len(session) > 60 and HAVE_TELETHON:   # chuỗi phiên (GitHub Secrets) thay cho file .session
+                session = StringSession(session)
+            else:
+                session = os.path.join(base, session or "3x_reader")
             _reader = Reader(api_id, api_hash, session)
             if _reader.connect():
                 log.info("Đã kết nối tài khoản đọc kênh Telegram")
@@ -146,6 +151,11 @@ if __name__ == "__main__":
     if not api_id or not api_hash:
         print("Hãy điền TG_API_ID và TG_API_HASH (lấy ở https://my.telegram.org) vào file .env trước.")
         sys.exit(1)
+    if "--string" in sys.argv:   # tạo chuỗi phiên để dán vào GitHub Secrets (TG_SESSION), không tạo file
+        print("ĐĂNG NHẬP TÀI KHOẢN PHỤ - nhập số điện thoại + mã Telegram gửi về")
+        with TelegramClient(StringSession(), int(api_id), api_hash) as c:
+            print("\nCHUỖI PHIÊN (giữ kín, chỉ dán vào GitHub Secrets TG_SESSION):\n" + c.session.save())
+        sys.exit(0)
     session = os.path.join(base, os.environ.get("TG_SESSION", "").strip() or "3x_reader")
     print("ĐĂNG NHẬP TÀI KHOẢN TELEGRAM PHỤ (chỉ dùng để đọc kênh tin)")
     with TelegramClient(session, int(api_id), api_hash) as c:

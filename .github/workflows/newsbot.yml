@@ -38,6 +38,9 @@ jobs:
           CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
           CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           ALLOWED_USERS: ${{ secrets.ALLOWED_USERS }}
+          TG_API_ID: ${{ secrets.TG_API_ID }}
+          TG_API_HASH: ${{ secrets.TG_API_HASH }}
+          TG_SESSION: ${{ secrets.TG_SESSION }}
           RUN_MINUTES: "55"
           CHECK_INTERVAL: "300"
           END_TIME_VN: "16:15"      # hết 16:15 giờ VN: phiên đang chạy tự dừng, phiên xếp hàng thoát ngay
