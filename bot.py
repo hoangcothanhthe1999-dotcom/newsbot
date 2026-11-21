@@ -1931,6 +1931,8 @@ def drop_irrelevant(entries):
             dropped.append(it)
     if dropped:
         log.info("AI loại %d bài lạc đề", len(dropped))
+        for _it in dropped[:20]:
+            log.info("BỊ LOẠI | lạc đề | %s | %s", _it.get("source", "?"), _it.get("title", "")[:110])
         SESSION_STATS["ai_offtopic"] += len(dropped)
     return kept, dropped
 
@@ -1969,6 +1971,8 @@ def ai_dedupe(entries, sent_titles):
                 prev.append(it["title"])
     if dropped:
         log.info("AI loại %d tin trùng sự kiện", len(dropped))
+        for _it in dropped[:20]:
+            log.info("BỊ LOẠI | trùng sự kiện | %s | %s", _it.get("source", "?"), _it.get("title", "")[:110])
         SESSION_STATS["ai_dup"] += len(dropped)
     return kept, dropped
 
@@ -3778,6 +3782,7 @@ def deliver(cid, cs, c, entries, now):
             break
         if not claim_send(cs, it):
             continue
+        SESSION_STATS["sent"] += 1
         store_item(it, cid, tags)
         r = send(cid, fmt_item(it, tags, c["summary"]), item_kb(it), silent=not should_ring(cs, it))
         if r and c["summary"] and not _summary_cache.get(it["id"], {}).get("summary"):
