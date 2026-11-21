@@ -882,18 +882,6 @@ def fetch_many(urls, prefer_cache=0):
     return out
 
 
-def site_search_urls(terms, homes):
-    """Tìm thẳng trong kho bài của báo (WordPress: ?s=…&feed=rss2) – tìm được cả bài cũ, bằng tiếng Khmer."""
-    from urllib.parse import quote
-    out = []
-    for h in homes:
-        r = STATE["resolved"].get(h, {})
-        if r.get("type") != "rss" or domain_of(r.get("url", "")) != domain_of(h):
-            continue
-        base = h if h.endswith("/") else h + "/"
-        for t in terms[:2]:
-            out.append(base + "?s=" + quote(t.replace("+", " ")) + "&feed=rss2")
-    return out
 
 
 def fresh(item, now, max_age=None):
@@ -1042,9 +1030,6 @@ def fallback_parse(kw):
             "en": cores if lang == "en" else [], "desc": kw, "fallback": True, "lang": lang, "native": []}
 
 
-def kw_title(kw):
-    x = STATE["kx"].get(kw) or {}
-    return x.get("title") if x.get("smart") else kw
 
 
 def kw_expansion(kw):
@@ -2058,10 +2043,6 @@ def edit(cid, mid, text, markup=None):
     return tg("editMessageText", **params)
 
 
-def fmt_time(ts):
-    if not ts:
-        return ""
-    return datetime.fromtimestamp(ts, VN_TZ).strftime("%H:%M %d/%m")
 
 
 def ago(ts):
@@ -2120,8 +2101,6 @@ def fmt_item(it, tags, want_summary):
     return f'{mark}{e(when)}{e(who)} {kind}: {e(title)}.\n{e(link)}'
 
 
-def show_tag(t):
-    return "🔎 " + kw_title(t[2:]) if t.startswith("🔎 ") else t
 
 
 def item_kb(it):
@@ -2166,21 +2145,6 @@ def should_ring(c, it):
     return ring
 
 
-def topic_keyboard(cid):
-    c = chat_state(cid)
-    rows, row = [], []
-    for key, t in TOPICS.items():
-        mark = "✅ " if key in c["topics"] else ""
-        row.append({"text": mark + t["name"], "callback_data": f"t:{key}"})
-        if len(row) == 2:
-            rows.append(row)
-            row = []
-    if row:
-        rows.append(row)
-    rows.insert(0, [{"text": "🇰🇭 1 chạm: Chế độ Campuchia (Khmer > Anh > Thái > Trung > Việt)",
-                     "callback_data": "preset:kh"}])
-    rows.append([{"text": "⬜ Tắt hết", "callback_data": "t:*off"}, {"text": "✔️ Xong", "callback_data": "done"}])
-    return {"inline_keyboard": rows}
 
 
 HELP = ("Mình tự gửi tin Campuchia cho bạn từ 6h đến 16h hằng ngày, không cần bấm gì.\n"
@@ -2193,100 +2157,17 @@ BUTTONS = {"📰 Tin mới nhất": "/moi", "🔥 Tin nóng hôm nay": "/nong", 
            "🔎 Thêm từ khoá": "/tukhoa", "📊 Đang theo dõi": "/list", "❓ Hướng dẫn": "/help"}
 
 
-def tick(v):
-    return "✅" if v else "⬜"
 
 
 NOTIFY_NAMES = {"all": "🔔 Chuông: mọi tin", "hot": "🔔 Chuông: chỉ tin nóng", "off": "🔕 Chuông: tắt hết"}
 
 
-def settings_text(cid):
-    c = chat_state(cid)
-    sc = c["scope"]
-    where = ("báo trong nước + nước ngoài" if sc["vn"] and sc["intl"] else
-             "chỉ báo trong nước" if sc["vn"] else "chỉ báo nước ngoài")
-    return ("<b>⚙️ Cài đặt 3X</b>\n"
-            f"• Nguồn: <b>{where}</b>, " + ("<b>chỉ báo chính thống / uy tín</b>" if sc["trusted"] else
-                                           "<b>tất cả các báo</b>") + "\n"
-            f"• {NOTIFY_NAMES[c['notify']]}" + (" · yên lặng 23h–6h" if c["quiet"] else "") + "\n"
-            f"• Bản tin tổng hợp 7h & 21h: <b>{'bật' if c['digest'] else 'tắt'}</b>\n\n"
-            "💡 Muốn <b>tất cả báo</b>: tick Trong nước + Nước ngoài, bỏ tick Uy tín.\n"
-            "💡 <b>Chuông chỉ tin nóng</b>: tin thường vẫn về nhưng không reo, tin 🔥 mới reo.\n"
-            "💡 <b>Yên lặng 23h–6h</b>: ban đêm chỉ reo với tin khẩn 🚨.")
 
 
-def settings_kb(cid):
-    c = chat_state(cid)
-    sc = c["scope"]
-    rows = [[{"text": f"{tick(sc['vn'])} Báo trong nước 🇻🇳", "callback_data": "s:vn"},
-             {"text": f"{tick(sc['intl'])} Báo nước ngoài 🌍", "callback_data": "s:intl"}],
-            [{"text": f"{tick(sc['trusted'])} Chỉ báo chính thống, uy tín", "callback_data": "s:trusted"}],
-            [{"text": f"{tick(c['hot_only'])} Chỉ gửi tin nóng 🔥", "callback_data": "s:hot"},
-             {"text": f"{tick(c['summary'])} Tóm tắt AI", "callback_data": "s:sum"}],
-            [{"text": NOTIFY_NAMES[c["notify"]] + " (bấm để đổi)", "callback_data": "s:notify"}],
-            [{"text": f"{tick(c['quiet'])} Yên lặng 23h–6h", "callback_data": "s:quiet"},
-             {"text": f"{tick(c['digest'])} Bản tin 7h & 21h", "callback_data": "s:digest"}],
-            [{"text": ("▶️ Đang TẠM DỪNG – bấm để nhận lại" if c["paused"] else "⏸ Tạm dừng nhận tin"),
-              "callback_data": "s:pause"}],
-            [{"text": "🗣 Ngôn ngữ báo: " + (", ".join(LANG_NAMES[l].replace("Tiếng ", "") for l in c["langs"])
-                                            or "Việt + Anh"), "callback_data": "lg:menu"}],
-            [{"text": f"📡 Nguồn báo riêng ({len(c['sources'])}) – thêm báo bất kỳ", "callback_data": "sr:menu"}],
-            [{"text": f"📣 Kênh Telegram chính thức ({len(STATE.get('channels', []))})", "callback_data": "ch:menu"}],
-            [{"text": "🗑 Xem tin đã bị lọc", "callback_data": "s:dropped"}],
-            [{"text": "📡 Tình trạng nguồn & AI", "callback_data": "s:status"},
-             {"text": "❓ Hướng dẫn", "callback_data": "s:help"}],
-            [{"text": f"👥 Người dùng ({len(STATE.get('users', {})) + 1}) – chỉ quản lý", "callback_data": "s:users"}],
-            [{"text": "✔️ Xong", "callback_data": "s:done"}]]
-    return {"inline_keyboard": rows}
 
 
-def lang_view(cid):
-    c = chat_state(cid)
-    lines = ["<b>🗣 Ngôn ngữ báo</b>", "Luôn tìm báo <b>tiếng Việt + tiếng Anh</b>. Tick thêm ngôn ngữ để:",
-             "• AI dịch từ khoá sang ngôn ngữ đó (vd Hun Manet → ហ៊ុន ម៉ាណែត)",
-             "• Tìm trong các báo tiếng đó + Google News nước đó (nếu có)",
-             "• <b>Ưu tiên</b> bài tiếng đó trong kết quả 🔎 Tìm ngay", ""]
-    for l in EXTRA_LANGS:
-        n = len(LANG_SOURCES.get(l, []))
-        gn = "Google News" if l in EDITIONS else ""
-        src = f"{n} báo" if n else ""
-        lines.append(f"{LANG_FLAGS.get(l, '')} {LANG_NAMES[l]}: " + " + ".join(x for x in (src, gn) if x))
-    rows, row = [], []
-    for l in EXTRA_LANGS:
-        row.append({"text": f"{tick(l in c['langs'])} {LANG_FLAGS.get(l, '')} {LANG_NAMES[l].replace('Tiếng ', '')}",
-                    "callback_data": "lg:" + l})
-        if len(row) == 2:
-            rows.append(row)
-            row = []
-    if row:
-        rows.append(row)
-    order = " > ".join(LANG_NAMES[l].replace("Tiếng ", "") for l in c["lang_order"])
-    lines.append(f"\n🔢 <b>Thứ tự ưu tiên:</b> {order}")
-    rows.append([{"text": "🔢 Đổi thứ tự ưu tiên", "callback_data": "lo:menu"}])
-    rows.append([{"text": "🇰🇭 1 chạm: Chế độ Campuchia", "callback_data": "preset:kh"}])
-    rows.append([{"text": "✔️ Xong", "callback_data": "lg:done"}])
-    return "\n".join(lines), {"inline_keyboard": rows}
 
 
-def order_view(cid):
-    c = chat_state(cid)
-    tmp = c.get("lo_tmp", [])
-    avail = list(dict.fromkeys(["vi", "en"] + c["langs"] + c["lang_order"]))
-    lines = ["<b>🔢 Thứ tự ưu tiên ngôn ngữ</b>", "Bấm lần lượt từ ngôn ngữ <b>quan trọng nhất</b> → ít quan trọng.",
-             "", "Đang chọn: " + (" > ".join(LANG_NAMES[l].replace("Tiếng ", "") for l in tmp) or "(chưa chọn)")]
-    rows, row = [], []
-    for l in avail:
-        if l in tmp:
-            continue
-        row.append({"text": f"{LANG_FLAGS.get(l, '🇻🇳' if l == 'vi' else '🇬🇧')} {LANG_NAMES[l].replace('Tiếng ', '')}",
-                    "callback_data": "lo:" + l})
-        if len(row) == 3:
-            rows.append(row)
-            row = []
-    if row:
-        rows.append(row)
-    rows.append([{"text": "💾 Lưu", "callback_data": "lo:save"}, {"text": "↩️ Chọn lại", "callback_data": "lo:reset"}])
-    return "\n".join(lines), {"inline_keyboard": rows}
 
 
 def apply_cambodia_preset(cid):
@@ -2314,71 +2195,11 @@ def apply_cambodia_preset(cid):
             "Vài phút nữa tin sẽ về. Gõ /nguon để xem từng báo Khmer có đang lấy tin được không.")
 
 
-def sources_view(cid):
-    c = chat_state(cid)
-    lines = ["<b>📡 Nguồn báo riêng</b>",
-             "Thêm bất kỳ trang báo nào (tiếng Khmer, Trung, Thái…): chỉ cần <b>gửi link trang chủ</b> vào ô chat. "
-             "Bot tự tìm RSS, không có thì theo dõi trang chủ và báo bài mới.", ""]
-    rows = []
-    for i, src in enumerate(c["sources"]):
-        mode = "📥 mọi tin" if src.get("all") else "🔎 chỉ tin khớp từ khoá"
-        r = STATE["resolved"].get(src["url"], {})
-        kind = "RSS" if r.get("type") == "rss" else "theo dõi trang"
-        lines.append(f"{i + 1}. {LANG_FLAGS.get(src.get('lang'), '🌐')} <b>{html.escape(src.get('name', ''))}</b> – "
-                     f"{kind} · {mode}")
-        k = kw_key(src["url"])
-        rows.append([{"text": f"{i + 1}. đổi: {'chỉ khớp từ khoá' if src.get('all') else 'nhận mọi tin'}",
-                      "callback_data": "sr:t:" + k},
-                     {"text": "❌ Xoá", "callback_data": "sr:x:" + k}])
-    if not c["sources"]:
-        lines.append("(chưa có nguồn nào)")
-    rows.append([{"text": "➕ Thêm nguồn", "callback_data": "sr:add"}])
-    return "\n".join(lines), {"inline_keyboard": rows}
 
 
 URL_RE = re.compile(r"^(https?://)?([a-z0-9\-]+\.)+[a-z]{2,}(/\S*)?$", re.I)
 
 
-def add_source(cid, url, reply_to=None):
-    def run():
-        u = url.strip()
-        if not u.startswith("http"):
-            u = "https://" + u
-        c = chat_state(cid)
-        if any(s["url"] == u for s in c["sources"]):
-            send(cid, "Nguồn này đã có rồi.", reply_to=reply_to)
-            return
-        send(cid, "🔍 Đang kiểm tra trang báo…", reply_to=reply_to, silent=True)
-        res = resolve_source(u, force=True)
-        try:
-            items = fetch_feed(res["url"]) if res["type"] == "rss" else fetch_page(u, res.get("name", ""))
-        except Exception as e:
-            send(cid, f"⚠️ Không đọc được trang này ({html.escape(str(e)[:100])}). Kiểm tra lại link.",
-                 reply_to=reply_to)
-            return
-        if not items:
-            send(cid, "⚠️ Không tìm thấy bài viết nào trên trang này. Thử gửi link trang chủ hoặc trang chuyên mục.",
-                 reply_to=reply_to)
-            return
-        lang = max(set(i["lang"] for i in items), key=lambda l: sum(1 for i in items if i["lang"] == l))
-        name = (res.get("name") or domain_of(u))[:50]
-        with state_lock:
-            c["sources"].append({"url": u, "name": name, "lang": lang, "all": False, "ts": time.time()})
-            save_state()
-        sample = "\n".join("• " + html.escape(i["title"][:90]) for i in items[:5])
-        kind = "RSS" if res["type"] == "rss" else "theo dõi trang chủ (báo không có RSS)"
-        send(cid, f"✅ Đã thêm nguồn: <b>{html.escape(name)}</b>\n{LANG_FLAGS.get(lang, '🌐')} "
-                  f"{LANG_NAMES.get(lang, lang)} · cách lấy tin: {kind}\n\nBài mới nhất trên trang:\n{sample}\n\n"
-                  "Mặc định bot chỉ gửi tin của nguồn này khi <b>khớp từ khoá</b> của bạn. Muốn nhận mọi tin: "
-                  "⚙️ Cài đặt → 📡 Nguồn báo riêng.", sources_view(cid)[1], reply_to=reply_to)
-        if lang not in ("vi", "en") and lang in LANG_NAMES and lang not in c["langs"]:
-            with state_lock:
-                c["langs"].append(lang)
-                c["scope"]["intl"] = True
-                save_state()
-            send(cid, f"🗣 Đã bật thêm ngôn ngữ <b>{LANG_NAMES[lang]}</b> để AI dịch từ khoá của bạn sang tiếng này.")
-        WAKE.set()
-    threading.Thread(target=run, daemon=True).start()
 
 
 TG_SETUP = ("📣 <b>Đọc kênh Telegram chính thức</b> cần 1 tài khoản Telegram PHỤ làm \"người đọc\" (cài 1 lần):\n"
@@ -2389,91 +2210,12 @@ TG_SETUP = ("📣 <b>Đọc kênh Telegram chính thức</b> cần 1 tài khoả
             "4. Chạy lại bot, vào ⚙️ Cài đặt → 📣 Kênh Telegram → 🔍 Gợi ý kênh chính thức.")
 
 
-def channels_view():
-    chans = STATE.get("channels", [])
-    r = tg_reader.get_reader() if tg_reader else None
-    lines = ["<b>📣 Kênh Telegram chính thức</b> (nguồn tầng 1 – tin về ngay khi kênh đăng)"]
-    if tg_reader:
-        lines.append("Tài khoản đọc: " + html.escape(tg_reader.status()))
-    rows = []
-    for ch in chans:
-        v = " ✔️" if ch.get("verified") else ""
-        lines.append(f"• <b>{html.escape(ch.get('title', ''))}</b>{v} – @{html.escape(ch['u'])}")
-        rows.append([{"text": f"❌ Bỏ @{ch['u']}"[:60], "callback_data": "ch:x:" + ch["u"]}])
-    if not chans:
-        lines.append("(chưa có kênh nào)")
-    if r:
-        rows.append([{"text": "🔍 Gợi ý kênh chính thức", "callback_data": "ch:sug"}])
-        lines.append("\nThêm kênh: <code>/kenh @tenkenh</code> · Tìm kênh: <code>/kenh tim hun manet</code>\n"
-                     "Chỉ nên thêm kênh có dấu ✔️ hoặc đúng là kênh của cơ quan / người đó.")
-    else:
-        lines.append("\n" + TG_SETUP)
-    return "\n".join(lines), ({"inline_keyboard": rows} if rows else None)
 
 
-def channel_search(cid, queries):
-    def run():
-        r = tg_reader.get_reader() if tg_reader else None
-        if not r:
-            send(cid, TG_SETUP)
-            return
-        send(cid, "🔍 Đang tìm kênh…", silent=True)
-        found = {}
-        for q in queries:
-            try:
-                for ch in r.search(q):
-                    found.setdefault(ch["username"].lower(), ch)
-            except Exception as e:
-                log.warning("Tìm kênh '%s' lỗi: %s", q, e)
-        have = {c["u"].lower() for c in STATE["channels"]}
-        res = sorted((c for k, c in found.items() if k not in have), key=lambda c: (not c["verified"], -c["members"]))[:16]
-        if not res:
-            send(cid, "Không tìm thấy kênh phù hợp. Thử <code>/kenh @tenkenh</code> nếu bạn biết tên kênh.")
-            return
-        lines = ["<b>Kênh tìm được</b> (✔️ = Telegram đã xác minh chính thức):"]
-        rows = []
-        for ch in res:
-            v = "✔️ " if ch["verified"] else ""
-            lines.append(f"• {v}<b>{html.escape(ch['title'])}</b> – @{html.escape(ch['username'])} "
-                         f"({ch['members']:,} người theo dõi)".replace(",", "."))
-            rows.append([{"text": f"➕ {v}{ch['title']}"[:60], "callback_data": "ch:a:" + ch["username"]}])
-        send(cid, "\n".join(lines), {"inline_keyboard": rows})
-    threading.Thread(target=run, daemon=True).start()
 
 
-def channel_add(cid, username):
-    def run():
-        r = tg_reader.get_reader() if tg_reader else None
-        if not r:
-            send(cid, TG_SETUP)
-            return
-        u = username.strip().lstrip("@").split("/")[-1]
-        if any(c["u"].lower() == u.lower() for c in STATE["channels"]):
-            send(cid, "Kênh này đã có rồi.")
-            return
-        try:
-            info = r.info(u)
-        except Exception as e:
-            send(cid, f"⚠️ Không mở được kênh @{html.escape(u)}: {html.escape(str(e)[:120])}")
-            return
-        with state_lock:
-            STATE["channels"].append({"u": info["username"], "title": info["title"], "verified": info["verified"],
-                                      "official": True, "ts": time.time()})
-            save_state()
-        v = " ✔️ (đã xác minh)" if info["verified"] else " (chưa có dấu xác minh – hãy chắc đây là kênh thật)"
-        send(cid, f"✅ Đã thêm kênh <b>{html.escape(info['title'])}</b>{v}\nBài đăng của kênh sẽ được gửi như "
-                  "<b>nguồn chính thức</b>.")
-        WAKE.set()
-    threading.Thread(target=run, daemon=True).start()
 
 
-def auto_resume(cid):
-    c = chat_state(cid)
-    if c["paused"]:
-        with state_lock:
-            c["paused"] = False
-            save_state()
-        send(cid, "▶️ Bot đang tạm dừng nên mình đã <b>tự bật nhận tin lại</b> cho bạn.")
 
 
 def can_use(user_id):
@@ -2483,8 +2225,6 @@ def can_use(user_id):
             or uid in STATE.get("users", {}))
 
 
-def is_owner(user_id):
-    return str(user_id) == STATE.get("owner") or (not STATE.get("owner") and str(user_id) in ALLOWED_USERS)
 
 
 def allowed(user_id):
@@ -2525,399 +2265,50 @@ def request_access(msg):
                                    {"text": "❌ Từ chối", "callback_data": "ud:" + uid}]]})
 
 
-def users_view():
-    users = STATE.get("users", {})
-    lines = [f"<b>👥 Người dùng bot ({len(users) + 1})</b>", "• Bạn (quản lý)"]
-    rows = []
-    for uid, u in users.items():
-        lines.append(f"• {html.escape(u.get('name', uid))} – <code>{uid}</code>")
-        rows.append([{"text": "❌ Xoá " + u.get("name", uid)[:30], "callback_data": "ur:" + uid}])
-    lines.append("\nNgười mới chỉ cần mở link bot và bấm Bắt đầu – bạn sẽ nhận nút ✅ Cho phép để duyệt. "
-                 "Mỗi người có chủ đề, từ khoá, cài đặt riêng, không ảnh hưởng nhau.")
-    return "\n".join(lines), ({"inline_keyboard": rows} if rows else None)
 
 
-def list_text(cid):
-    c = chat_state(cid)
-    t = "\n".join("• " + TOPICS[k]["name"] for k in c["topics"] if k in TOPICS) or "• (chưa chọn)"
-    k = "\n".join("• " + html.escape(x) for x in c["keywords"]) or "• (chưa có)"
-    status = "⏸ Đang tạm dừng" if c["paused"] else "▶️ Đang nhận tin"
-    return (f"<b>📋 Chủ đề:</b>\n{t}\n\n<b>🔎 Từ khoá:</b>\n{k}\n\n{status} · quét mỗi "
-            f"{max(1, RSS_EVERY // 60)} phút, lấy bài trong {MAX_AGE_HOURS} giờ gần nhất.")
 
 
 GENERIC_RE = re.compile(r"^(gửi|cho|xem|lấy|có)?\s*(\d+\s*)?(cái\s*)?(tin|tin tức|bài|bản tin|thời sự)?\s*"
                         r"(mới nhất|mới|hot|nóng|hôm nay|nổi bật)(\s*(đi|nào|với|ạ|nhé|nha))?\W*$", re.I)
 
 
-def is_generic(text):
-    return bool(GENERIC_RE.match(norm(text).strip()))
 
 
-def kw_key(kw):
-    return hashlib.md5(kw.encode("utf-8")).hexdigest()[:10]
 
 
-def smart_text(kw, cid=None):
-    x = kw_expansion(kw)
-    e = html.escape
-    lines = [f"🧠 <b>Đã hiểu yêu cầu: {e(x['title'])}</b>", f"<i>«{e(kw)}»</i>", ""]
-    if x.get("desc"):
-        lines.append("🎯 Chỉ lấy tin: " + e(x["desc"]))
-    if x["vi"]:
-        lines.append("🔎 Khớp bài báo: " + e(" · ".join(x["vi"])))
-    if x.get("gq"):
-        lines.append("🇻🇳 Tìm trên báo VN: " + e(" · ".join(x["gq"])))
-    if x["en"]:
-        lines.append("🌍 Tìm báo quốc tế: " + e(" · ".join(x["en"])))
-    if x.get("native"):
-        lines.append(f"🗣 {LANG_NAMES.get(x.get('lang'), x.get('lang', ''))}: " + e(" · ".join(x["native"])))
-    lines += lang_lines(kw, cid, skip=x.get("lang"))
-    return "\n".join(lines)
 
 
-def lang_lines(kw, cid, skip=None):
-    if cid is None:
-        return []
-    c = chat_state(cid)
-    out = []
-    for l, terms in kw_translations(kw, c.get("langs", [])).items():
-        if l == skip:
-            continue
-        n = len(LANG_SOURCES.get(l, []))
-        where = f"{n} báo tiếng {LANG_NAMES[l].replace('Tiếng ', '')}" + (" + Google News" if l in EDITIONS else "")
-        out.append(f"{LANG_FLAGS.get(l, '')} {where}: " + html.escape(" · ".join(terms)))
-    if c.get("sources"):
-        out.append(f"📡 + {len(c['sources'])} nguồn báo riêng của bạn")
-    return out
 
 
-def describe_keyword(kw):
-    if needs_smart(kw):
-        x = kw_expansion(kw)
-        return " HOẶC ".join(f"«{v}»" for v in (x["vi"] or [kw]))
-    parts = []
-    for group in parse_keyword(kw):
-        parts.append(" VÀ ".join(f"«{p}»" for p in group))
-    return "\n   HOẶC ".join(parts)
 
 
-def validate_keyword(cid, kw):
-    """Trả về None nếu hợp lệ, ngược lại gửi gợi ý và trả về False."""
-    if is_generic(kw):
-        send(cid, "Đây là yêu cầu chung, không phải từ khoá 🙂 Chọn một trong các nút:",
-             {"inline_keyboard": [[{"text": "📰 Xem 10 tin mới nhất ngay", "callback_data": "qlatest"}],
-                                  [{"text": "🆕 Theo dõi Tin mới nhất", "callback_data": "qn"}],
-                                  [{"text": "📋 Chọn chủ đề khác", "callback_data": "qm"}]]})
-        return False
-    groups = parse_keyword(kw)
-    if not groups or any(len(re.sub(r"\W", "", p)) < 3 for g in groups for p in g):
-        send(cid, "Từ khoá quá ngắn (cần ít nhất 3 chữ cái mỗi cụm). Ví dụ: <code>giá vàng</code>, "
-                  "<code>chiến sự + ukraina</code>")
-        return False
-    return None
 
 
-def add_keyword(cid, kw, quiet=False):
-    kw = re.sub(r"\s+", " ", kw.strip())[:200]
-    if not kw:
-        send(cid, "Gõ từ khoá bạn muốn theo dõi rồi gửi, ví dụ:\n<code>hun manet</code>\n"
-                  "<code>chiến sự + iran</code>\n<code>giá vàng, lãi suất</code>")
-        return False
-    if validate_keyword(cid, kw) is False:
-        return False
-    c = chat_state(cid)
-    with state_lock:
-        if kw.lower() in (x.lower() for x in c["keywords"]):
-            send(cid, "Từ khoá này đã có rồi.")
-            return False
-        c["keywords"].append(kw)
-        typed = detect_lang(kw)
-        if typed not in ("vi", "en") and typed in LANG_NAMES and typed not in c["langs"]:
-            c["langs"].append(typed)               # gõ tiếng Khmer -> tìm luôn báo tiếng Khmer
-            c["scope"]["intl"] = True
-            if typed not in c["lang_order"]:
-                c["lang_order"].append(typed)
-        save_state()
-    auto_resume(cid)
-    if quiet:
-        WAKE.set()
-        return True
-
-    def run():
-        send(cid, f"✅ Đang theo dõi <b>{html.escape(kw)}</b>. Đây là các bài mới nhất:")
-        with urgent_ai():
-            picked, found = find_articles(cid, kw, n=5)
-        with state_lock:
-            for iid in found:                      # bài cũ đã thấy: không gửi lại ở lượt quét sau
-                c["sent"].setdefault(iid, time.time())
-            c["init"]["k:" + kw] = True
-            save_state()
-        if not picked:
-            send(cid, "Hiện chưa có bài nào. Có bài mới bot sẽ gửi ngay.")
-        else:
-            with urgent_ai():
-                send_articles(cid, picked)
-        WAKE.set()
-    threading.Thread(target=run, daemon=True).start()
-    return True
 
 
 # ---- quản lý từ khoá: xem, xoá 1, chọn nhiều để xoá, xoá hết
-def kw_manager(cid, mode="list"):
-    c = chat_state(cid)
-    kws = c["keywords"]
-    if not kws:
-        return ("🔎 Bạn chưa theo dõi từ khoá nào.\n\nBấm ➕ Thêm, hoặc gõ thẳng từ khoá vào ô chat.",
-                {"inline_keyboard": [[{"text": "➕ Thêm từ khoá", "callback_data": "km:add"}]]})
-    if mode == "multi":
-        sel = set(c.get("kmsel", []))
-        rows = [[{"text": f"{'☑️' if kw_key(k) in sel else '⬜'} {kw_title(k)[:45]}", "callback_data": "km:t:" + kw_key(k)}]
-                for k in kws]
-        rows.append([{"text": f"🗑 Xoá {len(sel)} mục đã chọn", "callback_data": "km:delsel"},
-                     {"text": "☑️ Chọn hết", "callback_data": "km:selall"}])
-        rows.append([{"text": "↩️ Quay lại", "callback_data": "km:back"}])
-        return f"Chọn các từ khoá muốn xoá ({len(sel)}/{len(kws)} đã chọn):", {"inline_keyboard": rows}
-    if mode == "all":
-        return (f"⚠️ Xoá <b>tất cả {len(kws)}</b> từ khoá?",
-                {"inline_keyboard": [[{"text": "✅ Xoá hết", "callback_data": "km:allyes"},
-                                      {"text": "Huỷ", "callback_data": "km:back"}]]})
-    text = f"<b>🔎 Từ khoá đang theo dõi ({len(kws)})</b>\nBấm vào từ khoá để xem chi tiết / tìm ngay, ❌ để xoá."
-    rows = [[{"text": f"{i}. {('🧠 ' if needs_smart(k) else '') + kw_title(k)[:38]}", "callback_data": "km:o:" + kw_key(k)},
-             {"text": "❌", "callback_data": "km:x:" + kw_key(k)}] for i, k in enumerate(kws, 1)]
-    rows.append([{"text": "➕ Thêm", "callback_data": "km:add"},
-                 {"text": "☑️ Xoá nhiều", "callback_data": "km:multi"},
-                 {"text": "🗑 Xoá hết", "callback_data": "km:all"}])
-    return text, {"inline_keyboard": rows}
 
 
-def kw_detail(cid, k):
-    x = kw_expansion(k)
-    if x.get("smart"):
-        lines = [smart_text(k, cid)]
-    else:
-        lines = [f"<b>🔎 {html.escape(k)}</b>", "Bot tìm bài có:\n   " + html.escape(describe_keyword(k))]
-    if x["vi"] and not x.get("smart"):
-        lines.append("Cách viết khác (AI): " + html.escape(", ".join(x["vi"])))
-    if x["en"] and not x.get("smart"):
-        lines.append("Báo quốc tế (AI dịch): " + html.escape(", ".join(x["en"])))
-    if not x.get("smart"):
-        lines += lang_lines(k, cid)
-    kb = {"inline_keyboard": [[{"text": "🔎 Tìm ngay (7 ngày)", "callback_data": "km:s:" + kw_key(k)},
-                               {"text": "❌ Xoá", "callback_data": "km:x:" + kw_key(k)}],
-                              [{"text": "↩️ Quay lại", "callback_data": "km:back"}]]}
-    return "\n".join(lines), kb
 
 
-def remove_keywords(cid, keys):
-    c = chat_state(cid)
-    removed = []
-    with state_lock:
-        for k in list(c["keywords"]):
-            if kw_key(k) in keys:
-                c["keywords"].remove(k)
-                c["init"].pop("k:" + k, None)
-                removed.append(k)
-        c["kmsel"] = []
-        save_state()
-    return removed
 
 
-def find_articles(cid, kw, n=10, days=7):
-    """Tìm KỸ bài về 1 từ khoá: trang chính thức + kênh Telegram + báo Khmer/Trung/Thái (cả tìm thẳng trong kho
-    bài của báo bằng tiếng Khmer) + mọi báo RSS + nguồn riêng + Google News (1 giờ / 1 ngày / 7 ngày).
-    Trả về (n bài xếp theo ưu tiên: chính thức > thông cáo > ngôn ngữ ưu tiên > mới nhất, id mọi bài thấy)."""
-    now = time.time()
-    c = chat_state(cid)
-    scope = c["scope"]
-    intl = scope.get("intl", True)
-    langs = list(c.get("langs", [])) if intl else []
-    typed = detect_lang(kw)
-    if typed not in ("vi", "en") and typed not in langs:
-        langs.append(typed)
-    ensure_expansions([kw])
-    ensure_lang_translations([kw], langs)
-    tr = kw_translations(kw, langs)
-    homes = [s["url"] for s in OFFICIAL_SITES] + [u[4:] for u in ALL_FEEDS if u.startswith("src:")] + \
-            [s["url"] for l in langs for s in LANG_SOURCES.get(l, [])]
-    search_terms = [t for l in ("km", "zh", "th") if l in tr for t in tr[l]] + \
-                   ([kw] if typed not in ("vi", "en") else [])
-    ss = site_search_urls(search_terms, list(dict.fromkeys(homes)))
-    gn = keyword_gnews_urls(kw, "1d", intl, langs) + keyword_gnews_urls(kw, f"{days}d", intl, langs)
-    fetched = fetch_many(ALL_FEEDS + lang_source_urls(langs) + custom_source_urls(c) + channel_urls(), 1200)
-    fetched.update(fetch_many(gn + ss))
-    items = collect_keyword(kw, fetched, now, "1d", days * 24, langs)
-    items += collect_keyword(kw, fetched, now, f"{days}d", days * 24, langs)
-    for u in ss:                                    # kết quả tìm trong kho bài của báo: tin theo báo, để AI lọc
-        items += [it for it in fetched.get(u, []) if fresh(it, now, days * 24)]
-    items = [it for it in items if scope_ok(it, scope)]
-    found = {it["id"] for it in items}
-    uniq, toks, seen = [], [], set()
-    for it in sorted(items, key=lambda x: prio_key(x, c)):
-        if it["id"] in seen:
-            continue
-        seen.add(it["id"])
-        tk = title_tokens(it["title"])
-        if any(similar(tk, o) for o in toks):
-            continue
-        toks.append(tk)
-        uniq.append((it, {"🔎 " + kw}))
-        if len(uniq) >= n * 4:
-            break
-    uniq, _ = drop_irrelevant(uniq)
-    uniq, _ = ai_dedupe(uniq[:n * 2], [])          # cùng sự kiện: giữ bản của nguồn ưu tiên hơn
-    uniq.sort(key=lambda e: prio_key(e[0], c))
-    return uniq[:n], found
 
 
-def send_articles(cid, entries):
-    """Gửi NGAY (chưa có tóm tắt) cho nhanh, rồi bổ sung tóm tắt tiếng Việt vào từng tin khi AI xong."""
-    c = chat_state(cid)
-    SESSION_STATS["sent"] += len(entries) if hasattr(entries, "__len__") else 0
-    sent_msgs = []
-    for it, tags in entries:
-        claim_send(c, it)          # đánh dấu đã gửi (vòng quét sau không gửi lại); kết quả tìm vẫn hiện đủ
-        store_item(it, cid, tags)
-        r = send(cid, fmt_item(it, tags, c["summary"]), item_kb(it), silent=True)
-        if r:
-            sent_msgs.append((r.get("message_id"), it, tags))
-        time.sleep(0.4)
-    save_state()
-    if c["summary"] and sent_msgs:
-        need = [it for _, it, _ in sent_msgs if not _summary_cache.get(it["id"], {}).get("summary")]
-        summarize(need)
-        for mid, it, tags in sent_msgs:
-            if it in need:
-                if _summary_cache.get(it["id"], {}).get("summary"):
-                    store_item(it, cid, tags)
-                    edit(cid, mid, fmt_item(it, tags, True), item_kb(it))
-                else:
-                    queue_summary(cid, mid, it, tags)
 
 
-def search_now(cid, kw):
-    kw = re.sub(r"\s+", " ", kw.strip())[:200]
-    if validate_keyword(cid, kw) is False:
-        return
-
-    def run():
-        send(cid, f"🔎 Đang tìm: <b>{html.escape(kw)}</b> …")
-        with urgent_ai():
-            picked, _ = find_articles(cid, kw, n=10)
-        if not picked:
-            send(cid, "Không thấy bài nào trong 7 ngày qua. Thử viết từ khoá khác, "
-                      "vd tên đầy đủ hoặc thêm địa danh: <code>nguyễn văn a + đồng nai</code>")
-            return
-        send(cid, f"🔎 <b>{len(picked)} bài mới nhất</b> về <b>{html.escape(kw_title(kw))}</b>:")
-        with urgent_ai():
-            send_articles(cid, picked)
-        c = chat_state(cid)
-        if kw.lower() not in (x.lower() for x in c["keywords"]):
-            with state_lock:
-                c["lastsearch"] = kw
-            send(cid, "Theo dõi liên tục từ khoá này?",
-                 {"inline_keyboard": [[{"text": "➕ Theo dõi liên tục", "callback_data": "km:addlast"}]]})
-    threading.Thread(target=run, daemon=True).start()
 
 
 # ---- nút dưới mỗi tin
-def find_item(iid):
-    with state_lock:
-        it = STATE["items"].get(iid)
-    return dict(it) if it else None
 
 
-def save_item(cid, iid):
-    it = find_item(iid)
-    if not it:
-        return "Tin này đã quá cũ, không còn trong bộ nhớ."
-    c = chat_state(cid)
-    with state_lock:
-        if any(x["id"] == iid for x in c["saved"]):
-            return "Tin này đã lưu rồi."
-        c["saved"].insert(0, it)
-        del c["saved"][200:]
-        save_state()
-    return "⭐ Đã lưu! Xem lại ở nút ⭐ Đã lưu."
 
 
-def saved_view(cid):
-    c = chat_state(cid)
-    if not c["saved"]:
-        return "⭐ Chưa có tin nào được lưu. Bấm ⭐ Lưu dưới mỗi tin để lưu lại.", None
-    lines = [f"<b>⭐ Tin đã lưu ({len(c['saved'])})</b>"]
-    for n, it in enumerate(c["saved"][:25], 1):
-        title = it.get("title_vi") or it["title"]
-        lines.append(f'{n}. <a href="{html.escape(it["link"], quote=True)}">{html.escape(title)}</a> '
-                     f'<i>({html.escape(it["source"])}, {fmt_time(it["ts"])})</i>')
-    kb = {"inline_keyboard": [[{"text": "📊 Xuất Excel", "callback_data": "xl:saved"},
-                               {"text": "🗑 Xoá hết tin đã lưu", "callback_data": "sv:clear"}]]}
-    return "\n".join(lines), kb
 
 
-def analyze_item(cid, iid, reply_to):
-    def run():
-        it = find_item(iid)
-        if not it:
-            send(cid, "Tin này đã quá cũ, không còn trong bộ nhớ.", reply_to=reply_to)
-            return
-        if not GEMINI_KEY:
-            send(cid, "Cần cài GEMINI_API_KEY để dùng phân tích AI.", reply_to=reply_to)
-            return
-        send(cid, "🧠 Đang phân tích…", reply_to=reply_to, silent=True)
-        item = {"id": it["id"], "link": it["link"], "gnews": False, "real_link": it["link"]}
-        txt = fetch_text(item) or it.get("desc") or ""
-        raw = gemini(
-            glossary_for(it["title"] + " " + txt[:4000]) +
-            "Bạn là chuyên gia phân tích tin tức quốc tế và kinh tế cho người Việt Nam. Dựa trên bài báo dưới đây, "
-            "viết bằng TIẾNG VIỆT, súc tích, có các mục:\n"
-            "1) Nội dung chính (4-6 câu, nêu số liệu, nhân vật)\n2) Bối cảnh (vì sao xảy ra)\n"
-            "3) Tác động / ý nghĩa (với Việt Nam, kinh tế, ngoại giao nếu liên quan)\n"
-            "4) Cần theo dõi tiếp\nChỉ dựa trên thông tin bài và kiến thức nền phổ biến; không bịa số liệu. "
-            'Trả JSON: {"chinh": "...", "boicanh": "...", "tacdong": "...", "theodoi": "..."}\n\n'
-            f"Tiêu đề: {it['title']}\nNguồn: {it['source']}\nNội dung: {txt[:6000]}")
-        d = None
-        try:
-            d = json.loads(raw) if raw else None
-        except Exception:
-            d = None
-        if not isinstance(d, dict):
-            send(cid, "AI đang bận hoặc hết lượt miễn phí, thử lại sau ít phút nhé.", reply_to=reply_to)
-            return
-        e = html.escape
-        title = it.get("title_vi") or it["title"]
-        out = [f"🧠 <b>Phân tích: {e(title)}</b>",
-               f"\n<b>📌 Nội dung chính</b>\n{e(str(d.get('chinh', '')))}",
-               f"\n<b>🧭 Bối cảnh</b>\n{e(str(d.get('boicanh', '')))}",
-               f"\n<b>🎯 Tác động</b>\n{e(str(d.get('tacdong', '')))}",
-               f"\n<b>👀 Cần theo dõi</b>\n{e(str(d.get('theodoi', '')))}",
-               f'\n🔗 <a href="{e(it["link"], quote=True)}">Bài gốc</a>']
-        send(cid, "\n".join(out), reply_to=reply_to)
-    threading.Thread(target=run, daemon=True).start()
 
 
-def follow_item(cid, iid, reply_to):
-    def run():
-        it = find_item(iid)
-        if not it:
-            send(cid, "Tin này đã quá cũ, không còn trong bộ nhớ.", reply_to=reply_to)
-            return
-        kw = None
-        if GEMINI_KEY:
-            raw = gemini("Từ tiêu đề tin sau, tạo MỘT từ khoá tiếng Việt ngắn (2-6 chữ) để theo dõi diễn biến tiếp "
-                         "theo của đúng sự kiện này trên báo. Dùng dấu + nếu cần 2 ý bắt buộc (vd 'Hormuz + Iran'). "
-                         'Trả JSON {"kw": "..."}\nTiêu đề: ' + it["title"] + "\nTóm tắt: " + it.get("summary", ""))
-            try:
-                kw = str(json.loads(raw).get("kw", "")).strip() if raw else None
-            except Exception:
-                kw = None
-        if not kw:
-            words = [w for w in re.findall(r"\w+", it["title"]) if len(w) > 2][:4]
-            kw = " ".join(words)
-        if add_keyword(cid, kw, quiet=True):
-            send(cid, f"➕ Đã theo dõi sự kiện này với từ khoá: <b>{html.escape(kw)}</b>\n"
-                      "Sửa/xoá ở nút 🔎 Từ khoá.", reply_to=reply_to)
-    threading.Thread(target=run, daemon=True).start()
 
 
 def hot_view(cid, hours=24, n=10, title="🔥 Tin nóng nhất 24 giờ qua"):
@@ -2946,159 +2337,12 @@ def hot_view(cid, hours=24, n=10, title="🔥 Tin nóng nhất 24 giờ qua"):
 EXPORT_MODES = {"today": "hôm nay", "24h": "24 giờ qua", "7d": "7 ngày qua", "saved": "tin đã lưu"}
 
 
-def export_rows(cid, mode):
-    cid = str(cid)
-    c = chat_state(cid)
-    now = time.time()
-    if mode == "saved":
-        rows = [dict(x, _got=x.get("to", {}).get(cid) or x.get("stored")) for x in c["saved"]]
-        return rows
-    if mode == "today":
-        start = datetime.now(VN_TZ).replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
-    elif mode == "24h":
-        start = now - 86400
-    else:
-        start = now - 7 * 86400
-    with state_lock:
-        rows = [dict(x, _got=x["to"][cid]) for x in STATE["items"].values()
-                if cid in x.get("to", {}) and x["to"][cid] >= start]
-    rows.sort(key=lambda x: x["_got"], reverse=True)
-    return rows
 
 
-def build_excel(cid, mode):
-    """Tạo file Excel: sheet 'Tin tức' (đủ cột, link bấm được, lọc/sắp xếp) + sheet 'Thống kê'."""
-    from io import BytesIO
-    from collections import Counter
-    from openpyxl import Workbook
-    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
-    from openpyxl.utils import get_column_letter
-
-    rows = export_rows(cid, mode)
-    saved_ids = {x["id"] for x in chat_state(cid)["saved"]}
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Tin tức"
-    label = EXPORT_MODES[mode]
-    ws["A1"] = f"3X – Tin tức {label} ({datetime.now(VN_TZ).strftime('%d/%m/%Y %H:%M')})"
-    ws["A1"].font = Font(bold=True, size=14, color="C00000")
-    ws["A2"] = f"Tổng cộng {len(rows)} tin · Điểm nóng do AI chấm 1–5 (≥4 là tin nóng) · Bấm vào link để mở bài gốc"
-    ws["A2"].font = Font(italic=True, color="666666")
-    head = ["STT", "Giờ đăng", "Giờ nhận", "Mức độ", "Điểm nóng", "Tiêu đề", "Tiêu đề tiếng Việt (báo ngoại)",
-            "Tóm tắt", "Nguồn", "Trong nước / Quốc tế", "Chủ đề / Từ khoá", "Đã lưu", "Link"]
-    widths = [6, 16, 16, 10, 10, 55, 45, 80, 18, 14, 34, 9, 45]
-    hr = 4
-    thin = Side(style="thin", color="D9D9D9")
-    border = Border(left=thin, right=thin, top=thin, bottom=thin)
-    for i, (h, w) in enumerate(zip(head, widths), 1):
-        cell = ws.cell(row=hr, column=i, value=h)
-        cell.font = Font(bold=True, color="FFFFFF")
-        cell.fill = PatternFill("solid", fgColor="1F3864")
-        cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
-        cell.border = border
-        ws.column_dimensions[get_column_letter(i)].width = w
-    hot_fill = PatternFill("solid", fgColor="FCE4E4")
-    urgent_fill = PatternFill("solid", fgColor="F8CBAD")
-
-    def dt(ts):
-        return datetime.fromtimestamp(ts, VN_TZ).replace(tzinfo=None, microsecond=0) if ts else None
-
-    for n, x in enumerate(rows, 1):
-        r = hr + n
-        hot = int(x.get("hot") or 0)
-        tags = ", ".join(show_tag(t).replace("🔎 ", "Từ khoá: ") for t in x.get("tags", {}).get(str(cid), []))
-        vals = [n, dt(x.get("ts")), dt(x.get("_got")), "🚨 Khẩn" if hot >= 5 else "🔥 Nóng" if hot >= 4 else "",
-                hot or None, x["title"], x.get("title_vi") or "", x.get("summary") or x.get("desc") or "",
-                x["source"], "Trong nước" if x.get("vn", True) else "Quốc tế", tags,
-                "✓" if x["id"] in saved_ids else "", x["link"]]
-        for i, v in enumerate(vals, 1):
-            cell = ws.cell(row=r, column=i, value=v)
-            cell.border = border
-            cell.alignment = Alignment(vertical="top", wrap_text=i in (6, 7, 8, 11))
-            if i in (2, 3) and v:
-                cell.number_format = "dd/mm/yyyy hh:mm"
-            if hot >= 5:
-                cell.fill = urgent_fill
-            elif hot >= 4:
-                cell.fill = hot_fill
-        link_cell = ws.cell(row=r, column=13)
-        link_cell.hyperlink = x["link"]
-        link_cell.font = Font(color="0563C1", underline="single")
-        ws.cell(row=r, column=6).font = Font(bold=True)
-    ws.freeze_panes = ws.cell(row=hr + 1, column=7)
-    ws.page_setup.orientation = "landscape"
-    ws.page_setup.paperSize = ws.PAPERSIZE_A4
-    ws.sheet_properties.pageSetUpPr.fitToPage = True
-    ws.page_setup.fitToWidth = 1
-    ws.page_setup.fitToHeight = 0
-    ws.print_title_rows = f"{hr}:{hr}"
-    if rows:
-        ws.auto_filter.ref = f"A{hr}:{get_column_letter(len(head))}{hr + len(rows)}"
-
-    # ---- Thống kê
-    st = wb.create_sheet("Thống kê")
-    st.column_dimensions["A"].width = 45
-    st.column_dimensions["B"].width = 12
-    st["A1"] = f"Thống kê – tin {label}"
-    st["A1"].font = Font(bold=True, size=14, color="C00000")
-    by_tag = Counter(show_tag(t).replace("🔎 ", "Từ khoá: ") for x in rows for t in x.get("tags", {}).get(str(cid), []))
-    by_src = Counter(x["source"] for x in rows)
-    blocks = [("Tổng quan", [("Tổng số tin", len(rows)),
-                             ("Tin nóng 🔥 (điểm ≥ 4)", sum(1 for x in rows if (x.get("hot") or 0) >= 4)),
-                             ("Tin khẩn 🚨 (điểm 5)", sum(1 for x in rows if (x.get("hot") or 0) >= 5)),
-                             ("Báo trong nước", sum(1 for x in rows if x.get("vn", True))),
-                             ("Báo quốc tế", sum(1 for x in rows if not x.get("vn", True)))]),
-              ("Theo chủ đề / từ khoá", by_tag.most_common()),
-              ("Theo nguồn báo (top 25)", by_src.most_common(25))]
-    r = 3
-    for name, data in blocks:
-        st.cell(row=r, column=1, value=name).font = Font(bold=True, color="FFFFFF")
-        st.cell(row=r, column=1).fill = PatternFill("solid", fgColor="1F3864")
-        st.cell(row=r, column=2, value="Số tin").font = Font(bold=True, color="FFFFFF")
-        st.cell(row=r, column=2).fill = PatternFill("solid", fgColor="1F3864")
-        r += 1
-        for k, v in data or [("(không có)", 0)]:
-            st.cell(row=r, column=1, value=k)
-            st.cell(row=r, column=2, value=v)
-            r += 1
-        r += 1
-    buf = BytesIO()
-    wb.save(buf)
-    fname = f"3X_tin_tuc_{mode}_{datetime.now(VN_TZ).strftime('%Y-%m-%d_%Hh%M')}.xlsx"
-    return buf.getvalue(), fname, len(rows)
 
 
-def send_document(cid, data, fname, caption=""):
-    for attempt in range(3):
-        try:
-            r = HTTP.post(API + "sendDocument", data={"chat_id": cid, "caption": caption[:1000], "parse_mode": "HTML"},
-                          files={"document": (fname, data, "application/vnd.openxmlformats-officedocument."
-                                                           "spreadsheetml.sheet")}, timeout=60)
-            if r.json().get("ok"):
-                return True
-            log.warning("Gửi file lỗi: %s", r.text[:200])
-        except Exception as e:
-            log.warning("Gửi file lỗi mạng: %s", e)
-        time.sleep(3)
-    return False
 
 
-def export_excel(cid, mode):
-    def run():
-        try:
-            data, fname, n = build_excel(cid, mode)
-        except ImportError:
-            send(cid, "Thiếu thư viện openpyxl. Tắt bot và chạy lại run_windows.bat để tự cài.")
-            return
-        if not n:
-            send(cid, f"Chưa có tin nào ({EXPORT_MODES[mode]}) để xuất. Bot ghi nhận tin từ bản 3X này trở đi.")
-            return
-        ok = send_document(cid, data, fname,
-                           f"📊 <b>{n} tin {EXPORT_MODES[mode]}</b> – mở bằng Excel. Có sheet <b>Thống kê</b>, "
-                           "dùng bộ lọc ở dòng tiêu đề để lọc theo nguồn, chủ đề, mức độ nóng.")
-        if not ok:
-            send(cid, "Gửi file thất bại, thử lại sau nhé.")
-    threading.Thread(target=run, daemon=True).start()
 
 
 EXPORT_KB = {"inline_keyboard": [[{"text": "📅 Hôm nay", "callback_data": "xl:today"},
@@ -3108,6 +2352,7 @@ EXPORT_KB = {"inline_keyboard": [[{"text": "📅 Hôm nay", "callback_data": "xl
 
 
 def handle_message(msg):
+    """Bản rút gọn: bot tự gửi tin; Boss chỉ có /tat (tắt) và /bat (bật lại)."""
     cid = msg["chat"]["id"]
     uid = msg.get("from", {}).get("id")
     text = (msg.get("text") or "").strip()
@@ -3117,426 +2362,29 @@ def handle_message(msg):
         request_access(msg)
         return
     c = chat_state(cid)
-    cmd, _, arg = text.partition(" ")
-    cmd = cmd.split("@")[0].lower()
-    arg = arg.strip()
-    if text in BUTTONS:
-        cmd, arg = BUTTONS[text], ""
-
-    if cmd not in ("/start", "/help", "/tat", "/bat", "/pause", "/resume"):
-        # bản rút gọn: chỉ còn tự gửi tin + tắt/mở bot; mọi chức năng khác đã bỏ
-        send(cid, "Mình chỉ có 2 lệnh: /tat để tắt bot, /bat để mở lại.")
-        return
-
+    cmd = text.partition(" ")[0].split("@")[0].lower()
     if cmd in ("/start", "/help"):
         send(cid, HELP, MAIN_KB)
         if c["paused"]:
             send(cid, "Bot đang tắt nên chưa gửi tin. Gõ /bat để mở lại.")
-    elif cmd == "/moi":
-        latest_now(cid)
-    elif cmd == "/nong":
-        v = hot_view(cid)
-        if v:
-            send(cid, v)
-        else:
-            send(cid, "Chưa đủ tin để xếp hạng (cần AI tóm tắt và vài tin đã gửi). Mình gửi 10 tin mới nhất nhé.")
-            latest_now(cid)
-    elif cmd == "/caidat":
-        send(cid, settings_text(cid), settings_kb(cid))
-    elif cmd in ("/tukhoa", "/del", "/them"):
-        if cmd == "/del" and arg.lower() in ("all", "hết", "het", "tất cả"):
-            t, kb = kw_manager(cid, "all")
-        else:
-            t, kb = kw_manager(cid)
-        send(cid, t, kb)
-    elif cmd == "/excel":
-        if arg in EXPORT_MODES:
-            export_excel(cid, arg)
-        else:
-            send(cid, "📊 <b>Xuất file Excel</b> – chọn khoảng thời gian:", EXPORT_KB)
-    elif cmd == "/nguoidung":
-        if is_owner(uid):
-            t, kb = users_view()
-            send(cid, t, kb)
-        else:
-            send(cid, "Chỉ quản lý bot mới xem được danh sách người dùng.")
-    elif cmd in ("/nguonbao", "/themnguon"):
-        if arg and URL_RE.match(arg):
-            add_source(cid, arg)
-        else:
-            send(cid, *sources_view(cid))
-    elif cmd == "/kenh":
-        if not is_owner(uid):
-            send(cid, "Chỉ quản lý bot mới thêm / bớt kênh Telegram.")
-        elif arg.lower().startswith("tim "):
-            channel_search(cid, [arg[4:].strip()])
-        elif arg:
-            channel_add(cid, arg)
-        else:
-            send(cid, *channels_view())
-    elif cmd == "/thuatngu":
-        m = re.match(r"(.+?)\s*=\s*(.+)", arg)
-        if m:
-            with state_lock:
-                STATE["glossary"][m.group(1).strip()] = m.group(2).strip()
-                save_state()
-            send(cid, f"✅ Đã thêm thuật ngữ: <b>{html.escape(m.group(1))}</b> = {html.escape(m.group(2))}")
-        else:
-            g = dict(GLOSSARY)
-            g.update(STATE["glossary"])
-            send(cid, "<b>📖 Bảng thuật ngữ cho AI dịch</b>\nThêm: <code>/thuatngu ปุ๋ย = tân binh</code>\n\n" +
-                 "\n".join(f"• {html.escape(k)} = {html.escape(v)}" for k, v in g.items()))
-    elif cmd == "/daloc":
-        send(cid, dropped_view(cid))
-    elif cmd == "/ngonngu":
-        send(cid, *lang_view(cid))
-    elif cmd == "/daluu":
-        t, kb = saved_view(cid)
-        send(cid, t, kb)
-    elif cmd == "/menu":
-        send(cid, "Bấm để bật/tắt chủ đề:", topic_keyboard(cid))
-    elif cmd == "/add":
-        add_keyword(cid, arg)
-    elif cmd == "/list":
-        send(cid, list_text(cid))
-    elif cmd == "/tim":
-        if arg:
-            search_now(cid, arg)
-        else:
-            send(cid, "Ví dụ: <code>/tim lãi suất ngân hàng</code>")
-    elif cmd == "/nguon":
-        send(cid, source_report())
-    elif cmd == "/now":
-        if not c["topics"] and not c["keywords"]:
-            send(cid, "Bạn chưa theo dõi gì. Chọn chủ đề:", topic_keyboard(cid))
-        else:
-            send(cid, "⏳ Đang quét tin…")
-            WAKE.set()
-    elif cmd == "/tomtat":
-        with state_lock:
-            c["summary"] = not c["summary"]
-            save_state()
-        send(cid, ("✅ Đã BẬT" if c["summary"] else "Đã TẮT") + " tóm tắt AI.")
     elif cmd in ("/pause", "/resume", "/tat", "/bat"):
         with state_lock:
             c["paused"] = cmd in ("/pause", "/tat")
             save_state()
         send(cid, "Đã tắt bot. Gõ /bat để mở lại." if c["paused"] else "Đã mở bot, có tin mình gửi ngay.")
         WAKE.set()
-    elif cmd.startswith("/"):
-        send(cid, "Không hiểu lệnh này. Gõ /help để xem hướng dẫn.", MAIN_KB)
     else:
-        if URL_RE.match(text) and " " not in text:
-            res = send(cid, f"🔗 <b>{html.escape(text[:150])}</b>\nThêm trang này làm nguồn báo theo dõi?",
-                       {"inline_keyboard": [[{"text": "📡 Thêm làm nguồn báo", "callback_data": "sr:pend"}]]})
-            if res and res.get("message_id"):
-                with state_lock:
-                    c["pending"][str(res["message_id"])] = text[:300]
-                    save_state()
-            return
-        m = re.match(r"^(tìm kiếm|tìm|tim|search|find)\s+(.{3,})$", text, re.I)
-        if m:
-            search_now(cid, m.group(2))
-            return
-        if validate_keyword(cid, text) is False:
-            return
-        kb = {"inline_keyboard": [[
-            {"text": "➕ Theo dõi liên tục", "callback_data": "pa"},
-            {"text": "🔎 Tìm ngay", "callback_data": "pf"}]]}
-        label = "Yêu cầu" if needs_smart(text) else "Từ khoá"
-        res = send(cid, f"{label}: <b>{html.escape(text[:200])}</b>", kb)
-        if res and res.get("message_id"):
-            with state_lock:
-                c["pending"][str(res["message_id"])] = text[:200]
-                if len(c["pending"]) > 20:
-                    for k in sorted(c["pending"], key=int)[:-20]:
-                        c["pending"].pop(k)
-                save_state()
+        send(cid, "Mình chỉ có 2 lệnh: /tat để tắt bot, /bat để mở lại.")
+
 
 
 def handle_callback(cq):
-    uid = cq["from"]["id"]
-    msg = cq.get("message") or {}
-    cid = msg.get("chat", {}).get("id")
-    data = cq.get("data", "")
-    data0 = cq.get("data", "")
-    if data0[:3] not in ("ua:", "ud:", "ur:"):
-        tg("answerCallbackQuery", callback_query_id=cq["id"])   # nút cũ: bỏ qua
-        return
-    if data0[:3] in ("ua:", "ud:", "ur:") and cid and is_owner(uid):
-        target = data0[3:]
-        with state_lock:
-            req = STATE["requests"].pop(target, None) or {}
-            if data0.startswith("ua:"):
-                STATE["users"][target] = {"name": req.get("name", target), "ts": time.time()}
-                if target in STATE["chats"]:
-                    STATE["chats"][target].pop("revoked", None)
-            elif data0.startswith("ur:"):
-                STATE["users"].pop(target, None)
-                if target in STATE["chats"]:
-                    STATE["chats"][target]["revoked"] = True
-            save_state()
-        if data0.startswith("ua:"):
-            edit(cid, msg.get("message_id"), f"✅ Đã cho phép: <b>{html.escape(req.get('name', target))}</b>")
-            send(target, "🎉 Bạn đã được duyệt dùng bot <b>3X</b>!\n\n" + HELP, MAIN_KB)
-            send(target, "Chọn chủ đề bạn muốn theo dõi:", topic_keyboard(target))
-        elif data0.startswith("ud:"):
-            edit(cid, msg.get("message_id"), f"❌ Đã từ chối: <b>{html.escape(req.get('name', target))}</b>")
-            send(target, "Rất tiếc, yêu cầu dùng bot của bạn chưa được duyệt.")
-        else:
-            edit(cid, msg.get("message_id"), *users_view())
-        tg("answerCallbackQuery", callback_query_id=cq["id"])
-        return
-    if not cid or not allowed(uid):
-        tg("answerCallbackQuery", callback_query_id=cq["id"])
-        return
-    c = chat_state(cid)
-    mid = msg.get("message_id")
-    toast = None
+    """Không còn nút bấm: chỉ trả lời để nút cũ trên tin nhắn cũ không quay mãi."""
+    try:
+        tg("answerCallbackQuery", callback_query_id=cq.get("id"))
+    except Exception:
+        pass
 
-    if data.startswith("t:"):
-        key = data[2:]
-        with state_lock:
-            if key == "*off":
-                for k in c["topics"]:
-                    c["init"].pop("t:" + k, None)
-                c["topics"] = []
-                turned_on = False
-            elif key in TOPICS:
-                turned_on = key not in c["topics"]
-                if turned_on:
-                    c["topics"].append(key)
-                else:
-                    c["topics"].remove(key)
-                    c["init"].pop("t:" + key, None)
-            else:
-                turned_on = False
-            save_state()
-        tg("editMessageReplyMarkup", chat_id=cid, message_id=mid, reply_markup=topic_keyboard(cid))
-        if turned_on:
-            auto_resume(cid)
-    elif data == "done":
-        edit(cid, mid, list_text(cid))
-        WAKE.set()
-    elif data in ("pa", "pf"):
-        with state_lock:
-            kw = c["pending"].pop(str(mid), "")
-            save_state()
-        if kw:
-            tg("editMessageReplyMarkup", chat_id=cid, message_id=mid, reply_markup={"inline_keyboard": []})
-            add_keyword(cid, kw) if data == "pa" else search_now(cid, kw)
-    elif data == "qn":
-        with state_lock:
-            if "moinhat" not in c["topics"]:
-                c["topics"].append("moinhat")
-            save_state()
-        auto_resume(cid)
-        edit(cid, mid, "✅ Đã bật <b>🆕 Tin mới nhất Việt Nam</b>. Vài tin mới nhất sẽ về ngay sau đây.")
-        WAKE.set()
-    elif data == "qm":
-        send(cid, "Bấm để bật/tắt chủ đề:", topic_keyboard(cid))
-    elif data == "qlatest":
-        latest_now(cid)
-    elif data.startswith("km:"):
-        op, _, key = data[3:].partition(":")
-        if op == "o":
-            k = next((x for x in c["keywords"] if kw_key(x) == key), None)
-            if k:
-                edit(cid, mid, *kw_detail(cid, k))
-        elif op == "x":
-            removed = remove_keywords(cid, {key})
-            toast = ("🗑 Đã xoá: " + removed[0][:40]) if removed else None
-            edit(cid, mid, *kw_manager(cid))
-        elif op == "s":
-            k = next((x for x in c["keywords"] if kw_key(x) == key), None)
-            if k:
-                search_now(cid, k)
-        elif op == "multi":
-            with state_lock:
-                c["kmsel"] = []
-            edit(cid, mid, *kw_manager(cid, "multi"))
-        elif op == "t":
-            with state_lock:
-                sel = set(c.get("kmsel", []))
-                sel ^= {key}
-                c["kmsel"] = list(sel)
-            edit(cid, mid, *kw_manager(cid, "multi"))
-        elif op == "selall":
-            with state_lock:
-                c["kmsel"] = [kw_key(k) for k in c["keywords"]]
-            edit(cid, mid, *kw_manager(cid, "multi"))
-        elif op == "delsel":
-            removed = remove_keywords(cid, set(c.get("kmsel", [])))
-            toast = f"🗑 Đã xoá {len(removed)} từ khoá"
-            edit(cid, mid, *kw_manager(cid))
-        elif op == "all":
-            edit(cid, mid, *kw_manager(cid, "all"))
-        elif op == "allyes":
-            removed = remove_keywords(cid, {kw_key(k) for k in c["keywords"]})
-            toast = f"🗑 Đã xoá hết {len(removed)} từ khoá"
-            edit(cid, mid, *kw_manager(cid))
-        elif op == "back":
-            with state_lock:
-                c["kmsel"] = []
-            edit(cid, mid, *kw_manager(cid))
-        elif op == "add":
-            send(cid, "Gõ từ khoá bạn muốn theo dõi rồi gửi, ví dụ:\n<code>chiến sự + iran</code>\n"
-                      "<code>nguyen duc anh + dong nai</code>\n<code>giá vàng, lãi suất</code>")
-        elif op == "addlast":
-            if c.get("lastsearch"):
-                add_keyword(cid, c["lastsearch"])
-                tg("editMessageReplyMarkup", chat_id=cid, message_id=mid, reply_markup={"inline_keyboard": []})
-    elif data.startswith("sv:"):
-        if data == "sv:clear":
-            with state_lock:
-                c["saved"] = []
-                save_state()
-            edit(cid, mid, "🗑 Đã xoá hết tin đã lưu.")
-        else:
-            toast = save_item(cid, data[3:])
-    elif data.startswith("ch:"):
-        op, _, u = data[3:].partition(":")
-        if op == "menu":
-            send(cid, *channels_view())
-        elif not is_owner(uid):
-            toast = "Chỉ quản lý bot mới thay đổi kênh"
-        elif op == "sug":
-            channel_search(cid, TG_PRESET_SEARCHES)
-        elif op == "a":
-            channel_add(cid, u)
-            toast = "Đang thêm kênh…"
-        elif op == "x":
-            with state_lock:
-                STATE["channels"] = [c for c in STATE["channels"] if c["u"] != u]
-                save_state()
-            edit(cid, mid, *channels_view())
-    elif data == "preset:kh":
-        send(cid, apply_cambodia_preset(cid), MAIN_KB)
-        toast = "🇰🇭 Đã bật Chế độ Campuchia"
-    elif data.startswith("lo:"):
-        opt = data[3:]
-        with state_lock:
-            if opt == "menu" or opt == "reset":
-                c["lo_tmp"] = []
-            elif opt == "save":
-                tmp = c.get("lo_tmp", [])
-                if tmp:
-                    c["lang_order"] = tmp + [l for l in c["lang_order"] if l not in tmp]
-                c["lo_tmp"] = []
-            elif opt in LANG_NAMES:
-                c.setdefault("lo_tmp", []).append(opt)
-            save_state()
-        if opt == "menu":
-            send(cid, *order_view(cid))
-        elif opt == "save":
-            edit(cid, mid, "🔢 Thứ tự ưu tiên: <b>" + " > ".join(LANG_NAMES[l].replace("Tiếng ", "")
-                                                                 for l in c["lang_order"]) + "</b>")
-        else:
-            edit(cid, mid, *order_view(cid))
-    elif data.startswith("lg:"):
-        opt = data[3:]
-        if opt == "menu":
-            send(cid, *lang_view(cid))
-        elif opt == "done":
-            edit(cid, mid, "🗣 Ngôn ngữ báo: <b>Việt + Anh" + "".join(", " + LANG_NAMES[l].replace("Tiếng ", "")
-                                                                       for l in c["langs"]) + "</b>")
-            WAKE.set()
-        elif opt in LANG_NAMES:
-            with state_lock:
-                if opt in c["langs"]:
-                    c["langs"].remove(opt)
-                else:
-                    c["langs"].append(opt)
-                    c["scope"]["intl"] = True   # báo tiếng nước ngoài = báo nước ngoài
-                    if opt not in c["lang_order"]:
-                        c["lang_order"].append(opt)
-                save_state()
-            edit(cid, mid, *lang_view(cid))
-    elif data.startswith("sr:"):
-        op, _, key = data[3:].partition(":")
-        if op == "menu":
-            send(cid, *sources_view(cid))
-        elif op == "add":
-            send(cid, "Gửi <b>link trang chủ</b> của báo muốn thêm vào ô chat, ví dụ:\n"
-                      "<code>https://www.freshnewsasia.com</code>\n<code>https://jianhuadaily.com</code>")
-        elif op == "pend":
-            with state_lock:
-                u = c["pending"].pop(str(mid), "")
-                save_state()
-            if u:
-                tg("editMessageReplyMarkup", chat_id=cid, message_id=mid, reply_markup={"inline_keyboard": []})
-                add_source(cid, u, reply_to=mid)
-        elif op in ("t", "x"):
-            with state_lock:
-                for src in list(c["sources"]):
-                    if kw_key(src["url"]) == key:
-                        if op == "t":
-                            src["all"] = not src.get("all")
-                        else:
-                            c["sources"].remove(src)
-                            c["init"].pop("s:" + src["url"], None)
-                save_state()
-            edit(cid, mid, *sources_view(cid))
-            WAKE.set()
-    elif data.startswith("xl:"):
-        if data[3:] in EXPORT_MODES:
-            toast = "📊 Đang tạo file Excel…"
-            export_excel(cid, data[3:])
-    elif data.startswith("an:"):
-        toast = "🧠 Đang phân tích…"
-        analyze_item(cid, data[3:], mid)
-    elif data.startswith("fw:"):
-        toast = "➕ Đang tạo từ khoá theo dõi…"
-        follow_item(cid, data[3:], mid)
-    elif data.startswith("s:"):
-        opt = data[2:]
-        with state_lock:
-            sc = c["scope"]
-            if opt in ("vn", "intl"):
-                other = "intl" if opt == "vn" else "vn"
-                if sc[opt] and not sc[other]:
-                    toast = "Phải chọn ít nhất 1: báo trong nước hoặc nước ngoài"
-                else:
-                    sc[opt] = not sc[opt]
-            elif opt == "trusted":
-                sc["trusted"] = not sc["trusted"]
-            elif opt == "hot":
-                c["hot_only"] = not c["hot_only"]
-            elif opt == "sum":
-                c["summary"] = not c["summary"]
-            elif opt == "notify":
-                c["notify"] = {"all": "hot", "hot": "off", "off": "all"}[c["notify"]]
-            elif opt == "quiet":
-                c["quiet"] = not c["quiet"]
-            elif opt == "digest":
-                c["digest"] = not c["digest"]
-            elif opt == "pause":
-                c["paused"] = not c["paused"]
-            save_state()
-        if opt == "status":
-            send(cid, source_report())
-        elif opt == "dropped":
-            send(cid, dropped_view(cid))
-        elif opt == "users":
-            if is_owner(uid):
-                send(cid, *users_view())
-            else:
-                toast = "Chỉ quản lý bot mới dùng được mục này"
-        elif opt == "help":
-            send(cid, HELP, MAIN_KB)
-        elif opt == "done":
-            edit(cid, mid, settings_text(cid))
-            WAKE.set()
-        elif msg.get("text", "").startswith("⚙️"):
-            edit(cid, mid, settings_text(cid), settings_kb(cid))
-        else:
-            edit(cid, mid, "⏸ Đã tạm dừng." if c["paused"] else "▶️ Đã bật nhận tin lại.")
-        if opt == "pause" and not c["paused"]:
-            WAKE.set()
-    params = {"callback_query_id": cq["id"]}
-    if toast:
-        params["text"] = toast
-    tg("answerCallbackQuery", **params)
 
 
 def feed_label(url):
@@ -3557,45 +2405,6 @@ def feed_label(url):
     return domain_of(url) + " › " + p.path.rsplit("/", 1)[-1].replace(".rss", "")
 
 
-def source_report():
-    current = set(ALL_FEEDS) | {"src:" + s["url"] for p in LANG_SOURCES.values() for s in p} | set(channel_urls())
-    for c in STATE["chats"].values():
-        current |= set(custom_source_urls(c))
-    with state_lock:
-        items = [(u, h) for u, h in STATE["health"].items() if u in current or "news.google.com" in u]
-    ok = [u for u, h in items if h["fail"] == 0 and h.get("last_ok")]
-    bad = sorted([(u, h) for u, h in items if h["fail"] > 0], key=lambda x: -x[1]["fail"])
-    doms_ok = sorted({domain_of(u) for u in ok if "news.google.com" not in u})
-    lines = [f"<b>📡 Tình trạng nguồn tin</b>\n✅ Hoạt động tốt: <b>{len(ok)}</b> nguồn",
-             "Báo: " + html.escape(", ".join(doms_ok) or "(chưa quét lần nào)")]
-    if bad:
-        lines.append(f"\n⚠️ Đang lỗi / bị chặn: <b>{len(bad)}</b> nguồn")
-        for u, h in bad[:25]:
-            lines.append(f"• {html.escape(feed_label(u))} – {html.escape(h['err'])} (x{h['fail']})")
-        lines.append("\n<i>Tin của các báo này vẫn được lấy qua Google News nên không bị sót.</i>")
-    else:
-        lines.append("\nKhông có nguồn nào bị chặn. 👍")
-    def src_line(u):
-        h = STATE["health"].get(u)
-        if not h:
-            return f"⏳ {html.escape(feed_label(u))} – chưa quét"
-        n = len(_feed_cache.get(u, {}).get("items", []))
-        mark = "✅" if h["fail"] == 0 else "⚠️"
-        tail = f" – {html.escape(h['err'])}" if h["fail"] else f" – {n} bài"
-        return f"{mark} {html.escape(feed_label(u))}{tail}"
-    off = official_urls()
-    lines.append("\n<b>🏛 Trang chính thức (tầng 1)</b>")
-    lines += [src_line(u) for u in off]
-    lines.append("\n<b>📣 Kênh Telegram chính thức</b>")
-    if tg_reader:
-        lines.append("Tài khoản đọc: " + html.escape(tg_reader.status()))
-    lines += [src_line(u) for u in channel_urls()] or ["(chưa có kênh – ⚙️ Cài đặt → 📣 Kênh Telegram)"]
-    srcs = sorted({u for u, _ in items if u.startswith("src:") and u not in off})
-    if srcs:
-        lines.append("\n<b>📰 Báo Campuchia / Khmer / Trung / Thái / nguồn riêng</b>")
-        lines += [src_line(u) for u in srcs]
-    lines.append("\n🤖 AI tóm tắt: " + html.escape(AI["status"] if GEMINI_KEY else "chưa cài API key"))
-    return "\n".join(lines)
 
 
 def check_alerts():
@@ -3737,16 +2546,6 @@ def log_dropped(cs, items, reason):
     del lst[:-60]
 
 
-def dropped_view(cid):
-    c = chat_state(cid)
-    lst = list(reversed(c.get("dropped", [])))[:30]
-    if not lst:
-        return "Chưa có tin nào bị lọc."
-    lines = [f"<b>🗑 {len(lst)} tin bị lọc gần nhất</b> (bấm để xem nếu nghi bị sót):"]
-    for d in lst:
-        lines.append(f'• <a href="{html.escape(d["l"], quote=True)}">{html.escape(d["t"])}</a> '
-                     f'<i>({html.escape(d["s"])} – {d["r"]}, {ago(d["ts"])})</i>')
-    return "\n".join(lines)
 
 
 def apply_hot_filter(cs, c, entries, now):
@@ -3877,52 +2676,6 @@ def run_cycle():
     save_state()
 
 
-def latest_now(cid, n=10):
-    """Nút '📰 Tin mới nhất': gửi ngay N tin mới nhất theo chủ đề/từ khoá đang theo dõi
-    (chưa chọn gì thì lấy Tin mới nhất Việt Nam), đã lọc trùng + lọc lạc đề."""
-    def run():
-        cs = chat_state(cid)
-        with state_lock:
-            c = json.loads(json.dumps({k: cs[k] for k in ("topics", "keywords", "summary", "scope", "hot_only", "langs", "sources",
-                                                     "lang_order")}))
-        if not c["topics"] and not c["keywords"]:
-            c["topics"] = ["moinhat"]
-        send(cid, "⏳ Đang gom tin mới nhất từ các báo…")
-        now = time.time()
-        ensure_expansions(c["keywords"])
-        fetched = fetch_many(chat_urls(c))
-        cand = {}
-        for key, tag, items in chat_subs(c, fetched, now, max_age=24):
-            for it in items:
-                cand.setdefault(it["id"], [it, set()])[1].add(tag)
-        entries = sorted(cand.values(), key=lambda x: x[0]["ts"] or 0, reverse=True)[:80]
-        uniq, toks = [], []
-        for it, tags in entries:
-            tk = title_tokens(it["title"])
-            if any(similar(tk, o) for o in toks):
-                continue
-            toks.append(tk)
-            uniq.append((it, tags))
-        uniq, _ = drop_irrelevant(uniq)
-        uniq, _ = ai_dedupe(uniq[:n * 2], [])
-        uniq = uniq[:n]
-        if not uniq:
-            send(cid, "Chưa tìm thấy tin nào trong 24 giờ qua với cài đặt hiện tại. Thử bật thêm chủ đề "
-                      "(📋 Chủ đề) hoặc nới phạm vi nguồn (⚙️ Cài đặt).")
-            return
-        if c["summary"]:
-            summarize([it for it, _ in uniq])
-        send(cid, f"📰 <b>{len(uniq)} tin mới nhất</b> theo những gì bạn theo dõi:")
-        for it, tags in uniq:
-            if not claim_send(cs, it) and it["id"] not in cs["sent"]:
-                continue
-            store_item(it, cid, tags)
-            r = send(cid, fmt_item(it, tags, c["summary"]), item_kb(it), silent=True)
-            if r and c["summary"] and not _summary_cache.get(it["id"], {}).get("summary"):
-                queue_summary(cid, r.get("message_id"), it, tags)
-            time.sleep(0.6)
-        save_state()
-    threading.Thread(target=run, daemon=True).start()
 
 
 def check_digest():
