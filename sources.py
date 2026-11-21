@@ -57,6 +57,7 @@ TOPICS = {
         "ai_desc": "tin CẤP QUỐC GIA về chính trị, quân sự – quốc phòng – an ninh biên giới (Việt Nam–Campuchia và "
                    "Campuchia–Thái Lan, gồm ngừng bắn, GBC/RBC/JBC, ASEAN, nước thứ ba), ngoại giao, kinh tế – "
                    "tài chính – thương mại, vốn vay và viện trợ quốc tế, thuế, hải quan của Campuchia (kể cả quan hệ với Thái Lan, Việt Nam, Trung Quốc, Mỹ…); báo cáo, xếp hạng, trừng phạt, cáo buộc của nước ngoài hoặc tổ chức quốc tế (Mỹ, EU, LHQ, FATF…) nhắm vào Campuchia; khoản viện trợ, vốn vay, tài trợ mới của nước ngoài và tổ chức quốc tế (ADB, Ngân hàng Thế giới, Nhật, Trung Quốc, EU…) cho Campuchia; tội phạm lừa đảo trực tuyến và buôn người ở tầm quốc gia hoặc quốc tế (khu lừa đảo, truy quét, dẫn độ). "
+                   "LUÔN GIỮ: phát biểu, chỉ đạo, quyết định, tuyên bố của Thủ tướng, Phó Thủ tướng, Chủ tịch Thượng viện / Quốc hội, Bộ trưởng Campuchia, kể cả khi diễn ra ở hội chợ, lễ khai mạc, hội nghị. "
                    "LOẠI: tin xã hội / địa phương (dọn vệ sinh phường xã, lễ hội, triển lãm du học, giáo dục, y tế "
                    "thường ngày, vắc-xin, bệnh viện, sức khỏe), tai nạn giao thông, cháy nổ, trọng án dân sự, thời tiết, thể thao, giải trí, "
                    "văn hoá, nghệ thuật, lịch sử, du lịch, ẩm thực, môi trường, từ thiện, tôn giáo, quảng bá doanh nghiệp, hội thảo hoặc "
