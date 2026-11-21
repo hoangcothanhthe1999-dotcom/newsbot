@@ -255,3 +255,19 @@ PROBATION_URLS = ['https://freshnews.com.kh/', 'https://kh.usembassy.gov/', 'htt
 
 # Cơ quan / tổ chức NƯỚC NGOÀI: tin của họ nói về Campuchia luôn được gửi (không qua bộ lọc "lạc đề" của AI)
 FOREIGN_OFFICIAL_DOMAINS = ['state.gov', 'treasury.gov', 'justice.gov', 'fincen.gov', 'usembassy.gov', 'whitehouse.gov', 'congress.gov', 'un.org', 'ohchr.org', 'unodc.org', 'icj-cij.org', 'interpol.int', 'fatf-gafi.org', 'adb.org', 'imf.org', 'worldbank.org', 'aiib.org', 'eeas.europa.eu', 'europa.eu', 'europarl.europa.eu', 'gov.uk', 'diplomatie.gouv.fr', 'auswaertiges-amt.de', 'fmprc.gov.cn', 'gov.cn', 'mofa.go.jp', 'go.jp', 'mofa.go.kr', 'dfat.gov.au', 'mea.gov.in', 'kln.gov.my', 'mfa.gov.sg', 'mfa.go.th', 'thaigov.go.th', 'mofa.gov.vn']
+
+
+# Kênh Telegram CÔNG KHAI đọc qua t.me/s/<tên> (web_reader.py) – đã kiểm chứng 21/11/2026, không cần tài khoản phụ.
+# official=True: nguồn chính thức; False: báo chí. Chỉ nạp 1 lần vào state["channels"] khi bot chưa có kênh nào.
+DEFAULT_CHANNELS = [
+    {"u": "modgovkhm", "title": "Bộ Quốc phòng Campuchia", "official": True},
+    {"u": "moi_news", "title": "Bộ Nội vụ Campuchia", "official": True},
+    {"u": "MFAICNEWS", "title": "Bộ Ngoại giao Campuchia (MFAIC)", "official": True},
+    {"u": "mefcambodia", "title": "Bộ Kinh tế và Tài chính Campuchia", "official": True},
+    {"u": "royalcambodianarmy", "title": "Lục quân Hoàng gia Campuchia", "official": True},
+    {"u": "Dr_Hunmanetofcambodia", "title": "Thủ tướng Hun Manet", "official": True},
+    {"u": "SarSokha_Speech", "title": "Phó Thủ tướng Sar Sokha", "official": True},
+    {"u": "freshnewsasia", "title": "Fresh News (Khmer)", "official": False},
+    {"u": "freshnewsinternational", "title": "Fresh News English", "official": False},
+    {"u": "khmertimesbreakingnews", "title": "Khmer Times Breaking News", "official": False},
+]
