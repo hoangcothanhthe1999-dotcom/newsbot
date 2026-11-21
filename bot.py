@@ -1296,7 +1296,14 @@ def collect_keyword(kw, fetched, now, when="1d", max_age=None, langs=()):
     return [it for it in res if fresh(it, now, max_age)]
 
 
+def vn_press(it):
+    """Báo/trang Việt Nam (đuôi .vn): Boss không cần đọc, chặn cứng bất kể cài đặt chat."""
+    return (it.get("domain") or "").endswith(".vn")
+
+
 def scope_ok(it, scope):
+    if vn_press(it):
+        return False
     """Lọc theo cài đặt nguồn của người dùng: trong nước / nước ngoài / chỉ báo uy tín."""
     if it["vn"] and not scope.get("vn", True):
         return False
@@ -1333,7 +1340,7 @@ def chat_subs(c, fetched, now, max_age=None):
             subs.append(("s:" + src["url"], "📡 " + src.get("name", domain_of(src["url"])), items))
     out = []
     for k, tag, items in subs:
-        keep = [it for it in items if tag.startswith("📡") or scope_ok(it, c["scope"])]
+        keep = [it for it in items if not vn_press(it) and (tag.startswith("📡") or scope_ok(it, c["scope"]))]
         out.append((k, tag, keep))
     return out
 
