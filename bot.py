@@ -34,16 +34,21 @@ except ImportError:
     LANG_SOURCES = {}
 try:
     from sources import (FOREIGN_OFFICIAL_DOMAINS, PROBATION_UNTIL, PROBATION_URLS, OFFICIAL_SITES, OFFICIAL_DOMAINS, MAINSTREAM_KH, STATEMENT_WORDS, BLOCK_DOMAINS,
-                         TG_PRESET_SEARCHES, GLOSSARY)
+                         TG_PRESET_SEARCHES, GLOSSARY, DEFAULT_CHANNELS)
 except ImportError:
     OFFICIAL_SITES, OFFICIAL_DOMAINS, MAINSTREAM_KH, STATEMENT_WORDS = [], [], [], []
     PROBATION_UNTIL, PROBATION_URLS = 0, []
     FOREIGN_OFFICIAL_DOMAINS = []
     BLOCK_DOMAINS, TG_PRESET_SEARCHES, GLOSSARY = [], [], {}
+    DEFAULT_CHANNELS = []
 try:
     import tg_reader
 except Exception:
     tg_reader = None
+try:
+    import web_reader   # đọc kênh công khai qua t.me/s (không cần tài khoản phụ)
+except Exception:
+    web_reader = None
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -151,6 +156,9 @@ def load_state():
     st.setdefault("items", {})    # kho tin đã gửi gần đây (để lưu tin, phân tích, bản tin sáng/tối)
     st.setdefault("meta", {})
     st.setdefault("channels", [])  # kênh Telegram chính thức đọc qua tài khoản phụ
+    if DEFAULT_CHANNELS and not st["channels"] and not st["meta"].get("seed_channels"):
+        st["channels"] = [dict(c) for c in DEFAULT_CHANNELS]   # nạp 1 lần danh sách kênh công khai mặc định
+        st["meta"]["seed_channels"] = 1
     st.setdefault("glossary", {})  # thuật ngữ người dùng thêm (/thuatngu)
     st.setdefault("kt", {})        # từ khoá -> {ngôn ngữ: [cụm dịch]} (Khmer, Trung, Thái…)
     st.setdefault("resolved", {})  # trang báo -> {type: rss|page, url, name, at}
@@ -674,11 +682,11 @@ def fetch_channel(username):
     if cache and time.time() - cache.get("at", 0) < max(RSS_EVERY, 60) - 5:
         return cache["items"]
     r = tg_reader.get_reader() if tg_reader else None
-    if not r:
+    if not r and not web_reader:
         return cache.get("items", [])
     conf = next((c for c in STATE["channels"] if c["u"].lower() == username.lower()), {})
     try:
-        msgs = r.fetch(username, 25)
+        msgs = r.fetch(username, 25) if r else web_reader.fetch(username, 25)   # không có tài khoản phụ -> đọc qua t.me/s
         mark_ok(key)
     except Exception as e:
         mark_fail(key, e)
@@ -699,7 +707,7 @@ def fetch_channel(username):
 
 
 def channel_urls():
-    return ["tgch:" + c["u"] for c in STATE.get("channels", [])] if tg_reader else []
+    return ["tgch:" + c["u"] for c in STATE.get("channels", [])] if (tg_reader or web_reader) else []
 
 
 def official_urls():
