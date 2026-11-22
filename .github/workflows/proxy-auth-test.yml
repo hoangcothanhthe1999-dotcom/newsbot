@@ -1,0 +1,48 @@
+name: Proxy-Auth-Test (kiểm tra khóa Apps Script, KHÔNG gửi Telegram)
+# Chỉ chạy tay. Cần 2 Secret: APPS_PROXY_URL (URL deployment THỬ) và APPS_PROXY_KEY. Không in khóa/URL ra log.
+on:
+  push:
+    branches: ["feat/proxy-key"]   # file chưa nằm trên main nên không bấm 'Run workflow' được; push lên nhánh này (hoặc Re-run) để chạy
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r requirements.txt
+      - name: Kiểm tra xác thực (chỉ in kết quả, không in khóa/URL)
+        env:
+          URL: ${{ secrets.APPS_PROXY_URL }}
+          KEY: ${{ secrets.APPS_PROXY_KEY }}
+        run: |
+          if [ -z "$URL" ] || [ -z "$KEY" ]; then echo "Chưa có Secret APPS_PROXY_URL/APPS_PROXY_KEY → bỏ qua kiểm tra (đạt giả, chờ Boss thêm Secret rồi Re-run)"; exit 0; fi
+          show() { jq -r 'if type=="array" then "DANH SÁCH \(length) mục (\([.[]|select(.link and (.error|not))]|length) hợp lệ)" else "JSON: \(.error // "?")" end' 2>/dev/null || echo "KHÔNG PHẢI JSON"; }
+          echo -n "T1 POST khóa đúng : "; curl -sL --max-time 120 --data-urlencode "k=$KEY" "$URL" | show
+          echo -n "T2 POST thiếu khóa: "; curl -sL --max-time 120 -d "x=1" "$URL" | show
+          echo -n "T3 POST khóa sai  : "; curl -sL --max-time 120 -d "k=sai" "$URL" | show
+          echo -n "T4 GET khóa đúng  : "; curl -sGL --max-time 120 --data-urlencode "k=$KEY" "$URL" | show
+          echo -n "T5 GET thiếu khóa : "; curl -sL --max-time 120 "$URL" | show
+          echo -n "T6 POST lần 2 (cache?) : "; /usr/bin/time -f "%es" curl -sL --max-time 120 --data-urlencode "k=$KEY" "$URL" 2>&1 >/dev/null | tail -1
+      - name: Bot lấy tin qua khóa (DRY_RUN) + kiểm tra log không lộ
+        env:
+          DRY_RUN: "1"
+          TELEGRAM_BOT_TOKEN: "dry-run-khong-dung"
+          APPS_PROXY_URL: ${{ secrets.APPS_PROXY_URL }}
+          APPS_PROXY_KEY: ${{ secrets.APPS_PROXY_KEY }}
+          STATE_FILE: /tmp/state_proxytest.json
+          FETCH_FULLTEXT: "0"
+        run: |
+          if [ -z "$APPS_PROXY_URL" ] || [ -z "$APPS_PROXY_KEY" ]; then echo "Chưa có Secret → bỏ qua"; exit 0; fi
+          echo '{}' > /tmp/state_proxytest.json
+          python - 2>&1 <<'PY' | tee proxytest.log
+          import bot
+          items = bot.fetch_proxy("px:docho")
+          print("BOT: số mục lấy được =", len(items))
+          PY
+          if grep -qF "$APPS_PROXY_KEY" proxytest.log || grep -qF "$APPS_PROXY_URL" proxytest.log || grep -q "macros/s/[A-Za-z0-9_-]\{20,\}" proxytest.log; then echo "LỘ KHÓA/URL TRONG LOG"; exit 1; else echo "Log sạch (không có khóa/URL)"; fi
+          if grep -c "dry-run-khong-dung\|api.telegram.org" proxytest.log | grep -qv '^0$'; then echo "CẢNH BÁO: có dấu hiệu gọi Telegram"; fi
