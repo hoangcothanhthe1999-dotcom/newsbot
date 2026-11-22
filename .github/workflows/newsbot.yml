@@ -1,9 +1,6 @@
 name: NewsBot
 
 on:
-  schedule:
-    - cron: "*/20 23,0-7 * * *"   # 06:00–14:40 giờ VN, 20 phút một lần
-    - cron: "0,20 8 * * *"          # 15:00 và 15:20 giờ VN (phiên cuối bắt đầu 15:20)
   workflow_dispatch:          # cho phép bấm "Run workflow" để chạy tay
 
 concurrency:
@@ -51,11 +48,27 @@ jobs:
 
       - name: Lưu trạng thái
         if: always()
+        shell: bash
         run: |
+          set -u
           git config user.name "newsbot"
           git config user.email "newsbot@users.noreply.github.com"
-          git add state.json 2>/dev/null || exit 0
-          git diff --cached --quiet && exit 0
-          git commit -m "cập nhật state [skip ci]"
-          git pull --rebase -X theirs || true
-          git push
+          if [ ! -f state.json ]; then echo "::error::Không có state.json để lưu"; exit 1; fi
+          if ! git add state.json; then echo "::error::git add state.json thất bại"; exit 1; fi
+          if git diff --cached --quiet; then echo "Không có thay đổi state"; exit 0; fi
+          if ! git commit -m "cập nhật state [skip ci]"; then echo "::error::git commit thất bại"; exit 1; fi
+          for i in 1 2 3; do
+            if git pull --rebase --autostash origin main; then
+              if git push origin HEAD:main; then echo "Đã lưu state lên remote (lần $i)"; exit 0; fi
+              echo "::warning::push thất bại lần $i"
+            elif [ -d .git/rebase-merge ] || [ -d .git/rebase-apply ]; then
+              git rebase --abort || true
+              echo "::error::Xung đột khi rebase (state.json): dừng để bảo toàn dữ liệu, cần xử lý thủ công"
+              exit 1
+            else
+              echo "::warning::pull thất bại lần $i"
+            fi
+            sleep $((i*5))
+          done
+          echo "::error::Không lưu được state lên remote sau 3 lần thử"
+          exit 1
