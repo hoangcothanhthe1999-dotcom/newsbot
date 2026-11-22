@@ -87,6 +87,7 @@ CF_ACCOUNT = os.environ.get("CF_ACCOUNT_ID", "").strip()      # AI dự phòng t
 CF_TOKEN = os.environ.get("CF_API_TOKEN", "").strip()
 CF_KEY = CF_TOKEN if (CF_ACCOUNT and CF_TOKEN) else ""
 CF_MODEL = os.environ.get("CF_AI_MODEL", "").strip() or "@cf/meta/llama-3.1-8b-instruct"
+IS_ACTIONS = os.environ.get("GITHUB_ACTIONS", "").lower() == "true"   # trên Actions không tự gán chủ bot cho người nhắn đầu tiên
 ALLOWED_USERS = {x.strip() for x in os.environ.get("ALLOWED_USERS", "").split(",") if x.strip()}
 CHECK_INTERVAL = env_int("CHECK_INTERVAL", 60)       # giây giữa 2 lần quét
 RSS_EVERY = env_int("RSS_EVERY", 60)                 # RSS báo: tải lại tối đa mỗi 60 giây (nhanh nhất)
@@ -165,7 +166,7 @@ def load_state():
     st.setdefault("resolved", {})  # trang báo -> {type: rss|page, url, name, at}
     st.setdefault("pg", {})        # trang theo dõi không có RSS: link -> lần đầu thấy
     st.setdefault("users", {})     # người được chủ bot duyệt: uid -> {name, ts}
-    st.setdefault("requests", {})  # yêu cầu đang chờ duyệt
+    st["requests"] = {}  # (cũ) kho yêu cầu truy cập: không còn dùng, xoá dữ liệu cũ (state.json công khai)
     return st
 
 
@@ -2076,6 +2077,14 @@ API = f"https://api.telegram.org/bot{TOKEN}/"
 _last_tg_error = [""]
 
 
+def _scrub_tg(x):
+    """Che token bot Telegram trước khi ghi log (lỗi của requests chứa nguyên /bot<TOKEN>/...)."""
+    s = str(x)
+    if TOKEN:
+        s = s.replace(TOKEN, "***")
+    return re.sub(r"/bot\d+:[\w-]+", "/bot***", s)
+
+
 def tg(method, **params):
     _last_tg_error[0] = ""
     for attempt in range(5):
@@ -2083,7 +2092,7 @@ def tg(method, **params):
             r = HTTP.post(API + method, json=params, timeout=40 if method == "getUpdates" else 20)
             data = r.json()
         except Exception as e:
-            log.warning("Telegram %s lỗi mạng: %s", method, e)
+            log.warning("Telegram %s lỗi mạng: %s", method, _scrub_tg(e))
             time.sleep(2 + attempt * 2)
             continue
         if data.get("ok"):
@@ -2094,7 +2103,7 @@ def tg(method, **params):
             continue
         _last_tg_error[0] = str(data.get("description"))
         if "message is not modified" not in str(data.get("description")):
-            log.warning("Telegram %s lỗi: %s", method, data.get("description"))
+            log.warning("Telegram %s lỗi: %s", method, _scrub_tg(data.get("description")))
         return None
     return None
 
@@ -2330,7 +2339,8 @@ def can_use(user_id):
 def allowed(user_id):
     uid = str(user_id)
     with state_lock:
-        if STATE["owner"] is None and (not ALLOWED_USERS or uid in ALLOWED_USERS):
+        if (STATE["owner"] is None and not IS_ACTIONS
+                and (not ALLOWED_USERS or uid in ALLOWED_USERS)):
             STATE["owner"] = uid
             save_state()
             log.info("Đã gán chủ bot: %s", uid)
@@ -2345,28 +2355,22 @@ def user_label(frm):
     return name
 
 
+_DENIED_AT = {}   # chỉ trong bộ nhớ (không ghi state.json): chống trả lời lặp một người lạ
+
+
 def request_access(msg):
-    """Người lạ nhắn bot -> gửi yêu cầu cho chủ bot duyệt bằng 1 nút bấm."""
+    """Người lạ nhắn bot: từ chối ngắn, tối đa 1 lần/6 giờ/người. Không nhắn chủ bot, không lưu thông tin người lạ."""
     frm = msg.get("from", {})
     uid, cid = str(frm.get("id")), msg["chat"]["id"]
-    owner = STATE.get("owner")
+    now = time.time()
     with state_lock:
-        old = STATE["requests"].get(uid)
-        if old and time.time() - old["ts"] < 6 * 3600:
-            send(cid, "⏳ Yêu cầu của bạn đang chờ quản lý bot duyệt. Bạn sẽ nhận được thông báo khi được duyệt.")
+        if now - _DENIED_AT.get(uid, 0) < 6 * 3600:
             return
-        STATE["requests"][uid] = {"name": user_label(frm), "cid": cid, "ts": time.time()}
-        save_state()
-    send(cid, "👋 Chào bạn! Bot <b>3X</b> cần quản lý duyệt trước khi dùng.\n"
-              "✅ Mình đã gửi yêu cầu – bạn sẽ được báo ngay khi được duyệt.")
-    if owner:
-        send(owner, f"👤 <b>Có người muốn dùng bot:</b>\n{html.escape(user_label(frm))}\nID: <code>{uid}</code>",
-             {"inline_keyboard": [[{"text": "✅ Cho phép", "callback_data": "ua:" + uid},
-                                   {"text": "❌ Từ chối", "callback_data": "ud:" + uid}]]})
-
-
-
-
+        _DENIED_AT[uid] = now
+        if len(_DENIED_AT) > 1000:
+            for k in [k for k, t in _DENIED_AT.items() if now - t >= 6 * 3600]:
+                del _DENIED_AT[k]
+    send(cid, "Bot riêng, chưa mở cho người ngoài.")
 
 
 GENERIC_RE = re.compile(r"^(gửi|cho|xem|lấy|có)?\s*(\d+\s*)?(cái\s*)?(tin|tin tức|bài|bản tin|thời sự)?\s*"
@@ -2458,6 +2462,8 @@ def handle_message(msg):
     text = (msg.get("text") or "").strip()
     if not text:
         return
+    if msg.get("chat", {}).get("type") != "private":
+        return   # chỉ phục vụ chat riêng tư (không phản hồi trong nhóm/kênh)
     if not allowed(uid):
         request_access(msg)
         return
