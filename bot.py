@@ -351,10 +351,10 @@ def title_tokens(title):
     return {w for w in re.findall(r"\w+", norm(title)) if len(w) > 1}
 
 
-def similar(a, b):
+def similar(a, b, thr=0.6):
     if not a or not b:
         return False
-    return len(a & b) / len(a | b) >= 0.6
+    return len(a & b) / len(a | b) >= thr
 
 
 def is_ascii(s):
@@ -407,6 +407,36 @@ def blocked(domain):
 
 def trusted(domain):
     return any(domain == t or domain.endswith("." + t) for t in TRUSTED_DOMAINS)
+
+
+# ---- Nhóm ĐỘC LẬP "vũ khí – viện trợ quân sự – hợp tác quốc phòng" (topic "vukhi", Boss 22.11.26) ----
+ARMS_TAG = TOPICS.get("vukhi", {}).get("name", "")
+QS_TAG = TOPICS.get("quansu_thailan", {}).get("name", "")      # quân sự Thái Lan (độc lập, không cần nhắc Campuchia)
+SEC_TAG = TOPICS.get("anninh_khuvuc", {}).get("name", "")      # xung đột Campuchia – Thái Lan, an ninh khu vực
+REGION_TAGS = {t for t in (ARMS_TAG, QS_TAG, SEC_TAG) if t}
+REGION_KEYS = ("vukhi", "quansu_thailan", "anninh_khuvuc")
+ARMS_OFFICIAL = list(FOREIGN_OFFICIAL_DOMAINS) + list(OFFICIAL_DOMAINS) + [
+    "defense.gov", "war.gov", "dsca.mil", "mod.go.th", "rta.mi.th", "rtaf.mi.th", "navy.mi.th", "thaigov.go.th",
+    "mod.gov.cn", "mod.go.jp", "mod.gov.au"]
+
+
+def eff_topics(c):
+    """Chat đã bật chủ đề Campuchia tự nhận thêm nhóm vũ khí – quốc phòng (chỉ ở bộ nhớ, không ghi state.json)."""
+    t = list(c["topics"])
+    if "campuchia" in t:
+        for k in REGION_KEYS:
+            if k in TOPICS and k not in t:
+                t.append(k)
+    return t
+
+
+def arms_scope_ok(it, scope):
+    """Cho phép trang cơ quan chính thức (Nhà Trắng, DSCA, Bộ Quốc phòng…) qua Google News dù không nằm trong
+    danh sách báo tin cậy – CHỈ áp dụng cho nhóm vũ khí, nhóm Campuchia giữ nguyên."""
+    d = it.get("domain", "")
+    if vn_press(it) or blocked(d) or not domain_in(d, ARMS_OFFICIAL):
+        return False
+    return scope.get("vn", True) if it["vn"] else scope.get("intl", True)
 
 
 SOURCE_NAMES = {
@@ -1314,7 +1344,7 @@ def chat_urls(c):
     intl = c["scope"].get("intl", True)
     langs = c.get("langs", []) if intl else []
     urls = []
-    for t in c["topics"]:
+    for t in eff_topics(c):
         if t in TOPICS:
             urls += topic_urls(t, intl)
     for kw in c["keywords"]:
@@ -1328,7 +1358,7 @@ def chat_urls(c):
 def chat_subs(c, fetched, now, max_age=None):
     langs = c.get("langs", []) if c["scope"].get("intl", True) else []
     subs = [("t:" + t, TOPICS[t]["name"], collect_topic(t, fetched, now, max_age))
-            for t in c["topics"] if t in TOPICS]
+            for t in eff_topics(c) if t in TOPICS]
     subs += [("k:" + kw, "🔎 " + kw, collect_keyword(kw, fetched, now, "1d", max_age, langs)) for kw in c["keywords"]]
     for src in c.get("sources", []):
         if src.get("all"):   # nguồn riêng chọn "nhận mọi tin"
@@ -1336,7 +1366,8 @@ def chat_subs(c, fetched, now, max_age=None):
             subs.append(("s:" + src["url"], "📡 " + src.get("name", domain_of(src["url"])), items))
     out = []
     for k, tag, items in subs:
-        keep = [it for it in items if not vn_press(it) and (tag.startswith("📡") or scope_ok(it, c["scope"]))]
+        keep = [it for it in items if not vn_press(it) and (tag.startswith("📡") or scope_ok(it, c["scope"])
+                                                       or (tag in REGION_TAGS and arms_scope_ok(it, c["scope"])))]
         out.append((k, tag, keep))
     return out
 
@@ -1791,6 +1822,7 @@ def ai_relevant(pairs):
                 "y tế / giáo dục / văn hoá / du lịch / môi trường / quảng bá doanh nghiệp / hội thảo nhỏ / bình luận chung chung / "
                 "tội phạm địa phương / thể thao / từ thiện / tôn giáo, không phải tin cấp quốc gia thuộc các mảng CẦN => KHÔNG, "
                 "kể cả khi không chắc. Chỉ trả CÓ khi bài RÕ RÀNG thuộc các mảng CẦN.\n"
+                + arms_extra(chunk) +
                 'Trả về JSON: [{"i": 1, "ok": true}, ...]\n\n' + "\n".join(lines))
             data = ai_json(gemini(prompt))
             try:
@@ -1812,6 +1844,10 @@ FILTER_TOPICS = {t["name"]: (t.get("ai_desc") or t["name"].split(" ", 1)[-1])
                  for t in TOPICS.values() if t.get("filter") or t.get("ai_desc")}
 
 
+ARMS_CRIT = ("chủ đề " + FILTER_TOPICS[ARMS_TAG]) if ARMS_TAG in FILTER_TOPICS else None
+REGION_CRIT = {("chủ đề " + FILTER_TOPICS[t]): t for t in REGION_TAGS if t in FILTER_TOPICS}
+
+
 def tag_criterion(tag):
     """Tag nào cần AI kiểm tra độ liên quan: từ khoá, và chủ đề lọc theo chữ (Chiến sự, Ngoại giao)."""
     if tag.startswith("🔎 "):
@@ -1827,6 +1863,8 @@ def strict_ok(tag, it):
     có ≥ 2 cụm (vd campuchia + thái lan + xung đột) hoặc cụm ngôn ngữ gốc; từ khoá thường thì giữ."""
     if tag == CAMBO_TAG:
         return fallback_ok(it)
+    if tag in REGION_TAGS:
+        return region_fallback(tag, it)
     if not tag.startswith("🔎 "):
         return True
     x = kw_expansion(tag[2:])
@@ -1892,6 +1930,514 @@ JUNK_TITLE_WORDS = ["football", "soccer", "sea games", "bóng đá", "ฟุต�
                     "traffic accident", "drowned", "charity", "donates", "scholarship", "pho ", "mother's", "recipe"]
 
 
+def bypass_ai(tag, it):
+    """Tin cơ quan chính thức nước ngoài / tin chính thức có từ cốt lõi: khỏi hỏi AI. Nhóm vũ khí KHÔNG dùng lối tắt này
+    (trang chính thức cũng phải nói về vũ khí / quốc phòng mới giữ), các nhóm khác giữ nguyên."""
+    return tag not in REGION_TAGS and (foreign_official(it) or hard_official(it))
+
+
+def _arms_re(words):
+    """Từ kết thúc bằng * là THÂN TỪ (khớp mọi đuôi chữ cái: reform* -> reforms, reforming); từ ASCII khác khớp nguyên từ (+s)."""
+    base = [w.rstrip("*") for w in words]
+    ws = [re.escape(b) + ("[a-z]*" if w.endswith("*") else ("s?" if b.isascii() else "")) for w, b in zip(words, base)]
+    ascii_part = [w for w, o in zip(ws, base) if o.isascii()]
+    uni_part = [w for w, o in zip(ws, base) if not o.isascii()]
+    parts = []
+    if ascii_part:
+        parts.append(r"(?<![a-z0-9])(?:" + "|".join(ascii_part) + r")(?![a-z0-9])")
+    if uni_part:
+        parts.append("(?:" + "|".join(uni_part) + ")")
+    return re.compile("|".join(parts), re.I)
+
+
+ARMS_STRONG = _arms_re([
+    "himars", "arms deal", "arms sale", "arms purchase", "arms transfer", "weapon", "weapons system", "procurement",
+    "military aid", "military assistance", "foreign military", "dsca", "possible sale", "fighter jet", "fighter aircraft",
+    "gripen", "f-16", "f-35", "j-10", "missile", "rocket launcher", "rocket system", "howitzer", "tank", "submarine",
+    "frigate", "corvette", "radar", "air defense", "air defence", "drone", "uav", "unmanned", "helicopter", "armored vehicle",
+    "armoured vehicle", "warship", "patrol vessel", "aircraft carrier", "artillery", "munition", "ammunition",
+    "military equipment", "military hardware", "defense deal", "defence deal",
+    "อาวุธ", "ยุทโธปกรณ์", "ฮิมาร์ส", "จัดซื้อ", "เครื่องบินขับไล่", "ขีปนาวุธ", "รถถัง", "เรือดำน้ำ", "เรือฟริเกต",
+    "军购", "军售", "武器", "海马斯", "导弹", "坦克", "战斗机", "潜艇", "护卫舰", "雷达", "无人机", "军事援助", "军事装备",
+    "អាវុធ", "យុទ្ធភណ្ឌ", "vũ khí", "tên lửa", "mua sắm quân sự", "viện trợ quân sự"])
+ARMS_DEFENSE = _arms_re([
+    "military", "defense", "defence", "army", "navy", "air force", "troops", "armed forces", "soldier*", "battalion", "regiment",
+    "warship", "army chief", "navy chief", "air chief", "commander-in-chief", "exercise", "drill", "military base", "naval base",
+    "intelligence sharing", "security cooperation", "alliance", "cobra gold", "pentagon",
+    "กลาโหม", "ทหาร", "กองทัพ", "ซ้อมรบ", "国防", "军事", "军演", "演习", "军队", "陆军", "海军", "空军", "ការពារជាតិ", "យោធា", "quốc phòng", "quân sự"])
+ARMS_PRIO = _arms_re([
+    "thailand", "thai army", "royal thai", "cambodia", "ไทย", "กัมพูชา", "泰国", "柬埔寨", "ថៃ", "កម្ពុជា", "thái lan", "campuchia"])
+ARMS_CTX = _arms_re([
+    "thailand", "cambodia", "asean", "southeast asia", "philippines", "indonesia", "malaysia", "vietnam", "south china sea",
+    "indo-pacific", "taiwan", "myanmar", "laos", "brunei", "singapore", "ไทย", "กัมพูชา", "อาเซียน", "泰国", "柬埔寨", "东盟",
+    "东南亚", "菲律宾", "印尼", "ថៃ", "កម្ពុជា", "đông nam á"])
+ARMS_PROMO = _arms_re([
+    "stock price", "shares", "etf", "expo", "trade show", "giveaway", "discount", "coupon", "toy", "airsoft", "video game",
+    "game review", "movie", "concert", "football", "think tank", "earnings", "dividend", "how to buy", "online shop"])
+# ---- Nhận diện MỐC THỰC CHẤT của một sự kiện / chương trình (chống trùng) ----
+# Mốc = loại hành động thực sự diễn ra (đề xuất, phê duyệt, ký, bàn giao, vào biên chế, điều động, triển khai, công bố/ban hành, sửa đổi,
+# thay đổi số lượng / giá trị / tiến độ). Từ rộng như contract, test, launch, training, exercise KHÔNG tự tạo mốc. Một tin chỉ được coi là
+# "mốc mới" khi nó có loại hành động mà tin liền trước KHÔNG có. Khớp cụm từ làm trên CHUỖI tiêu đề gốc, không ghép bừa tập từ.
+_SUBJ = r"(?:order|orders|purchase|purchases|deal|contract|budget|headcount|manpower|troops|personnel|units|fleet|batch|delivery|deliveries|programme|program|quantity|value|number|size|force)"
+_SUBJ_RE = re.compile(_SUBJ)     # danh từ đối tượng luôn được giữ khi lọc từ (để "headcount increases" còn nhận ra đổi số lượng)
+_CHG = {"down": r"(?:cut|cuts|cutting|reduc\w+|trim\w*|scrap\w*|cancel\w*|slash\w*)",
+        "up": r"(?:increas\w+|rais\w+|expand\w*|doubl\w+|boost\w*)",
+        "delay": r"(?:delay\w*|postpon\w*|suspend\w*|halt\w*|defer\w*)"}
+# Mốc vòng đời có THỨ HẠNG (tiến triển thực chất); các mốc còn lại (deployed, implementing, announced, revised) và thông tin bổ sung
+# (changed:*, amt:*) KHÔNG xếp tuyến tính với vòng đời.
+_LIFE = ("proposed", "approved", "signed", "delivered", "inservice")
+_WEAK = ("deployed", "implementing", "announced", "revised")
+# Từ khóa đơn (dùng được cả trên tập từ không còn thứ tự) và cụm từ (chỉ dùng trên CHUỖI tiêu đề gốc, có thứ tự).
+_STAGE_W = {
+    "proposed": r"propos(?:es|ed|ing|al|als)|consider(?:s|ed|ing)|mull(?:s|ed|ing)|weigh(?:s|ed|ing)|eyes|eyed|eyeing|seek(?:s|ing)|intend(?:s|ed|ing)",
+    # Chỉ DẠNG ĐỘNG TỪ ĐÃ / ĐANG XẢY RA (approves/approved...). Danh từ (approval, authorization, endorsement, ratification, notification),
+    # nguyên mẫu (to approve, will approve) và "seeks authorization" KHÔNG phải đã phê duyệt. "gets approval" ... có cụm riêng ở _STAGE_P.
+    "approved": r"approves|approved|authori[sz]es|authori[sz]ed|green-?lights|green-?lighted|green-?lit|clears|cleared|endorses|endorsed|ratifies|ratified|notifies|notified",
+    # Chỉ dạng ĐÃ XẢY RA: signs/signed/signing, awarded/awards, inks/inked, finalizes/finalized. Nguyên mẫu (plans to sign, will sign, to award) và danh từ
+    # (award, ink, finalization) KHÔNG phải đã ký; nguyên mẫu chủ ngữ số nhiều ("A and B sign a deal") được nhận qua _base_form_stages có kiểm tra ngữ cảnh ý định.
+    "signed": r"signed|awarded|inked|finali[sz]es|finali[sz]ed",   # signs/signing/awards/inks vừa là danh từ vừa là động từ: xử lý riêng ở _inflected_sign_stages
+    # delivers/delivered (đã giao). KHÔNG nhận nguyên mẫu "deliver" (plans to / will / intends to / seeks to deliver) và danh từ delivery.
+    "delivered": r"delivers|delivered|handover|arrives|arrived|shipped",
+    "inservice": r"commissioned|inducted|activated",
+    "deployed": r"re-?deploy\w*|deploy\w*|stationed",
+    "implementing": r"implement\w+|rollout",
+    "announced": r"announc\w+|unveil\w+|reveal\w+|adopt\w+|issue[sd]|publish\w+",
+    "revised": r"revis\w+|amend\w+|overhaul\w*|rewrit\w+|updat\w+"}
+_STAGE_P = {   # chỉ trên chuỗi gốc. "plan" đứng một mình (danh từ: "ceasefire plan") KHÔNG phải đề xuất; phải là động từ + ngữ cảnh
+    "proposed": r"plans? to|(?:plans|planned|planning) (?:for|on|a|an|the|new|more)",
+    "approved": r"(?:gets?|got|wins?|won|secures?|secured|receives?|received|obtains?|obtained|gains?|gained|granted|given) (?:\w+ )?(?:approval|authori[sz]ation|clearance)|(?:approval|authori[sz]ation|clearance) (?:granted|given|received|secured)",
+    "delivered": r"hand(?:s|ed)? over|first (?:batch|units?)|takes? delivery",
+    "inservice": r"enters? service|entered service|(?:becomes?|became|declared|now|fully) operational|initial operating capability",
+    "implementing": r"takes? effect|comes? into effect|roll(?:s|ed)? out"}
+_STAGE_TOKEN_EXTRA = {"proposed": r"plans|planned|planning"}   # trên tập từ (mất thứ tự): chấp nhận nhiễu, ghi rõ trong báo cáo
+_STAGE_RES = [(n, re.compile(r"\b(?:" + w + (("|" + _STAGE_P[n]) if n in _STAGE_P else "") + r")\b")) for n, w in _STAGE_W.items()]
+_STAGE_TOK = [(n, re.compile(r"^(?:" + w + (("|" + _STAGE_TOKEN_EXTRA[n]) if n in _STAGE_TOKEN_EXTRA else "") + r")$")) for n, w in _STAGE_W.items()]
+_STAGE_CHG = [(f"changed:{k}", re.compile(rf"\b{_SUBJ}\b(?:\W+\w+){{0,6}}?\W+\b{v}\b|\b{v}\b(?:\W+\w+){{0,6}}?\W+\b{_SUBJ}\b")) for k, v in _CHG.items()]
+# Số liệu TÁCH LOẠI: val = giá trị tiền tệ, qty = số lượng thiết bị / đơn hàng. Không trộn hai loại.
+_STAGE_VAL = re.compile(r"\$\s?(\d[\d,\.]*)\s?(billion|million|bn|mn|m|b)?\b")
+_STAGE_QTY = re.compile(r"\b(\d[\d,]*)\s+(?:units?|aircraft|jets?|fighters?|launchers?|batteries|systems?|tanks?|vehicles?|helicopters?|submarines?|frigates?|drones?)\b")
+_STAGE_NONLATIN = {"approved": ("อนุมัติ", "批准"), "signed": ("ลงนาม", "签署"), "delivered": ("ส่งมอบ", "交付", "交货"),
+                   "inservice": ("ประจำการ", "服役", "入役"), "deployed": ("部署", "ส่งกำลัง")}
+
+
+# Dạng NGUYÊN MẪU của động từ ("Thailand and Cambodia approve ...": chủ ngữ số nhiều, hiện tại) chỉ tính là hành động đã xảy ra khi từ đứng
+# ngay trước KHÔNG biểu thị ý định / khả năng / kế hoạch. Chỉ kiểm được trên chuỗi gốc (có thứ tự); trên tập từ thì bỏ qua nguyên mẫu.
+_BASE_ACT = [("approved", re.compile(r"\b(?:approve|authori[sz]e|endorse|ratify)\b"), False), ("delivered", re.compile(r"\bdeliver\b"), False),
+             ("signed", re.compile(r"\b(?:sign|award|ink|finali[sz]e)\b"), True)]
+# Với sign/award/ink: "sign", "award" còn là DANH TỪ ("a sign of", "an award") nên thêm: đứng ngay sau mạo từ / từ hạn định thì không phải động từ.
+_DET_PREV = {"a", "an", "the", "no", "any", "another", "every", "each", "this", "that", "these", "those", "first", "new", "early", "clear", "latest", "major",
+             "its", "their", "his", "her", "our", "my", "your", "of", "red", "road", "stop", "warning", "peace", "gold", "silver", "top", "big", "good", "bad"}
+_INTENT_PREV = {"to", "will", "would", "shall", "should", "can", "could", "may", "might", "must", "not", "cannot", "won't", "wont", "n't", "expected",
+                "expects", "expect", "hopes", "hope", "seeks", "seek", "seeking", "plans", "plan", "planning", "intends", "intend", "aims", "aim", "wants",
+                "want", "ready", "going", "set", "likely", "soon", "about", "before", "until", "if", "unless", "whether", "yet", "fail", "fails", "failed",
+                "refuse", "refuses", "refused", "unable", "need", "needs", "needed", "propose", "proposes", "proposed", "agrees", "agreed", "pledges", "pledged",
+                "promises", "promised", "vows", "vowed", "offers", "offered", "ready"}
+
+
+# "receives / received" chỉ là bàn giao khi vật nhận là THIẾT BỊ ("received Gripen jets", "receives the first batch of aircraft"). Nhận giấy phép / phê duyệt /
+# yêu cầu / ngân sách KHÔNG phải bàn giao. Xét trong 5 từ sau động từ; có từ giấy tờ thì loại.
+_RECV = re.compile(r"\b(?:receives|received)\b")
+_RECV_PAPER = {"approval", "authorization", "authorisation", "clearance", "permission", "go-ahead", "request", "requests", "notification", "funding", "bid",
+               "offer", "proposal", "invitation", "licence", "license", "waiver", "consent", "assurance", "assurances", "pledge", "letter", "report", "briefing"}
+_RECV_GOODS = {"batch", "unit", "units", "aircraft", "jet", "jets", "fighter", "fighters", "helicopter", "helicopters", "tank", "tanks", "system", "systems",
+               "vehicle", "vehicles", "launcher", "launchers", "frigate", "frigates", "submarine", "submarines", "drone", "drones", "shipment", "delivery",
+               "deliveries", "missile", "missiles", "radar", "radars", "ship", "ships", "weapons", "equipment", "howitzers", "artillery"}
+
+
+def _receive_stages(t):
+    for m in _RECV.finditer(t):
+        nxt = [w.strip(",.;:()\"'") for w in t[m.end():].split()[:5]]
+        if any(w in _RECV_PAPER for w in nxt):
+            continue
+        if any(w in _RECV_GOODS for w in nxt):
+            return {"delivered"}
+    return set()
+
+
+_NOUN_NEXT = {"of", "for", "to", "in", "at", "on", "by", "from", "with", "near", "that", "and", "or", "as", "is", "was", "has", "remains", "ceremony",
+              "ceremonies", "winner", "winners", "holders", "holder", "event", "events", "season", "night", "gala", "shows", "show"}
+
+
+_INFL_SIGN_RX = re.compile(r"\b(?:signs|signing|awards|inks)\b")
+# Dạng DANH TỪ của signs/signing/awards/inks: đứng sau từ hạn định / động từ cảm nhận ("sees signs of", "a signing ceremony"), hoặc trước "of"/danh từ ghép
+# ("awards ceremony"), hoặc ở cuối tiêu đề (không có tân ngữ).
+_NOUN_PREV_INFL = _DET_PREV | {"see", "sees", "seeing", "saw", "seen", "show", "shows", "showing", "showed", "positive", "negative", "more", "some", "few",
+                               "mixed", "no", "fewer", "other", "all", "many", "key", "further"}
+_NOUN_NEXT_INFL = {"of", "ceremony", "ceremonies", "event", "events", "season", "night", "gala", "show", "shows", "winner", "winners", "holder",
+                   "holders", "date", "day", "session", "bonus", "fee", "fees", "deadline", "committee", "programme", "program", "board", "panel",
+                   "category", "list", "list,", "ceremony,"}
+
+
+_NOUN_SENSE = {"see", "sees", "seeing", "saw", "seen", "show", "shows", "showing", "showed", "positive", "negative", "mixed"}
+
+
+def _inflected_sign_stages(t):
+    """signs/signing/awards/inks tính là mốc 'signed' chỉ khi là ĐỘNG TỪ chỉ hành động ký/trao (có tân ngữ, không sau từ hạn định, không sau cụm ý định).
+    Quy ước: 'is signing a contract' (đang ký) TÍNH là signed, giống 'signs'; 'plans signing of / will be signing' thì không."""
+    for m in _INFL_SIGN_RX.finditer(t):
+        prev = [w.strip(",;:()\"'") for w in t[:m.start()].split()]
+        last = prev[-1] if prev else ""
+        after = [w.strip(",.;:()\"'") for w in t[m.end():].split()[:1]]
+        if not prev or last in _NOUN_PREV_INFL or last in _INTENT_PREV:
+            continue
+        if not after or after[0] in _NOUN_NEXT_INFL:
+            continue
+        if last in ("be", "been") and any(w in _INTENT_PREV for w in prev[-4:-1]):
+            continue                          # "will be signing": vẫn là ý định
+        if last in ("and", "or") and any(w in _INTENT_PREV for w in prev[-7:-1]):
+            continue
+        return {"signed"}
+    return set()
+
+
+def _base_form_stages(t):
+    out = set()
+    for n, rx, noun_risk in _BASE_ACT:
+        for m in rx.finditer(t):
+            prev = [w.strip(",;:()\"'") for w in t[:m.start()].split()]
+            last = prev[-1] if prev else ""
+            if noun_risk and (not prev or last in _DET_PREV):
+                continue                      # danh từ, hoặc đầu câu (không có chủ ngữ): không tính là hành động
+            if last in _INTENT_PREV:
+                continue
+            if noun_risk:                     # nguyên mẫu sign/award/ink cần có tân ngữ: đứng cuối câu hoặc trước giới từ ("defence award", "sign of progress") là danh từ
+                after = [w.strip(",.;:()\"'") for w in t[m.end():].split()[:1]]
+                if not after or after[0] in _NOUN_NEXT:
+                    continue
+            if last in ("and", "or") and any(w in _INTENT_PREV for w in prev[-7:-1]):
+                continue                      # "plans to buy and sign": vế sau cùng chịu ý định của vế trước
+            out.add(n)
+    return out
+
+
+def event_stages(text=None, tokens=None):
+    """Tập loại mốc. text = tiêu đề GỐC (có thứ tự: nhận diện cụm, đổi số lượng, số tiền). tokens = tập từ đã mất thứ tự (tin cũ chỉ còn
+    token set): chỉ nhận diện TỪ ĐƠN, không nhận cụm nhiều từ, không nhận thay đổi số lượng / số tiền (không suy diễn thứ tự đã mất)."""
+    if tokens is not None:
+        toks = [str(w).lower() for w in tokens]
+        st = {n for n, rx in _STAGE_TOK if any(rx.match(w) for w in toks)}
+        st |= {n for n, ws in _STAGE_NONLATIN.items() if any(x in w for w in toks for x in ws)}
+        # signs/signing/awards/inks: tập từ mất thứ tự nên không xét được ngữ cảnh; nhận như động từ trừ khi tập có từ báo danh từ ("ceremony", "sees"...)
+        if {"signs", "signing", "awards", "inks"} & set(toks) and not (set(toks) & (_NOUN_NEXT_INFL | _NOUN_SENSE)):
+            st.add("signed")
+    else:
+        t = (text or "").lower()
+        st = {n for n, rx in _STAGE_RES if rx.search(t)}
+        st |= {n for n, rx in _STAGE_CHG if rx.search(t)}
+        st |= _base_form_stages(t) | _receive_stages(t) | _inflected_sign_stages(t)
+        st |= {"val:" + m.group(1).replace(",", "") + (m.group(2) or "")[:3] for m in _STAGE_VAL.finditer(t)}
+        st |= {"qty:" + m.group(1).replace(",", "") for m in _STAGE_QTY.finditer(t)}
+        st |= {n for n, ws in _STAGE_NONLATIN.items() if any(w in t for w in ws)}
+    if "proposed" in st and any(x in st for x in _LIFE[1:] + ("implementing", "deployed")):
+        st.discard("proposed")      # tiêu đề đã nói phê duyệt / ký / triển khai: "plan" ở đó là danh từ, không phải đề xuất mới
+    return st
+
+
+def _life_rank(st):
+    return max([_LIFE.index(x) + 1 for x in st if x in _LIFE] or [0])
+
+
+def stage_progress(s_new, s_old):
+    """'life' = tiến triển vòng đời thực chất (hạng cao hơn hẳn tin trước); 'info' = đổi số lượng hoặc giá trị (cùng loại, tin cũ đã có và bị thay bằng số khác) hay đổi chiều (cắt/tăng/hoãn);
+    'weak' = mốc khác loại nhiễu hơn (triển khai, công bố, sửa đổi...); None = không có gì mới."""
+    if _life_rank(s_new) > _life_rank(s_old):
+        return "life"
+    d = s_new - s_old
+    if any(x.startswith("changed:") for x in d):
+        return "info"
+    for k in ("val:", "qty:"):      # chỉ cùng LOẠI số liệu: tin cũ đã có và bị thay bằng giá trị khác. Lần đầu xuất hiện, hoặc khác loại, không tính
+        o, n = {x for x in s_old if x.startswith(k)}, {x for x in s_new if x.startswith(k)}
+        if o and n and (o - n) and (n - o):
+            return "info"
+    if any(x in _WEAK for x in d):
+        return "weak"
+    return None
+
+
+_STOP = {"to", "of", "the", "an", "for", "from", "with", "in", "on", "at", "by", "and", "as", "its", "has", "have", "will", "is", "are", "be",
+         "says", "said", "after", "over", "new", "reportedly", "report", "reports", "takes", "take", "amid", "again", "also", "now"}
+_SYN = {}
+for _c, _ws in {"buy": "buys buying bought purchase purchases purchasing acquire acquires acquiring acquisition procure procures procurement order orders ordering",
+                "plan": "plans planning planned proposes propose proposal proposed considers considering mulls mulling weighs weighing eyes eyeing seeks seeking",
+                "announce": "announces announced unveils unveiled unveil reveals revealed",
+                "approve": "approves approved approval authorizes authorized authorises authorised clears cleared endorses endorsed",
+                "sign": "signs signed signing inks inked",
+                "deliver": "delivers delivered delivery deliveries receives received receive handover arrives arrived",
+                "thailand": "thai thailand thailands", "jet": "jets jet fighter fighters", "us": "usa america american americas"}.items():
+    for _w in _ws.split():
+        _SYN[_w] = _c
+
+
+def _canon(tokens):
+    """Tập từ chuẩn hóa để so trùng: bỏ từ nối, gộp đồng nghĩa (buys = purchase, unveils = announces…)."""
+    out = set()
+    for w in tokens:
+        if w in _STOP:
+            continue
+        w = _SYN.get(w, w)
+        if len(w) > 3 and w.endswith("s") and not w.endswith("ss"):
+            w = w[:-1]                       # tests = test, systems = system
+        out.add(w)
+    return out
+
+
+def _region_dup_reason(new_title, tk, old_tokens, old_title):
+    """Trả về (trùng?, lý do). Tin nhóm khu vực có trùng tin trước không?
+    - Tin mới luôn được nhận diện mốc trực tiếp từ TIÊU ĐỀ GỐC new_title (không dựng lại từ tập từ sắp xếp).
+    - Tin cũ: nếu còn tiêu đề gốc thì dùng nó; nếu chỉ còn tập từ thì chỉ nhận từ đơn, và tin mới chỉ được xét ở các từ tin cũ không có.
+    - Thứ tự kiểm tra: (1) tập từ chuẩn hóa giống hệt -> trùng; (2) Jaccard < 0,6 -> KHÁC sự kiện, không trùng (mốc mới không liên quan);
+      (3) chỉ trong phạm vi CÙNG sự kiện (Jaccard >= 0,6): tiến triển vòng đời ('life') hoặc đổi thông tin có neo ('info') thì KHÔNG bị loại,
+      bất kể tiêu đề dài đến đâu; mốc loại nhiễu ('weak') vẫn phải có Jaccard < 0,95; không có gì mới thì là trùng."""
+    if old_title:
+        s_new, s_old = event_stages(new_title), event_stages(old_title)
+    else:
+        # Tin cũ chỉ còn tập từ: không biết nó có cụm "hands over", "approve"... hay không. Để tin đăng lại (cùng từ mốc với tin cũ) không bị coi là mốc mới,
+        # chỉ xét các từ của tin mới mà tin cũ KHÔNG có (từ trùng được thay bằng "_" để giữ vị trí; giữ từ nối ngắn để cụm như "plans to" còn nguyên).
+        oldset = set(old_tokens)
+        # Từ đã có ở tin cũ được thay bằng "_" (không xóa) để giữ nguyên VỊ TRÍ và ngữ cảnh: từ đứng trước/sau, khoảng cách tới danh từ đối tượng.
+        keep = ["_" if (title_tokens(w) and set(title_tokens(w)) <= oldset and w.lower().strip(",.;:()\"'") not in _STOP
+                        and not _SUBJ_RE.fullmatch(w.lower().strip(",.;:()\"'"))) else w for w in new_title.split()]
+        s_new, s_old = event_stages(" ".join(keep)), event_stages(tokens=old_tokens)
+    cn, co = _canon(tk), _canon(old_tokens)
+    if cn == co:
+        # Tập từ chuẩn hóa trùng hẳn (vì _SYN gộp signs = sign...), nhưng tin mới vẫn có thể là bước vòng đời mới ("will sign" -> "signs")
+        return (False, "cùng sự kiện, có mốc mới: life") if stage_progress(s_new, s_old) == "life" else (True, "giống hệt")
+    if not similar(cn, co, 0.6):
+        return False, "khác sự kiện"          # Bước 1: chưa đủ giống thì KHÔNG phải cùng sự kiện; mốc mới không đóng vai trò gì ở đây
+    kind = stage_progress(s_new, s_old)       # Bước 2: chỉ trong phạm vi CÙNG sự kiện mới xét mốc tiến triển
+    if kind in ("life", "info"):
+        return False, "cùng sự kiện, có mốc mới: " + kind
+    if kind == "weak":
+        return similar(cn, co, 0.95), "cùng sự kiện, mốc nhiễu (ngưỡng 0,95)"
+    return True, "cùng sự kiện, không mốc mới"
+
+
+def _region_dup(new_title, tk, old_tokens, old_title):
+    return _region_dup_reason(new_title, tk, old_tokens, old_title)[0]
+
+
+def arms_milestone(it):
+    return bool(event_stages(it.get("title", "")))
+
+
+MIL_CHANGE = _arms_re([
+    "reform*", "restructur*", "reorganiz*", "reorganis*", "moderniz*", "modernis*", "doctrine",
+    "strateg*", "deploy*", "brigade", "division", "army region", "command", "military budget", "defense budget", "defence budget",
+    "white paper", "procurement", "upgrad*", "unveil*", "commission*", "training", "exercise", "drill", "base", "electronic warfare",
+    "intelligence", "reconnaissance", "logistics", "conscription", "submarine", "frigate", "fighter", "gripen", "drone",
+    "air defense", "air defence", "cobra gold", "redeploy*", "mobiliz*", "mobilis*", "buildup", "build-up", "reinforc*",
+    "capabilit*", "readiness", "combat", "force structure", "relocat*",
+    "ปฏิรูป", "ปรับโครงสร้าง", "ปรับกำลัง", "ยุทธศาสตร์", "งบประมาณกลาโหม", "ซ้อมรบ", "ฝึก", "กองพล", "กองทัพภาค", "เรือดำน้ำ",
+    "เรือฟริเกต", "กริเพน", "สงครามอิเล็กทรอนิกส์", "โดรน", "จัดซื้อ", "ประจำการ",
+    "改革", "现代化", "国防预算", "部署", "整编", "训练", "演习", "基地", "潜艇", "战机", "无人机", "电子战", "重组"])
+THAI = _arms_re(["thailand", "thai", "thai army", "thai navy", "thai air force", "royal thai", "thai military", "thai troops", "thai forces",
+                 "ไทย", "泰国", "泰军", "thái lan", "กองทัพบก", "กองทัพเรือ", "กองทัพอากาศ", "กระทรวงกลาโหม"])
+CAMB = _arms_re(["cambodia", "cambodian", "กัมพูชา", "柬埔寨", "កម្ពុជា", "campuchia"])
+BORDER = _arms_re(["border", "ceasefire", "cease-fire", "clash", "shelling", "artillery", "landmine", "land mine", "troops", "gbc", "rbc",
+                   "jbc", "checkpoint", "สู้รบ", "ชายแดน", "หยุดยิง", "ทุ่นระเบิด", "ปะทะ", "边境", "停火", "冲突", "ព្រំដែន", "ឈប់បាញ់",
+                   "biên giới", "ngừng bắn"])
+SECURITY = _arms_re(["south china sea", "asean", "military", "security", "navy", "maritime", "tension", "dispute", "conflict",
+                     "อาเซียน", "ความมั่นคง", "东盟", "安全", "南海", "tranh chấp", "border", "ceasefire", "clash", "ชายแดน", "边境", "ព្រំដែន"])
+WEAK_MIL = _arms_re(["jet", "aircraft", "vessel", "ship", "armed", "general", "commander", "purchase", "budget", "contract", "order",
+                     "fleet", "squadron", "base", "border"])
+_S = lambda rx: (lambda t: bool(rx.search(t)))
+_has = lambda *rxs: (lambda t: all(rx.search(t) for rx in rxs))
+_any = lambda *rxs: (lambda t: any(rx.search(t) for rx in rxs))
+_both = lambda f, g: (lambda t: f(t) and g(t))
+# Mỗi nhóm khu vực: anchor = chữ làm mốc tìm trong toàn văn; sure = đủ chắc để giữ; sure_seg = điều kiện trong ±300 ký tự quanh mốc;
+# signal = bài có nét đặc trưng của nhóm (dùng để không loại nhầm tin quảng bá lẫn từ khoá); drop = chắc chắn lạc đề (bỏ nếu không phải trang chính thức);
+# ctx = bối cảnh tối thiểu cho bộ lọc dự phòng khi AI hết lượt.
+REGION = {}
+if ARMS_TAG:
+    REGION[ARMS_TAG] = dict(label="VUKHI", anchor=ARMS_STRONG, sure=_has(ARMS_STRONG, ARMS_PRIO), sure_seg=_S(ARMS_PRIO),
+                            signal=_S(ARMS_STRONG), drop=lambda t: not (ARMS_STRONG.search(t) or ARMS_DEFENSE.search(t)), ctx=_S(ARMS_CTX))
+if QS_TAG:
+    _QS_MIL = _any(ARMS_DEFENSE, ARMS_STRONG)
+    _QS_CHG = _any(MIL_CHANGE, ARMS_STRONG)
+    REGION[QS_TAG] = dict(label="QUANSU_TL", anchor=MIL_CHANGE, sure=_both(_has(THAI), _both(_QS_MIL, _QS_CHG)), sure_seg=_both(_has(THAI), _QS_MIL),
+                          signal=_both(_QS_MIL, _QS_CHG), drop=lambda t: not THAI.search(t) or not (_QS_MIL(t) or WEAK_MIL.search(t)),
+                          ctx=_S(THAI))
+if SEC_TAG:
+    REGION[SEC_TAG] = dict(label="ANNINH", anchor=BORDER, sure=_has(THAI, CAMB, BORDER), sure_seg=_has(THAI, CAMB),
+                           signal=_S(BORDER), drop=lambda t: not SECURITY.search(t) or not (ARMS_CTX.search(t) or THAI.search(t) or CAMB.search(t)), ctx=_has(THAI, CAMB))
+
+_arms_body_cache = {}
+_arms_status = {}
+_arms_attempts = {}               # id -> [số lần thử thật, không thử trước thời điểm này]
+_arms_fetch_times = []
+ARMS_FETCH_BUDGET = (6, 600)      # tối đa 6 bài chính thức / 10 phút (dùng chung cho cả 3 nhóm khu vực)
+# LƯU Ý: bộ đếm lần thử chỉ nằm trong RAM của MỘT tiến trình (một phiên workflow ~55 phút). Phiên sau chạy lại từ 0 vì workflow chỉ lưu state.json
+# (không được sửa). Vậy "tối đa 3 lần" áp dụng trong từng phiên, không phải tổng cộng nhiều phiên; bài lỗi tạm thời không bị đánh dấu đã gửi nên phiên sau vẫn có thể thử lại.
+ARMS_MAX_ATTEMPTS = 3             # mỗi bài thử tối đa 3 lần TRONG 1 TIẾN TRÌNH, giãn cách 5 → 15 phút
+ARMS_BACKOFF = 300
+
+
+def arms_fetch_body(it):
+    """Đọc toàn văn CÓ ĐIỀU KIỆN, chỉ cho bài của các nhóm khu vực từ trang chính thức mà tiêu đề chưa đủ rõ.
+    KHÔNG phụ thuộc FETCH_FULLTEXT (vẫn =0 cho phần còn lại của bot). Trả "" nếu chưa có nội dung; trạng thái ở it["_fetch_status"]:
+    "ok" | "transient" (lỗi mạng / 429 / 5xx / hết hạn mức / chưa giải mã link: sẽ thử lại, KHÔNG phải đã xác minh) |
+    "blocked" (robots, 403, 404, không phải trang chính thức, không trích được chữ: không thể xác minh) | "gaveup" (đã thử đủ số lần)."""
+    key = it["id"]
+    if key in _arms_body_cache:
+        it["_fetch_status"] = _arms_status.get(key, "ok")
+        return _arms_body_cache[key]
+    now = time.time()
+    rec = _arms_attempts.setdefault(key, [0, 0.0])
+    if rec[0] >= ARMS_MAX_ATTEMPTS:
+        _arms_body_cache[key], _arms_status[key] = "", "gaveup"
+        it["_fetch_status"] = "gaveup"
+        return ""
+    _arms_fetch_times[:] = [t for t in _arms_fetch_times if now - t < ARMS_FETCH_BUDGET[1]]
+    if now < rec[1] or len(_arms_fetch_times) >= ARMS_FETCH_BUDGET[0]:
+        it["_fetch_status"] = "transient"          # chờ giãn cách / hết hạn mức: không tính là một lần thử
+        return ""
+    _arms_fetch_times.append(now)
+    rec[0] += 1
+    body, status = "", "transient"
+    try:
+        if it.get("real_link") is None:
+            it["real_link"] = resolve_link(it)
+        url = it["real_link"]
+        if "news.google.com" in url:
+            status = "transient" if it.get("gnews") else "blocked"     # chưa giải mã được link Google News
+        elif not domain_in(domain_of(url), ARMS_OFFICIAL) or not robots_allows(url):
+            status = "blocked"
+        else:
+            import trafilatura
+            with domain_slot(url):
+                r = HTTP.get(url, timeout=15, headers={"Accept": "text/html,*/*;q=0.8"})
+            if r.status_code == 200:
+                body = re.sub(r"\s+", " ", trafilatura.extract(r.text, include_comments=False, include_tables=False) or "")[:12000]
+                status = "ok" if body else "blocked"
+            elif r.status_code == 429 or r.status_code >= 500:
+                status = "transient"
+            else:
+                status = "blocked"
+    except Exception as e:
+        log.debug("Nhóm khu vực: lỗi khi đọc toàn văn %s: %s", it.get("title", "")[:60], e)
+        status = "transient"
+    if status == "transient":
+        rec[1] = now + ARMS_BACKOFF * 3 ** (rec[0] - 1)
+        if rec[0] >= ARMS_MAX_ATTEMPTS:
+            status = "gaveup"
+    if status != "transient":
+        _arms_body_cache[key], _arms_status[key] = body, status
+    it["_fetch_status"] = status
+    return body
+
+
+def _region_window(P, body):
+    """(đoạn trích, đủ chắc?) – chắc khi điều kiện sure_seg đúng trong ±300 ký tự quanh một từ mốc."""
+    for m in P["anchor"].finditer(body):
+        seg = body[max(0, m.start() - 300):m.end() + 300].lower()
+        if P["sure_seg"](seg):
+            return body[max(0, m.start() - 300):m.end() + 300], True
+    m = P["anchor"].search(body)
+    return (body[max(0, m.start() - 150):m.end() + 150], False) if m else (None, False)
+
+
+def region_pre(tag, it):
+    """Nhóm khu vực (vukhi / quansu_thailan / anninh_khuvuc): True = chắc chắn giữ, False = chắc chắn bỏ, None = hỏi AI.
+    KHÔNG cần nhắc Campuchia (trừ an ninh: cần cả Thái Lan lẫn Campuchia để giữ chắc chắn). Bài từ trang chính thức mà tiêu đề / mô tả
+    chưa đủ rõ: đọc toàn văn (có hạn mức). Trạng thái từng nhóm ở it["_rs"][tag]: "title" | "fulltext" | "unread" (không đọc được
+    -> KHÔNG suy diễn, bỏ). Không đọc được thì không bao giờ giữ chỉ vì tiêu đề có Asia / Thailand / security."""
+    P = REGION[tag]
+    off = domain_in(it.get("domain", ""), ARMS_OFFICIAL)
+    rs, rv = it.setdefault("_rs", {}), it.setdefault("_rv", {})
+    if off and tag not in rs:
+        text = (it.get("title", "") + " " + it.get("desc", "")[:300]).lower()
+        if P["sure"](text):
+            rs[tag] = "title"
+        else:
+            body = arms_fetch_body(it)
+            if not body:
+                rs[tag] = "unread"
+                it["_defer"] = it.get("_fetch_status") == "transient"     # lỗi tạm thời: chưa xác minh, sẽ thử lại, KHÔNG đánh dấu đã xử lý
+            else:
+                rs[tag] = "fulltext"
+                seg, sure = _region_window(P, body)
+                if seg is None:
+                    rv[tag] = False          # đọc được nhưng không có nội dung thuộc nhóm: bỏ, dù là trang chính thức
+                else:
+                    if seg not in it.get("desc", ""):
+                        it["desc"] = (seg + " | " + it.get("desc", "")).strip()
+                    if sure:
+                        rv[tag] = True
+        if tag == ARMS_TAG:
+            it["_arms_state"] = rs[tag]
+        log.info("%s | %s | %s | %s", P["label"], rs[tag], it.get("domain", ""), it.get("title", "")[:90])
+    if rs.get(tag) == "unread":
+        return False
+    if tag in rv:
+        return rv[tag]
+    text = (it.get("title", "") + " " + it.get("desc", "")[:400]).lower()
+    promo = bool(ARMS_PROMO.search(text))
+    if promo and not P["signal"](text):
+        return False
+    if P["drop"](text) and not off:
+        return False
+    if P["sure"](text) and not promo:
+        return True
+    return None
+
+
+def region_fallback(tag, it):
+    """AI hết lượt: giữ khi bài có nét đặc trưng của nhóm và bối cảnh phù hợp, không phải quảng bá."""
+    if region_pre(tag, it) is True:
+        return True
+    P = REGION[tag]
+    text = (it.get("title", "") + " " + it.get("desc", "")[:400]).lower()
+    return bool(P["signal"](text) and P["ctx"](text) and not ARMS_PROMO.search(text))
+
+
+def arms_pre(it):
+    return region_pre(ARMS_TAG, it)
+
+
+def arms_fallback(it):
+    return region_fallback(ARMS_TAG, it)
+
+
+_REGION_EXTRA = {
+    "vukhi": ("- RIÊNG dòng có «chủ đề» vũ khí – viện trợ quân sự – quốc phòng: các quy tắc về lãnh đạo Campuchia ở trên KHÔNG áp dụng. "
+              "Tin KHÔNG cần nhắc Campuchia. CÓ khi bài nói về mua bán / chuyển giao vũ khí, viện trợ hoặc tín dụng quân sự, tập trận, "
+              "chia sẻ tình báo, căn cứ quân sự, thỏa thuận quốc phòng của nước lớn với Thái Lan, Campuchia hoặc nước liên quan tranh chấp / căng thẳng "
+              "an ninh khu vực (vd Mỹ bán HIMARS cho Thái Lan; Trung Quốc giao xe tăng, tên lửa, máy bay cho Thái Lan; Thái Lan ký mua radar, "
+              "tên lửa, máy bay chiến đấu); bản tin tổng hợp nhiều thỏa thuận mà CÓ mục vũ khí / quốc phòng như vậy cũng CÓ. "
+              "Với Philippines, Indonesia hoặc nước ASEAN khác: chỉ CÓ khi có ý nghĩa an ninh, quốc phòng, chiến lược cụ thể với khu vực. "
+              "KHÔNG: quảng bá doanh nghiệp, sản phẩm thương mại thông thường, bình luận chung chung.\n"),
+    "quansu_thailan": ("- RIÊNG dòng có «chủ đề» quân sự Thái Lan: các quy tắc về lãnh đạo Campuchia ở trên KHÔNG áp dụng; KHÔNG cần nhắc Campuchia. "
+                       "CÓ khi bài nói về quân đội Thái Lan: cải tổ tổ chức, biên chế, quân khu, hệ thống chỉ huy; hiện đại hóa lục quân / hải quân / không quân; "
+                       "mua sắm, phát triển, thử nghiệm, đưa vào sử dụng vũ khí trang bị; chiến lược, học thuyết, năng lực tác chiến; điều động, bố trí lực lượng, "
+                       "căn cứ, hệ thống phòng thủ; huấn luyện, diễn tập, hậu cần, tình báo, tác chiến điện tử; ngân sách, chính sách quốc phòng; hợp tác quân sự với "
+                       "Mỹ, Trung Quốc và đối tác khác – kể cả khi chưa có xung đột trực tiếp. KHÔNG tự suy diễn mua vũ khí là chuẩn bị tấn công. "
+                       "Phân biệt rõ tin đã xác nhận, tuyên bố của các bên và đánh giá của giới phân tích. "
+                       "KHÔNG: quảng bá doanh nghiệp, chứng khoán, du lịch, thương mại thông thường, chính trị nội bộ Thái không liên quan quân đội.\n"),
+    "anninh_khuvuc": ("- RIÊNG dòng có «chủ đề» an ninh khu vực: CÓ khi bài nói về xung đột, giao tranh, đàm phán, ngừng bắn, đóng mở biên giới, bố trí quân, "
+                      "bom mìn giữa Campuchia và Thái Lan, hoặc diễn biến an ninh khu vực (ASEAN, Biển Đông) có tác động trực tiếp tới hai nước. "
+                      "Phân biệt tin đã xác nhận, tuyên bố của các bên và đánh giá của giới phân tích. KHÔNG: thể thao, du lịch, thương mại thông thường, "
+                      "tin xã hội địa phương không liên quan an ninh.\n"),
+}
+
+
+def arms_extra(chunk):
+    out = ""
+    for crit, tag in REGION_CRIT.items():
+        if any(kw == crit for _, kw in chunk):
+            key = next((k for k, v in TOPICS.items() if v["name"] == tag), None)
+            out += _REGION_EXTRA.get(key, "")
+    return out
+
+
+def arms_dedupe_extra(chunk):
+    if not any(set(tags) & REGION_TAGS for _, tags in chunk):
+        return ""
+    return ("\nNgoại lệ cho tin vũ khí / quân sự / quốc phòng: MỐC MỚI của cùng một thương vụ hoặc chương trình (đề xuất, phê duyệt, thông báo Quốc hội, "
+            "ký hợp đồng, thay đổi giá trị hoặc số lượng, lịch giao hàng, lô đầu tiên về nước, bàn giao, đưa vào sử dụng, cải tổ bước tiếp theo) là KHÔNG trùng. "
+            "Tin thuộc nhiều nhóm chỉ cần giữ một bản.\n")
+
+
+
 def _cambo_text(it):
     return (it["title"] + " " + it.get("desc", "")[:300]).lower()
 
@@ -1899,6 +2445,8 @@ def _cambo_text(it):
 def pre_decide(tag, it):
     """Chủ đề Campuchia: True = chắc chắn giữ, False = chắc chắn bỏ (tin thể thao/giải trí rõ ràng), None = hỏi AI.
     Chỉ áp dụng cho bài có nhắc Campuchia để không giữ nhầm tin về nước khác."""
+    if tag in REGION_TAGS:
+        return region_pre(tag, it)
     if tag != CAMBO_TAG:
         return None
     text = _cambo_text(it)
@@ -1931,18 +2479,43 @@ def note_dropped(reason, it):
         pass
 
 
+def drop_reason(it):
+    """Lý do loại, phân biệt: chờ thử lại (lỗi mạng) / không xác minh được / không liên quan."""
+    if it.get("_defer"):
+        return "chờ thử lại (lỗi mạng khi đọc toàn văn)"
+    if any(v == "unread" for v in (it.get("_rs") or {}).values()):
+        return "không xác minh được (chưa đọc được toàn văn)"
+    return "không liên quan nhóm khu vực" if it.get("_rs") is not None else "lạc đề"
+
+
 def drop_irrelevant(entries):
     """entries = [(item, tags)]. Bỏ tag mà AI cho là lạc đề; bỏ hẳn bài nếu hết tag."""
     pairs = [(it, tag_criterion(t)) for it, tags in entries for t in tags
-             if tag_criterion(t) and not strong_match(t, it) and not foreign_official(it) and not hard_official(it)
+             if tag_criterion(t) and not strong_match(t, it) and not bypass_ai(t, it)
              and pre_decide(t, it) is None]
     if not pairs:
-        return entries, []
+        if not any(set(tags) & REGION_TAGS for _, tags in entries):
+            return entries, []
+        # Không có tin nào cần AI: mã gốc trả nguyên lô. Giữ nguyên cho MỌI tag khác (Campuchia…); chỉ các tag khu vực
+        # (vũ khí / quân sự Thái / an ninh) được kiểm tra thêm bằng region_pre. Tag khác của cùng một tin không bị đụng tới;
+        # bài chỉ bị loại khi KHÔNG còn tag nào.
+        kept, dropped = [], []
+        for it, tags in entries:
+            new = {t for t in tags if t not in REGION_TAGS or region_pre(t, it) is not False}
+            if new:
+                kept.append((it, new))
+            else:
+                dropped.append(it)
+        if dropped:
+            log.info("Nhóm khu vực: loại %d tin (không còn tag nào phù hợp)", len(dropped))
+            for _it in dropped:
+                note_dropped(drop_reason(_it), _it)
+        return kept, dropped
     ok, unknown = ai_relevant(pairs)
 
     def keep(it, t):
         crit = tag_criterion(t)
-        if not crit or strong_match(t, it) or foreign_official(it) or hard_official(it):
+        if not crit or strong_match(t, it) or bypass_ai(t, it):
             return True
         pd = pre_decide(t, it)
         if pd is not None:
@@ -1963,7 +2536,7 @@ def drop_irrelevant(entries):
         for _it in dropped[:20]:
             log.info("BỊ LOẠI | lạc đề | %s | %s", _it.get("source", "?"), _it.get("title", "")[:110])
         for _it in dropped:
-            note_dropped("lạc đề", _it)
+            note_dropped(drop_reason(_it), _it)
         SESSION_STATS["ai_offtopic"] += len(dropped)
     return kept, dropped
 
@@ -1985,6 +2558,7 @@ def ai_dedupe(entries, sent_titles):
                   "lời bình luận, phản ứng). Người dùng CHỈ cần bản đến sớm nhất của mỗi sự kiện, nên các bản "
                   "sau đều là trùng. Chỉ coi là KHÔNG trùng khi đó là một sự kiện hoàn toàn khác (hành động mới "
                   "xảy ra, quyết định mới, nhân vật hoặc địa điểm khác).\n"
+                  + arms_dedupe_extra(chunk) +
                   'Trả JSON: [{"i": 1, "dup": false}, ...]')
         data = ai_json(gemini(prompt))
         dups = set()
@@ -2017,8 +2591,30 @@ API = f"https://api.telegram.org/bot{TOKEN}/"
 _last_tg_error = [""]
 
 
+DRY_RUN = os.environ.get("DRY_RUN", "").strip() not in ("", "0", "false", "False")   # chạy thử: KHÔNG gọi Telegram, chỉ ghi log
+_dry_mid = [1000]
+
+
+def _dry_tg(method, params):
+    if method == "getMe":
+        return {"id": 0, "username": "dry_run_bot", "first_name": "dry-run"}
+    if method == "getUpdates":
+        time.sleep(min(float(params.get("timeout", 5)), 5))     # không có lệnh người dùng; tránh vòng lặp bận
+        return []
+    if method == "sendMessage":
+        _dry_mid[0] += 1
+        log.info("[DRY-RUN] sendMessage chat=%s | %s", params.get("chat_id"), str(params.get("text", ""))[:300].replace("\n", " ⏎ "))
+        return {"message_id": _dry_mid[0], "chat": {"id": params.get("chat_id")}}
+    if method == "editMessageText":
+        log.info("[DRY-RUN] editMessageText chat=%s mid=%s", params.get("chat_id"), params.get("message_id"))
+        return {"message_id": params.get("message_id")}
+    return True                                                 # setMy*, answerCallbackQuery...: bỏ qua, không đổi hồ sơ bot thật
+
+
 def tg(method, **params):
     _last_tg_error[0] = ""
+    if DRY_RUN:
+        return _dry_tg(method, params)
     for attempt in range(5):
         try:
             r = HTTP.post(API + method, json=params, timeout=40 if method == "getUpdates" else 20)
@@ -2496,20 +3092,43 @@ def lang_rank(it, c):
 _send_locks = {}
 
 
-def claim_send(cs, it):
+def claim_send(cs, it, tags=None):
     """Chống gửi trùng: 1 bài (hoặc bài cùng tiêu đề từ link khác) chỉ được gửi 1 lần cho mỗi người, kể cả khi
-    khớp nhiều từ khoá hay vòng quét và lệnh tìm chạy cùng lúc. Trả về True nếu được phép gửi."""
+    khớp nhiều từ khoá hay vòng quét và lệnh tìm chạy cùng lúc. Trả về True nếu được phép gửi.
+    Tin nhóm khu vực dùng ĐÚNG luật của filter_new (_region_dup): mốc mới của cùng sự kiện không bị chặn lại ở bước gửi."""
     lk = _send_locks.setdefault(cs.get("_id", "?"), threading.Lock())
     with lk:
         if it["id"] in cs["sent"]:
             return False
         tk = title_tokens(it["title"])
         now = time.time()
+        reg = bool(set(tags or ()) & REGION_TAGS)
         for t in cs["titles"][-400:]:
-            if now - t[1] < 48 * 3600 and similar(tk, set(t[0])):
+            if now - t[1] >= 48 * 3600:
+                continue
+            if reg:
+                if _region_dup(it["title"], tk, set(t[0]), t[2] if len(t) > 2 else None):
+                    return False
+            elif similar(tk, set(t[0])):
                 return False
         remember_sent(cs, it, now)
         return True
+
+
+_send_fail = {}                   # id -> số lần Telegram từ chối (chỉ trong một tiến trình)
+SEND_MAX_FAILS = 3
+
+
+def unclaim_send(cs, it):
+    """Hoàn tác claim_send khi gửi Telegram thất bại (chỉ bản ghi do chính claim_send vừa tạo)."""
+    lk = _send_locks.setdefault(cs.get("_id", "?"), threading.Lock())
+    with lk, state_lock:
+        cs["sent"].pop(it["id"], None)
+        for i in range(len(cs["titles"]) - 1, -1, -1):
+            t = cs["titles"][i]
+            if len(t) > 2 and t[2] == it["title"]:
+                del cs["titles"][i]
+                break
 
 
 _pending_sum = []   # tin đã gửi nhưng chưa có tóm tắt tiếng Việt -> bổ sung sau
@@ -2550,16 +3169,23 @@ def recent_titles(cs, hours=12):
 def filter_new(cs, c, entries, now):
     """Lọc 3 lớp: trùng tiêu đề -> AI lạc đề -> AI trùng sự kiện. Trả về danh sách gửi được."""
     with state_lock:
-        recent = [set(t[0]) for t in cs["titles"]]
+        recent_ent = [(set(t[0]), t[2] if len(t) > 2 else None) for t in cs["titles"]]
+    recent = [e[0] for e in recent_ent]
+    raw = {frozenset(e[0]): e[1] for e in recent_ent if e[1]}      # tiêu đề gốc theo tập từ (nếu có)
     out, same = [], []
     for it, tags in sorted(entries, key=lambda x: x[0]["ts"] or now):
         tk = title_tokens(it["title"])
-        if any(similar(tk, o) for o in recent):
+        if set(tags) & REGION_TAGS:      # nhóm khu vực: mốc thực chất của cùng sự kiện / chương trình không bị coi là trùng
+            dup = any(_region_dup(it["title"], tk, o, raw.get(frozenset(o))) for o in recent)
+        else:
+            dup = any(similar(tk, o) for o in recent)
+        if dup:
             same.append(it)
             with state_lock:
                 cs["sent"][it["id"]] = now
             continue
         recent.append(tk)
+        raw[frozenset(tk)] = it["title"]
         out.append((it, tags))
     n_in = len(entries)
     out, dropped = drop_irrelevant(out)
@@ -2567,6 +3193,8 @@ def filter_new(cs, c, entries, now):
     out, dups = ai_dedupe(out, recent_titles(cs))
     with state_lock:
         for it in dropped + dups:
+            if it.get("_defer"):
+                continue          # lỗi mạng tạm thời khi đọc toàn văn: KHÔNG đánh dấu đã xử lý, lượt sau thử lại (có giới hạn)
             cs["sent"][it["id"]] = now
         log_dropped(cs, dropped, "lạc đề")
         log_dropped(cs, dups, "trùng sự kiện")
@@ -2608,30 +3236,42 @@ def deliver(cid, cs, c, entries, now):
     overflow, lst = entries[:-MAX_PER_CYCLE], entries[-MAX_PER_CYCLE:]
     lst = sorted(lst, key=lambda e: prio_key(e[0], c))
     if overflow:
-        lines = [f"📚 <b>{len(overflow)} tin khác</b> (gộp để tránh làm phiền):"]
-        for it, _ in overflow:
-            title = _summary_cache.get(it["id"], {}).get("title_vi") or it["title"]
-            lines.append(f'• <a href="{html.escape(it["link"], quote=True)}">{html.escape(title)}</a> '
-                         f'<i>({html.escape(it["source"])})</i>')
-        chunk = ""
-        for ln in lines:
-            if len(chunk) + len(ln) > 3900:
-                send(cid, chunk, silent=True)
-                chunk = ""
-            chunk += ln + "\n"
-        if chunk:
-            send(cid, chunk, silent=True)
+        head = f"📚 <b>{len(overflow)} tin khác</b> (gộp để tránh làm phiền):"
+        chunk, members, done = head + "\n", [], []     # done = (văn bản, các tin trong khối)
         for it, tags in overflow:
-            store_item(it, cid, tags)
-            remember_sent(cs, it, now)
+            title = _summary_cache.get(it["id"], {}).get("title_vi") or it["title"]
+            ln = (f'• <a href="{html.escape(it["link"], quote=True)}">{html.escape(title)}</a> '
+                  f'<i>({html.escape(it["source"])})</i>')
+            if len(chunk) + len(ln) > 3900 and members:
+                done.append((chunk, members))
+                chunk, members = "", []
+            chunk += ln + "\n"
+            members.append((it, tags))
+        if members:
+            done.append((chunk, members))
+        for text, mem in done:
+            if send(cid, text, silent=True) is None:      # Telegram không xác nhận: không ghi đã gửi, vòng sau thử lại
+                log.warning("Digest %d tin gửi lỗi, giữ lại để thử vòng sau", len(mem))
+                continue
+            for it, tags in mem:
+                store_item(it, cid, tags)
+                remember_sent(cs, it, now)
     for n, (it, tags) in enumerate(lst):
         if STOP.is_set() and RUN_MINUTES:
             break
-        if not claim_send(cs, it):
+        if not claim_send(cs, it, tags):
             continue
         SESSION_STATS["sent"] += 1
         store_item(it, cid, tags)
         r = send(cid, fmt_item(it, tags, c["summary"]), item_kb(it), silent=not should_ring(cs, it))
+        if r is None:
+            SESSION_STATS["sent"] -= 1
+            _send_fail[it["id"]] = _send_fail.get(it["id"], 0) + 1
+            if _send_fail[it["id"]] < SEND_MAX_FAILS:
+                unclaim_send(cs, it)      # Telegram không xác nhận: không coi là đã gửi, vòng sau thử lại
+            else:                         # lỗi dai dẳng (chat bị chặn...): bỏ tin này để không lặp mãi
+                log.warning("BỎ TIN sau %d lần gửi lỗi | %s", SEND_MAX_FAILS, it["title"][:90])
+            continue
         if r and c["summary"] and not _summary_cache.get(it["id"], {}).get("summary"):
             queue_summary(cid, r.get("message_id"), it, tags)
         if n % 10 == 9:
