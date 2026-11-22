@@ -338,11 +338,6 @@ def any_match_ml(terms, text):
     return any(phrase_in(term, t, tp) for term in terms)
 
 
-def any_match(terms, text):
-    t = norm(text)
-    return any(word_re(term).search(t) for term in terms)
-
-
 def title_tokens(title):
     """Tập 'từ' để so trùng tiêu đề. Chữ viết liền (Khmer, Thái, Trung…) dùng cặp ký tự liền nhau, vì dấu
     nguyên âm Khmer/Thái làm tách sai từ -> trước đây nhiều tin Khmer khác nhau bị coi là trùng."""
@@ -2153,17 +2148,6 @@ def edit(cid, mid, text, markup=None):
 
 
 
-def ago(ts):
-    if not ts:
-        return ""
-    m = int((time.time() - ts) // 60)
-    if m < 1:
-        return "vừa xong"
-    if m < 60:
-        return f"{m} phút trước"
-    if m < 24 * 60:
-        return f"{m // 60} giờ trước"
-    return f"{m // 1440} ngày trước"
 
 
 def item_info(it):
@@ -2347,13 +2331,6 @@ def allowed(user_id):
         return can_use(uid)
 
 
-def user_label(frm):
-    name = " ".join(x for x in (frm.get("first_name"), frm.get("last_name")) if x) or "Không tên"
-    if frm.get("username"):
-        name += f" (@{frm['username']})"
-    return name
-
-
 _DENIED_AT = {}   # chỉ trong bộ nhớ (không ghi state.json): chống trả lời lặp một người lạ
 
 
@@ -2412,28 +2389,6 @@ GENERIC_RE = re.compile(r"^(gửi|cho|xem|lấy|có)?\s*(\d+\s*)?(cái\s*)?(tin|
 
 
 
-
-
-def hot_view(cid, hours=24, n=10, title="🔥 Tin nóng nhất 24 giờ qua"):
-    """Tin quan trọng nhất (theo điểm AI) trong số tin bot đã gửi cho bạn."""
-    c = chat_state(cid)
-    now = time.time()
-    with state_lock:
-        pool = [STATE["items"][i] for i, t in c["sent"].items()
-                if i in STATE["items"] and now - t < hours * 3600]
-    pool = [p for p in pool if p.get("hot")]
-    if len(pool) < 3:
-        return None
-    pool.sort(key=lambda p: (p.get("hot", 0), p.get("ts") or 0), reverse=True)
-    lines = [f"<b>{title}</b>"]
-    for k, p in enumerate(pool[:n], 1):
-        icon = "🚨" if p["hot"] >= 5 else "🔥" if p["hot"] >= 4 else "▫️"
-        t = p.get("title_vi") or p["title"]
-        lines.append(f'\n{k}. {icon} <a href="{html.escape(p["link"], quote=True)}"><b>{html.escape(t)}</b></a>'
-                     f' <i>({html.escape(p["source"])}, {ago(p["ts"])})</i>')
-        if p.get("summary"):
-            lines.append("   " + html.escape(p["summary"][:220]))
-    return "\n".join(lines)
 
 
 # ---- xuất Excel
