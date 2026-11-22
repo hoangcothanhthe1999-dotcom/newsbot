@@ -775,7 +775,7 @@ def _proxy_fetch(url):
             raise RuntimeError("chuyển hướng tới host/giao thức không cho phép")
         r = HTTP.get(nxt, timeout=170, allow_redirects=False)
     raise RuntimeError("quá nhiều chuyển hướng")
-    
+
 
 _KH_WORDS = ["cambodia", "khmer", "phnom penh", "hun manet", "hun sen", "campuchia", "កម្ពុជា", "กัมพูชา", "เขมร", "柬埔寨"]
 PX_NEED = {"ADB": _KH_WORDS, "ASEAN": _KH_WORDS + ["thailand-cambodia", "cambodia-thailand", "observer team", "border"],
