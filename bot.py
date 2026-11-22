@@ -128,6 +128,7 @@ except Exception:
     pass
 log = logging.getLogger("newsbot")
 logging.getLogger("trafilatura").setLevel(logging.ERROR)
+logging.getLogger("urllib3").setLevel(logging.WARNING)   # DEBUG của urllib3 ghi nguyên đường dẫn (có mã URL/khóa) → không bao giờ để lọt vào log công khai
 
 HTTP = requests.Session()
 HTTP.headers.update({"User-Agent": UA, "Accept-Language": "vi,en;q=0.8",
@@ -718,6 +719,19 @@ def official_urls():
 
 
 APPS_PROXY_URL = os.environ.get("APPS_PROXY_URL", "").strip()   # web app Apps Script "đọc hộ" (IP của Google) cho các trang chặn IP máy chủ Actions
+APPS_PROXY_KEY = os.environ.get("APPS_PROXY_KEY", "").strip()           # khóa xác thực web app (Secret), KHÔNG ghi vào code/log
+APPS_PROXY_METHOD = os.environ.get("APPS_PROXY_METHOD", "POST").strip().upper()   # POST: khóa nằm trong thân gói tin; GET: ?k= (chỉ để so sánh/dự phòng)
+
+
+def _redact(x):
+    """Che URL web app và khóa trước khi ghi log / state.json (repo công khai; lỗi của requests chứa nguyên URL)."""
+    s = str(x)
+    for secret in (APPS_PROXY_URL, APPS_PROXY_KEY):
+        if secret:
+            s = s.replace(secret, "***")
+    s = re.sub(r"/macros/s/[\w-]+", "/macros/s/***", s)
+    s = re.sub(r"(user_content_key|[?&]k)=[^&\s'\")]+", r"\1=***", s)
+    return s
 
 
 _KH_WORDS = ["cambodia", "khmer", "phnom penh", "hun manet", "hun sen", "campuchia", "កម្ពុជា", "กัมพูชา", "เขมร", "柬埔寨"]
@@ -737,14 +751,21 @@ def fetch_proxy(url):
         return cache.get("items", [])
     try:
         with domain_slot("https://script.google.com/"):
-            r = HTTP.get(APPS_PROXY_URL, timeout=170)
+            if not APPS_PROXY_KEY:                       # bản cũ không khóa (dự phòng / rollback)
+                r = HTTP.get(APPS_PROXY_URL, timeout=170)
+            elif APPS_PROXY_METHOD == "GET":
+                r = HTTP.get(APPS_PROXY_URL, params={"k": APPS_PROXY_KEY}, timeout=170)
+            else:
+                r = HTTP.post(APPS_PROXY_URL, data={"k": APPS_PROXY_KEY}, timeout=170)
         r.raise_for_status()
         data = r.json()
+        if isinstance(data, dict) and data.get("error"):
+            raise RuntimeError("web app từ chối: %s" % str(data.get("error"))[:40])
         if not isinstance(data, list):
             raise RuntimeError("web app trả về dữ liệu lạ")
     except Exception as e:
-        mark_fail(url, e)
-        log.warning("Đọc hộ qua Apps Script lỗi: %s", e)
+        mark_fail(url, _redact(e))
+        log.warning("Đọc hộ qua Apps Script lỗi: %s", _redact(e))
         return cache.get("items", [])
     mark_ok(url)
     now = time.time()
