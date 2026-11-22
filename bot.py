@@ -1920,6 +1920,17 @@ def fallback_ok(it):
     return any(w in text for w in THEME_WORDS) and any(w in text for w in _KH_WORDS)
 
 
+def note_dropped(reason, it):
+    """Lưu 60 tiêu đề bị loại gần nhất vào state.json để rà soát loại nhầm (không cần mở log Actions)."""
+    try:
+        lst = STATE.setdefault("dropped", [])
+        lst.append({"t": int(time.time()), "why": reason, "src": str(it.get("source", "?"))[:40],
+                    "title": str(it.get("title", ""))[:140], "link": str(it.get("link", ""))[:200]})
+        del lst[:-60]
+    except Exception:
+        pass
+
+
 def drop_irrelevant(entries):
     """entries = [(item, tags)]. Bỏ tag mà AI cho là lạc đề; bỏ hẳn bài nếu hết tag."""
     pairs = [(it, tag_criterion(t)) for it, tags in entries for t in tags
@@ -1951,6 +1962,8 @@ def drop_irrelevant(entries):
         log.info("AI loại %d bài lạc đề", len(dropped))
         for _it in dropped[:20]:
             log.info("BỊ LOẠI | lạc đề | %s | %s", _it.get("source", "?"), _it.get("title", "")[:110])
+        for _it in dropped:
+            note_dropped("lạc đề", _it)
         SESSION_STATS["ai_offtopic"] += len(dropped)
     return kept, dropped
 
@@ -1991,6 +2004,8 @@ def ai_dedupe(entries, sent_titles):
         log.info("AI loại %d tin trùng sự kiện", len(dropped))
         for _it in dropped[:20]:
             log.info("BỊ LOẠI | trùng sự kiện | %s | %s", _it.get("source", "?"), _it.get("title", "")[:110])
+        for _it in dropped:
+            note_dropped("trùng sự kiện", _it)
         SESSION_STATS["ai_dup"] += len(dropped)
     return kept, dropped
 
