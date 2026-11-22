@@ -155,7 +155,7 @@ def load_state():
     st.setdefault("health", {})   # url -> tình trạng nguồn
     st.setdefault("tr", {})       # (cũ) từ khoá -> bản dịch tiếng Anh
     st.setdefault("kx", {})       # từ khoá -> {"vi": cách viết khác, "en": tiếng Anh} do AI mở rộng
-    st.setdefault("items", {})    # kho tin đã gửi gần đây (để lưu tin, phân tích, bản tin sáng/tối)
+    st.setdefault("items", {})    # kho tin đã gửi gần đây (để lưu tin, phân tích)
     st.setdefault("meta", {})
     st.setdefault("channels", [])  # kênh Telegram chính thức đọc qua tài khoản phụ
     if DEFAULT_CHANNELS and not st["channels"] and not st["meta"].get("seed_channels"):
@@ -199,7 +199,6 @@ def chat_state(cid):
         c.setdefault("hot_only", False)
         c.setdefault("notify", "all")      # all | hot | off
         c.setdefault("quiet", True)        # yên lặng 23h-6h (trừ tin khẩn)
-        c.setdefault("digest", True)       # bản tin tổng hợp 7h & 21h
         c.setdefault("saved", [])
         c.setdefault("kmsel", [])
         c.setdefault("langs", [])      # ngôn ngữ báo tìm thêm: km, zh, th…
@@ -2784,31 +2783,6 @@ def run_cycle():
 
 
 
-def check_digest():
-    return   # bỏ bản tin tổng hợp: chỉ gửi tin thời gian thực
-    now = datetime.now(VN_TZ)
-    slot = None
-    if now.hour == 7 or (now.hour == 8 and now.minute < 30):
-        slot = ("sáng", 7, 14)
-    elif now.hour == 21 or (now.hour == 22 and now.minute < 30):
-        slot = ("tối", 21, 14)
-    if not slot:
-        return
-    tag = now.strftime("%Y-%m-%d-") + str(slot[1])
-    for cid in list(STATE["chats"]):
-        c = chat_state(cid)
-        if not c["digest"] or c["paused"] or c.get("digest_last") == tag or c.get("revoked"):
-            continue
-        with state_lock:
-            c["digest_last"] = tag
-            save_state()
-        icon = "☀️" if slot[0] == "sáng" else "🌙"
-        v = hot_view(cid, hours=slot[2], n=10,
-                     title=f"{icon} Bản tin {slot[0]} 3X – {now.strftime('%d/%m')}: 10 tin đáng chú ý nhất")
-        if v:
-            send(cid, v)
-
-
 def _owner_target():
     return STATE.get("owner") or (sorted(ALLOWED_USERS)[0] if ALLOWED_USERS else None)
 
@@ -2924,7 +2898,6 @@ def worker():
             run_cycle()
             process_pending_summaries()
             check_alerts()
-            check_digest()
             save_state()
             fails = 0
         except Exception:
