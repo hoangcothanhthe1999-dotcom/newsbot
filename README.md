@@ -1,6 +1,6 @@
 # 🔴 3X – Bot Telegram săn tin nóng từ báo chính thống
 
-Bot tự quét **VnExpress, Tuổi Trẻ, Thanh Niên, Dân Trí, VietnamPlus, VnEconomy, BBC Tiếng Việt, Báo Chính phủ, Nhân Dân, QĐND, Báo Quốc tế…** cùng các báo quốc tế (Reuters, AP, BBC, Al Jazeera, Guardian, DW…) **mỗi 3 phút**, rồi gửi bài mới qua Telegram kèm **tóm tắt 2–3 câu bằng AI** và dấu 🔥 cho tin nóng.
+Bot tự quét **báo Campuchia, Thái Lan, Trung Quốc và quốc tế**, gồm (Reuters, AP, BBC, Al Jazeera, Guardian, DW…) **mỗi 3 phút**, rồi gửi bài mới qua Telegram kèm **tóm tắt 2–3 câu bằng AI** và dấu 🔥 cho tin nóng.
 
 - Chọn chủ đề bằng nút bấm: Tin mới nhất, Thời sự, Thế giới, **Chiến sự**, **Ngoại giao**, Kinh tế, Kinh tế quốc tế, Tài chính – Chứng khoán – Vàng, BĐS, Pháp luật, Công nghệ, Giáo dục, Sức khỏe, Thể thao, Giải trí, Báo quốc tế (tiếng Anh).
 - Theo dõi **từ khoá bất kỳ**: bot vừa lọc trong ~70 chuyên mục RSS, vừa tìm trên Google News (chỉ giữ báo chính thống).

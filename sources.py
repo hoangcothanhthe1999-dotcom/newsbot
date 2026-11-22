@@ -5,25 +5,16 @@ Bạn có thể tự thêm / bớt nguồn ở đây (chỉ cần dán link RSS 
 
 - feeds  : link RSS trực tiếp của các báo chính thống
 - gnews  : câu truy vấn Google News (tự động gom tin từ hàng trăm báo).
-           Có thể dùng "site:tenmien.vn" để lấy tin từ báo không có RSS.
+           Có thể dùng "site:tenmien.com" để lấy tin từ báo không có RSS.
 - filter : (tuỳ chọn) chỉ giữ bài có chứa ít nhất 1 từ trong danh sách này
            (dùng cho chủ đề không có mục RSS riêng, ví dụ "Chiến sự").
 """
-
-VNE = "https://vnexpress.net/rss/"
-TT = "https://tuoitre.vn/"
-TN = "https://thanhnien.vn/rss/"
-DT = "https://dantri.com.vn/rss/"
-VNP = "https://www.vietnamplus.vn/rss/"
-VNEC = "https://vneconomy.vn/"
-TP = "https://tienphong.vn/rss/"
-CF = "https://cafef.vn/"
 
 # Mỗi chủ đề lấy tin qua 2 ĐƯỜNG song song:
 #   1) RSS trực tiếp của báo  (nhanh nhất)
 #   2) Google News             (dự phòng: Google đã thu thập sẵn từ hàng trăm báo, kể cả
 #                               báo chặn bot hoặc không có RSS – bot chỉ giữ báo chính thống)
-# Nếu RSS của báo nào bị chặn/lỗi, bot tự thêm truy vấn "site:tenbao.vn <hint>" để không sót tin.
+# Nếu RSS của báo nào bị chặn/lỗi, bot tự thêm truy vấn "site:tenbao.com <hint>" để không sót tin.
 
 TOPICS = {
     "campuchia": {
@@ -69,20 +60,8 @@ TOPICS = {
 # Các tên miền được coi là "báo chính thống" khi lấy tin qua Google News.
 # Bài từ trang KHÔNG nằm trong danh sách này sẽ bị bỏ qua (nếu TRUSTED_ONLY=1).
 TRUSTED_DOMAINS = [
-    # Việt Nam
-    "vnexpress.net", "tuoitre.vn", "thanhnien.vn", "dantri.com.vn", "vietnamplus.vn",
-    "baochinhphu.vn", "chinhphu.vn", "nhandan.vn", "qdnd.vn", "vov.vn", "vtv.vn",
-    "vnanet.vn", "vneconomy.vn", "cafef.vn", "vietnamnet.vn", "laodong.vn",
-    "tienphong.vn", "znews.vn", "zingnews.vn", "plo.vn", "sggp.org.vn",
-    "hanoimoi.vn", "baoquocte.vn", "mofa.gov.vn", "cand.com.vn", "congan.com.vn",
-    "vtc.vn", "nld.com.vn", "kinhtedothi.vn", "thesaigontimes.vn", "vir.com.vn",
-    "vietnamnews.vn", "baodautu.vn", "tapchicongsan.org.vn", "dangcongsan.vn",
-    "quochoi.vn", "daibieunhandan.vn", "moit.gov.vn", "mof.gov.vn", "sbv.gov.vn",
-    "baotintuc.vn", "vietstock.vn", "tinnhanhchungkhoan.vn", "bnews.vn",
-    "congthuong.vn", "baophapluat.vn", "nguoiquansat.vn", "vnbusiness.vn",
-    "vietnamfinance.vn", "thoibaotaichinhvietnam.vn", "bbc.com", "bbc.co.uk",
-    "rfi.fr", "voatiengviet.com", "vov.gov.vn", "antt.vn",
     # Quốc tế
+    "bbc.com", "bbc.co.uk", "rfi.fr", "voatiengviet.com",
     "reuters.com", "apnews.com", "bloomberg.com", "ft.com", "wsj.com",
     "nytimes.com", "washingtonpost.com", "theguardian.com", "economist.com",
     "cnn.com", "aljazeera.com", "dw.com", "france24.com", "euronews.com",
@@ -207,7 +186,7 @@ OFFICIAL_SITES = [   # tầng 1 – bot tự dò RSS, không có thì theo dõi 
     {"name": "ADB – tin Campuchia", "url": "https://www.adb.org/where-we-work/cambodia"},
     {"name": "Ngân hàng Thế giới – Campuchia", "url": "https://www.worldbank.org/en/country/cambodia"},
 ]
-OFFICIAL_DOMAINS = ["gov.kh", "usembassy.gov", "state.gov", "treasury.gov", "justice.gov", "un.org", "ohchr.org", "unodc.org", "icj-cij.org", "adb.org", "imf.org", "eeas.europa.eu", "fmprc.gov.cn", "mofa.go.jp", "dfat.gov.au", "kln.gov.my", "mea.gov.in", "kh.usembassy.gov", "thailand.go.th", "prd.go.th", "national-assembly.org.kh", "nac.org.kh", "senate.gov.kh", "mfa.go.th", "mod.go.th", "thaigov.go.th", "rta.mi.th", "mofa.gov.vn", "chinhphu.vn", "asean.org", "adb.org", "worldbank.org"]   # mọi trang .gov.kh = chính thức
+OFFICIAL_DOMAINS = ["gov.kh", "usembassy.gov", "state.gov", "treasury.gov", "justice.gov", "un.org", "ohchr.org", "unodc.org", "icj-cij.org", "adb.org", "imf.org", "eeas.europa.eu", "fmprc.gov.cn", "mofa.go.jp", "dfat.gov.au", "kln.gov.my", "mea.gov.in", "kh.usembassy.gov", "thailand.go.th", "prd.go.th", "national-assembly.org.kh", "nac.org.kh", "senate.gov.kh", "mfa.go.th", "mod.go.th", "thaigov.go.th", "rta.mi.th", "asean.org", "adb.org", "worldbank.org"]   # mọi trang .gov.kh = chính thức
 MAINSTREAM_KH = ["freshnewsasia.com", "freshnews.com.kh", "dap-news.com", "kampucheathmey.com", "thmeythmey.com",
                  "kohsantepheapdaily.com.kh", "postkhmer.com", "cnc.com.kh", "khmertimeskh.com",
                  "phnompenhpost.com", "cambodianess.com", "cambojanews.com", "kiripost.com", "tvk.gov.kh",
@@ -254,7 +233,7 @@ PROBATION_URLS = ['https://freshnews.com.kh/', 'https://kh.usembassy.gov/', 'htt
 
 
 # Cơ quan / tổ chức NƯỚC NGOÀI: tin của họ nói về Campuchia luôn được gửi (không qua bộ lọc "lạc đề" của AI)
-FOREIGN_OFFICIAL_DOMAINS = ['state.gov', 'treasury.gov', 'justice.gov', 'fincen.gov', 'usembassy.gov', 'whitehouse.gov', 'congress.gov', 'un.org', 'ohchr.org', 'unodc.org', 'icj-cij.org', 'interpol.int', 'fatf-gafi.org', 'adb.org', 'imf.org', 'worldbank.org', 'aiib.org', 'eeas.europa.eu', 'europa.eu', 'europarl.europa.eu', 'gov.uk', 'diplomatie.gouv.fr', 'auswaertiges-amt.de', 'fmprc.gov.cn', 'gov.cn', 'mofa.go.jp', 'go.jp', 'mofa.go.kr', 'dfat.gov.au', 'mea.gov.in', 'kln.gov.my', 'mfa.gov.sg', 'mfa.go.th', 'thaigov.go.th', 'mofa.gov.vn']
+FOREIGN_OFFICIAL_DOMAINS = ['state.gov', 'treasury.gov', 'justice.gov', 'fincen.gov', 'usembassy.gov', 'whitehouse.gov', 'congress.gov', 'un.org', 'ohchr.org', 'unodc.org', 'icj-cij.org', 'interpol.int', 'fatf-gafi.org', 'adb.org', 'imf.org', 'worldbank.org', 'aiib.org', 'eeas.europa.eu', 'europa.eu', 'europarl.europa.eu', 'gov.uk', 'diplomatie.gouv.fr', 'auswaertiges-amt.de', 'fmprc.gov.cn', 'gov.cn', 'mofa.go.jp', 'go.jp', 'mofa.go.kr', 'dfat.gov.au', 'mea.gov.in', 'kln.gov.my', 'mfa.gov.sg', 'mfa.go.th', 'thaigov.go.th']
 
 
 # Kênh Telegram CÔNG KHAI đọc qua t.me/s/<tên> (web_reader.py) – đã kiểm chứng 21/11/2026, không cần tài khoản phụ.

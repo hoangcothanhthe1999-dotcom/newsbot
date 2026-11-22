@@ -217,7 +217,12 @@ def prune_state():
             keep = sorted(items.values(), key=lambda x: x.get("stored", 0), reverse=True)[:5000]
             STATE["items"] = {x["id"]: x for x in keep if now - x.get("stored", 0) < 8 * 86400}
         STATE["health"] = {u: h for u, h in STATE.get("health", {}).items()
-                           if now - max(h.get("last_ok", 0), h.get("since", 0), h.get("skip_until", 0)) < 7 * 86400}
+                           if now - max(h.get("last_ok", 0), h.get("since", 0), h.get("skip_until", 0)) < 7 * 86400
+                           and not is_vn(domain_of(u[4:] if u.startswith("src:") else u))}
+        # nguồn báo Việt Nam đã bỏ: xóa dấu vết cũ để bot không báo "nguồn lỗi" cho nguồn không còn đọc
+        for k in ("resolved", "pg"):
+            if isinstance(STATE.get(k), dict):
+                STATE[k] = {u: v for u, v in STATE[k].items() if not is_vn(domain_of(u))}
 
 
 # --------------------------------------------------------------- tiện ích --
@@ -405,8 +410,6 @@ def trusted(domain):
 
 
 SOURCE_NAMES = {
-    "vnexpress.net": "VnExpress", "tuoitre.vn": "Tuổi Trẻ", "thanhnien.vn": "Thanh Niên",
-    "dantri.com.vn": "Dân Trí", "vietnamplus.vn": "VietnamPlus", "vneconomy.vn": "VnEconomy",
     "feeds.bbci.co.uk": "BBC", "bbc.com": "BBC", "aljazeera.com": "Al Jazeera",
     "theguardian.com": "The Guardian", "rss.dw.com": "DW", "france24.com": "France 24",
 }
