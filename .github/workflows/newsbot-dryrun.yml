@@ -1,0 +1,54 @@
+name: NewsBot DRY-RUN (chạy thử, KHÔNG gửi Telegram)
+
+# Chỉ chạy tay, trên nhánh được chọn. DRY_RUN=1: bot không gọi Telegram, không đổi hồ sơ bot, không lưu state lên remote.
+# Không dùng TG_SESSION, không dùng APPS_PROXY_URL. Chỉ đọc nguồn tin công khai (+ AI nếu có khóa).
+on:
+  push:
+    branches: ["fix/claim-region-rollback"]      # tự chạy khi đẩy mã lên ĐÚNG nhánh sửa; không bao giờ chạy trên main
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: "Số phút chạy thử"
+        default: "12"
+
+concurrency:
+  group: newsbot-dryrun
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  dryrun:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4          # nhánh đang được chọn khi bấm Run workflow (không phải main cố định)
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Chạy thử (DRY_RUN)
+        env:
+          DRY_RUN: "1"
+          TELEGRAM_BOT_TOKEN: "dry-run-khong-dung"
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          RUN_MINUTES: ${{ github.event.inputs.minutes || '12' }}
+          CHECK_INTERVAL: "300"
+          MAX_AGE_HOURS: "6"
+          FETCH_FULLTEXT: "0"
+          STATE_FILE: "/tmp/state_dryrun.json"
+        run: |
+          cp state.json /tmp/state_dryrun.json
+          python bot.py 2>&1 | tee dryrun.log
+      - name: Tóm tắt
+        if: always()
+        run: |
+          echo "Số tin sẽ gửi: $(grep -c 'DRY-RUN\] sendMessage' dryrun.log || true)"
+          echo "Số lỗi/cảnh báo: $(grep -ciE 'traceback|error' dryrun.log || true)"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dryrun-log
+          path: dryrun.log
