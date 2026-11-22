@@ -731,6 +731,48 @@ def _redact(x):
             s = s.replace(secret, "***")
     s = re.sub(r"/macros/s/[\w-]+", "/macros/s/***", s)
     s = re.sub(r"(user_content_key|[?&]k)=[^&\s'\")]+", r"\1=***", s)
+
+_PROXY_HOSTS = ("script.google.com", "script.googleusercontent.com")   # khớp CHÍNH XÁC tên host (không dùng "chứa chuỗi"/đuôi tên miền → chặn script.google.com.evil.com, evilgoogle.com…)
+_PROXY_MAX_HOPS = 4
+
+
+def _proxy_host_ok(u):
+    """Chỉ nhận https + đúng host Google trong danh sách, cổng 443, không có user:pass@."""
+    try:
+        p = urlparse(u)
+        return (p.scheme == "https" and (p.hostname or "").lower() in _PROXY_HOSTS
+                and p.port in (None, 443) and not p.username and not p.password)
+    except Exception:
+        return False
+
+
+def _proxy_fetch(url):
+    """Gọi web app Apps Script, TỰ kiểm soát chuyển hướng (không để requests tự theo):
+    khóa chỉ gửi ở yêu cầu đầu tới host Google; 302/303 → GET trần (không thân, không khóa) tới host Google;
+    301/307/308 và mọi host/giao thức khác → từ chối. Thông báo lỗi không chứa URL/khóa."""
+    if not _proxy_host_ok(url):
+        raise RuntimeError("URL web app không hợp lệ")
+    if APPS_PROXY_KEY and APPS_PROXY_METHOD != "GET":
+        r = HTTP.post(url, data={"k": APPS_PROXY_KEY}, timeout=170, allow_redirects=False)
+    elif APPS_PROXY_KEY:
+        r = HTTP.get(url, params={"k": APPS_PROXY_KEY}, timeout=170, allow_redirects=False)
+    else:                                                    # bản cũ không khóa (dự phòng / rollback)
+        r = HTTP.get(url, timeout=170, allow_redirects=False)
+    for hop in range(_PROXY_MAX_HOPS + 1):
+        if not 300 <= r.status_code < 400:
+            return r
+        if r.status_code not in (302, 303):
+            raise RuntimeError("chuyển hướng %d bị từ chối" % r.status_code)
+        if hop >= _PROXY_MAX_HOPS:
+            raise RuntimeError("quá nhiều chuyển hướng")
+        loc = r.headers.get("Location", "")
+        if not loc:
+            raise RuntimeError("chuyển hướng thiếu địa chỉ")
+        nxt = requests.compat.urljoin(r.url, loc)
+        if not _proxy_host_ok(nxt):
+            raise RuntimeError("chuyển hướng tới host/giao thức không cho phép")
+        r = HTTP.get(nxt, timeout=170, allow_redirects=False)
+    raise RuntimeError("quá nhiều chuyển hướng")
     return s
 
 
@@ -751,12 +793,7 @@ def fetch_proxy(url):
         return cache.get("items", [])
     try:
         with domain_slot("https://script.google.com/"):
-            if not APPS_PROXY_KEY:                       # bản cũ không khóa (dự phòng / rollback)
-                r = HTTP.get(APPS_PROXY_URL, timeout=170)
-            elif APPS_PROXY_METHOD == "GET":
-                r = HTTP.get(APPS_PROXY_URL, params={"k": APPS_PROXY_KEY}, timeout=170)
-            else:
-                r = HTTP.post(APPS_PROXY_URL, data={"k": APPS_PROXY_KEY}, timeout=170)
+            r = _proxy_fetch(APPS_PROXY_URL)
         r.raise_for_status()
         data = r.json()
         if isinstance(data, dict) and data.get("error"):
