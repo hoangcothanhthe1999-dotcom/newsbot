@@ -731,6 +731,8 @@ def _redact(x):
             s = s.replace(secret, "***")
     s = re.sub(r"/macros/s/[\w-]+", "/macros/s/***", s)
     s = re.sub(r"(user_content_key|[?&]k)=[^&\s'\")]+", r"\1=***", s)
+    return s
+
 
 _PROXY_HOSTS = ("script.google.com", "script.googleusercontent.com")   # khớp CHÍNH XÁC tên host (không dùng "chứa chuỗi"/đuôi tên miền → chặn script.google.com.evil.com, evilgoogle.com…)
 _PROXY_MAX_HOPS = 4
@@ -773,8 +775,7 @@ def _proxy_fetch(url):
             raise RuntimeError("chuyển hướng tới host/giao thức không cho phép")
         r = HTTP.get(nxt, timeout=170, allow_redirects=False)
     raise RuntimeError("quá nhiều chuyển hướng")
-    return s
-
+    
 
 _KH_WORDS = ["cambodia", "khmer", "phnom penh", "hun manet", "hun sen", "campuchia", "កម្ពុជា", "กัมพูชา", "เขมร", "柬埔寨"]
 PX_NEED = {"ADB": _KH_WORDS, "ASEAN": _KH_WORDS + ["thailand-cambodia", "cambodia-thailand", "observer team", "border"],
