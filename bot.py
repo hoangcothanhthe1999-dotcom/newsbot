@@ -770,7 +770,7 @@ def _proxy_fetch(url):
         if not 300 <= r.status_code < 400:
             return r
         if r.status_code not in (302, 303):
-            raise RuntimeError("chuyển hướng %d bị từ chối" % r.status_code)
+            raise RuntimeError(f"chuyển hướng {r.status_code} bị từ chối")
         if hop >= _PROXY_MAX_HOPS:
             raise RuntimeError("quá nhiều chuyển hướng")
         loc = r.headers.get("Location", "")
@@ -804,9 +804,9 @@ def fetch_proxy(url):
         r.raise_for_status()
         data = r.json()
         if isinstance(data, dict) and data.get("error"):
-            raise RuntimeError("web app từ chối: %s" % str(data.get("error"))[:40])
+            raise RuntimeError(f"web app từ chối: {str(data.get('error'))[:40]}")
         if not isinstance(data, list):
-            raise RuntimeError("web app trả về dữ liệu lạ")
+            raise RuntimeError("web app trả về dữ liệu lạ")  # noqa: TRY004
     except Exception as e:
         mark_fail(url, _redact(e))
         log.warning("Đọc hộ qua Apps Script lỗi: %s", _redact(e))
@@ -1370,9 +1370,7 @@ def scope_ok(it, scope):
         return False
     if not it["vn"] and not scope.get("intl", True):
         return False
-    if scope.get("trusted", True) and (blocked(it.get("domain", "")) or (it["gnews"] and not trusted(it["domain"]))):
-        return False
-    return True
+    return not (scope.get("trusted", True) and (blocked(it.get("domain", "")) or (it["gnews"] and not trusted(it["domain"]))))
 
 
 def chat_urls(c):
@@ -1721,7 +1719,7 @@ def _gemini_call(prompt):
                 except Exception:
                     return None
             if r.status_code in (429, 500, 503):
-                ai_set(False, "hết lượt miễn phí / quá tải tạm thời (HTTP %s)" % r.status_code)
+                ai_set(False, f"hết lượt miễn phí / quá tải tạm thời (HTTP {r.status_code})")
                 time.sleep(5)
                 continue
             if r.status_code == 404:
@@ -2480,7 +2478,7 @@ def feed_label(url):
 
 def check_alerts():
     """Báo cho chủ bot khi 1 nguồn bị chặn liên tục > 3 giờ (mỗi sự cố chỉ báo 1 lần)."""
-    target = STATE.get("owner") or (sorted(ALLOWED_USERS)[0] if ALLOWED_USERS else None)
+    target = STATE.get("owner") or (min(ALLOWED_USERS) if ALLOWED_USERS else None)
     if not target:
         return
     now = time.time()
@@ -2754,7 +2752,7 @@ def run_cycle():
 
 
 def _owner_target():
-    return STATE.get("owner") or (sorted(ALLOWED_USERS)[0] if ALLOWED_USERS else None)
+    return STATE.get("owner") or (min(ALLOWED_USERS) if ALLOWED_USERS else None)
 
 
 def heartbeat():

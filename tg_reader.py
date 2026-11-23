@@ -140,10 +140,11 @@ if __name__ == "__main__":
     import sys
     base = os.path.dirname(os.path.abspath(__file__))
     if os.path.exists(os.path.join(base, ".env")):
-        for line in open(os.path.join(base, ".env"), encoding="utf-8"):
-            if "=" in line and not line.strip().startswith("#"):
-                k, v = line.strip().split("=", 1)
-                os.environ.setdefault(k.strip(), v.strip().strip('"'))
+        with open(os.path.join(base, ".env"), encoding="utf-8") as fh:
+            for line in fh:
+                if "=" in line and not line.strip().startswith("#"):
+                    k, v = line.strip().split("=", 1)
+                    os.environ.setdefault(k.strip(), v.strip().strip('"'))
     if not HAVE_TELETHON:
         print("Thiếu thư viện telethon. Chạy: pip install telethon")
         sys.exit(1)
