@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Danh sách CHỦ ĐỀ và NGUỒN BÁO.
 Bạn có thể tự thêm / bớt nguồn ở đây (chỉ cần dán link RSS vào danh sách "feeds").

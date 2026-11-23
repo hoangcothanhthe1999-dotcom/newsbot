@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Đọc KÊNH TELEGRAM CÔNG KHAI qua trang web t.me/s/<tên kênh> – không cần tài khoản phụ,
 không cần api_id / api_hash / session. Chỉ đọc được kênh công khai (kênh riêng tư thì không).
@@ -21,9 +20,9 @@ UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like
 
 _WRAP = re.compile(r'<div class="tgme_widget_message_wrap')
 _POST = re.compile(r'data-post="([^"/]+)/(\d+)"')
-_TEXT = re.compile(r'<div class="tgme_widget_message_text[^"]*"[^>]*>(.*?)</div>', re.S)
+_TEXT = re.compile(r'<div class="tgme_widget_message_text[^"]*"[^>]*>(.*?)</div>', re.DOTALL)
 _TIME = re.compile(r'<time[^>]*datetime="([^"]+)"')
-_TITLE = re.compile(r'<div class="tgme_channel_info_header_title"[^>]*>(.*?)</div>', re.S)
+_TITLE = re.compile(r'<div class="tgme_channel_info_header_title"[^>]*>(.*?)</div>', re.DOTALL)
 _MEDIA = re.compile(r'tgme_widget_message_(?:photo_wrap|video|document|roundvideo)')
 
 

@@ -1,0 +1,3 @@
+# Bot chịu lỗi mạng: bắt except rộng là chủ đích (không để một nguồn lỗi làm dừng cả lượt quét).
+[lint]
+extend-ignore = ["BLE001", "S110", "S112"]
