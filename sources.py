@@ -54,6 +54,81 @@ TOPICS = {
                    "ký kết hợp tác nhỏ của công ty, bài bình luận chung chung, ma túy và tội phạm cấp tỉnh, mọi tin về Việt Nam không liên quan Campuchia",
         "hint": "Campuchia",
     },
+    # Nhóm ĐỘC LẬP (Boss 22.11.26): mua bán vũ khí, viện trợ quân sự, hợp tác quốc phòng của các nước lớn với nước
+    # có tranh chấp / căng thẳng an ninh khu vực (ưu tiên Thái Lan, Campuchia). KHÔNG bắt buộc nhắc Campuchia.
+    # Chat nào đã bật chủ đề "campuchia" sẽ tự nhận thêm nhóm này (bot.py: eff_topics), không sửa state.json.
+    "vukhi": {
+        "name": "🛡️ Vũ khí – viện trợ quân sự – hợp tác quốc phòng (Thái Lan, Campuchia, khu vực)",
+        "feeds": [],
+        "gnews_en": ["Thailand HIMARS", "Thailand US arms deal", "Thailand military procurement", "Thailand weapons purchase",
+                     "Thailand defense cooperation", "Thailand military aid", "Thailand China arms deal",
+                     "Thailand China military equipment", "Thailand fighter jet purchase", "Thailand Gripen F-16 F-35",
+                     "Cambodia defense procurement", "Cambodia military assistance", "Cambodia China weapons military equipment",
+                     "ASEAN arms transfers", "ASEAN regional defense cooperation", "DSCA possible sale Thailand",
+                     "Thailand (site:whitehouse.gov OR site:state.gov OR site:defense.gov OR site:war.gov OR site:dsca.mil OR site:usembassy.gov)",
+                     "Asia arms deal Thailand Philippines Indonesia (site:whitehouse.gov OR site:state.gov OR site:dsca.mil)",
+                     "Thailand (arms OR weapons OR HIMARS OR procurement OR military) (site:reuters.com OR site:apnews.com OR site:asia.nikkei.com OR site:bangkokpost.com OR site:nationthailand.com)",
+                     "Cambodia (arms OR weapons OR procurement OR military aid) (site:reuters.com OR site:apnews.com OR site:asia.nikkei.com OR site:khmertimeskh.com OR site:phnompenhpost.com)"],
+        "gnews_th": ["ฮิมาร์ส กองทัพไทย", "ไทย ซื้ออาวุธ สหรัฐ", "จัดซื้ออาวุธ กองทัพไทย", "ไทย จีน ซื้ออาวุธ ยุทโธปกรณ์",
+                     "ความร่วมมือด้านกลาโหม ไทย สหรัฐ", "จัดซื้อ เครื่องบินขับไล่ กองทัพอากาศ", "กระทรวงกลาโหม จัดซื้อ ยุทโธปกรณ์",
+                     "กัมพูชา จัดซื้ออาวุธ ยุทโธปกรณ์"],
+        "gnews_zh": ["泰国 军购", "泰国 美国 海马斯", "泰国 购买 武器", "中国 泰国 军事 装备 合作", "柬埔寨 军购 武器 装备",
+                     "东盟 军售 国防合作"],
+        "ai_desc": "mua bán, cung cấp, chuyển giao vũ khí và trang bị quân sự (hợp đồng, phê duyệt DSCA, bàn giao); viện trợ / tín dụng / "
+                   "tài trợ quân sự; tập trận, huấn luyện, chia sẻ tình báo, hỗ trợ hậu cần; hiện đại hóa quân đội; xây dựng, mở rộng căn cứ và "
+                   "hạ tầng quân sự có ý nghĩa chiến lược; tuyên bố, thỏa thuận quốc phòng cấp cao – của các nước lớn (Mỹ, Trung Quốc, Nga, Nhật, "
+                   "EU…) hoặc đối tác khác với Thái Lan, Campuchia và các quốc gia liên quan đến tranh chấp, căng thẳng an ninh khu vực "
+                   "(Mỹ – Thái Lan, Trung Quốc – Thái Lan, đối tác khác – Thái Lan, hoạt động tương tự với Campuchia). Tin về Philippines, Indonesia "
+                   "hoặc nước ASEAN khác CHỈ GIỮ khi có ý nghĩa an ninh, quốc phòng, chiến lược cụ thể với khu vực. "
+                   "KHÔNG cần nhắc Campuchia mới được giữ: Mỹ bán HIMARS cho Thái Lan, Trung Quốc cung cấp xe tăng / tên lửa / máy bay cho Thái Lan, "
+                   "Thái Lan ký mua radar / tên lửa / máy bay chiến đấu đều GIỮ. Bài tổng hợp nhiều thỏa thuận (vd bản tin Nhà Trắng) GIỮ nếu "
+                   "có mục mua bán vũ khí / hợp tác quốc phòng với Thái Lan hoặc nước trong khu vực. "
+                   "LOẠI: quảng bá doanh nghiệp hoặc sản phẩm thương mại thông thường, tin cổ phiếu / triển lãm / game / đồ chơi, bình luận "
+                   "chung chung, tin quốc phòng không liên quan khu vực Đông Nam Á",
+        "hint": "Thailand",
+    },
+    # Nhóm ĐỘC LẬP: thay đổi quân sự của Thái Lan (không cần nhắc Campuchia).
+    "quansu_thailan": {
+        "name": "🪖 Quân sự Thái Lan: cải tổ, hiện đại hóa, năng lực tác chiến",
+        "feeds": [],
+        "gnews_en": ["Thai army restructuring", "Thailand military reform", "Royal Thai Army modernization",
+                     "Royal Thai Navy submarine frigate", "Royal Thai Air Force Gripen fleet", "Thailand defense budget",
+                     "Thailand defence white paper military strategy", "Thailand military deployment border base",
+                     "Thailand electronic warfare drone program", "Thailand military exercise Cobra Gold",
+                     "Thailand military conscription reform", "Thailand army doctrine combat capability",
+                     "Thailand (army OR navy OR \"air force\" OR military) (site:mod.go.th OR site:thaigov.go.th OR site:rta.mi.th OR site:rtaf.mi.th OR site:navy.mi.th OR site:dsca.mil OR site:defense.gov)",
+                     "Thailand (army OR military OR defence OR defense) (reform OR modernization OR deployment OR budget) (site:reuters.com OR site:apnews.com OR site:asia.nikkei.com OR site:bangkokpost.com OR site:nationthailand.com OR site:thediplomat.com)"],
+        "gnews_th": ["ปฏิรูปกองทัพ", "กองทัพบก ปรับโครงสร้าง", "งบประมาณกลาโหม", "กองทัพเรือ เรือดำน้ำ", "กองทัพอากาศ กริเพน",
+                     "กองทัพไทย ปรับกำลัง ชายแดน", "ยุทธศาสตร์ กองทัพไทย", "สงครามอิเล็กทรอนิกส์ โดรน กองทัพไทย", "กระทรวงกลาโหม แถลง"],
+        "gnews_zh": ["泰国 军队 改革", "泰国 陆军 现代化", "泰国 国防预算", "泰国 海军 潜艇", "泰国 空军 战机", "泰军 边境 部署"],
+        "ai_desc": "thay đổi quân sự của Thái Lan: cải tổ tổ chức quân đội, biên chế, quân khu, hệ thống chỉ huy; hiện đại hóa lục quân, hải quân, không quân "
+                   "và lực lượng chuyên ngành; mua sắm, phát triển, thử nghiệm, đưa vào sử dụng vũ khí trang bị; chiến lược, học thuyết, phương án và năng lực tác chiến; "
+                   "điều động, bố trí lực lượng, căn cứ, công trình, hệ thống phòng thủ; huấn luyện, diễn tập, hậu cần, trinh sát, tình báo, tác chiến điện tử; "
+                   "ngân sách, chính sách, chương trình phát triển quốc phòng; hợp tác quân sự với Mỹ, Trung Quốc và đối tác khác; thay đổi năng lực tác chiến và "
+                   "tương quan quân sự Thái Lan – Campuchia. KHÔNG cần nhắc Campuchia; không bỏ tin cải tổ, hiện đại hóa, điều chỉnh học thuyết chỉ vì chưa có xung đột trực tiếp. "
+                   "Ưu tiên thay đổi có ý nghĩa chiến lược hoặc ảnh hưởng an ninh biên giới. Không suy diễn mua vũ khí là chuẩn bị tấn công; phân biệt tin đã xác nhận, "
+                   "tuyên bố của các bên và đánh giá của giới phân tích. "
+                   "LOẠI: quảng bá doanh nghiệp, chứng khoán, du lịch, thương mại thông thường, chính trị nội bộ Thái không liên quan quân đội, bình luận chung chung",
+        "hint": "Thailand army",
+    },
+    # Nhóm ĐỘC LẬP: xung đột Campuchia – Thái Lan và an ninh khu vực liên quan.
+    "anninh_khuvuc": {
+        "name": "⚔️ An ninh khu vực: xung đột Campuchia – Thái Lan, ASEAN, Biển Đông",
+        "feeds": [],
+        "gnews_en": ["Thailand Cambodia border clash", "Thailand Cambodia ceasefire", "Thai Cambodian border dispute talks",
+                     "Thailand Cambodia border landmine", "ASEAN observers Thailand Cambodia border", "Thailand Cambodia GBC RBC JBC",
+                     "Thailand Cambodia border closure checkpoint", "Thai troops Cambodia border deployment",
+                     "Southeast Asia security tensions South China Sea ASEAN",
+                     "Thailand Cambodia (border OR ceasefire OR clash) (site:reuters.com OR site:apnews.com OR site:asia.nikkei.com OR site:bangkokpost.com OR site:nationthailand.com OR site:thediplomat.com)",
+                     "Thailand Cambodia (site:mfa.go.th OR site:thaigov.go.th OR site:mod.go.th OR site:asean.org OR site:state.gov OR site:un.org)"],
+        "gnews_th": ["ชายแดนไทยกัมพูชา ปะทะ", "หยุดยิง ไทย กัมพูชา", "ทุ่นระเบิด ชายแดนไทยกัมพูชา", "ผู้สังเกตการณ์อาเซียน ชายแดน",
+                     "GBC RBC JBC ไทย กัมพูชา", "ปิดด่านชายแดน กัมพูชา", "กองทัพภาคที่ 2 ชายแดน"],
+        "gnews_zh": ["泰柬边境 冲突", "泰国 柬埔寨 停火", "泰柬 边境 谈判", "东盟 观察员 泰柬", "南海 东南亚 安全 局势"],
+        "ai_desc": "xung đột, giao tranh, đàm phán, ngừng bắn, đóng mở biên giới, bố trí quân, bom mìn giữa Campuchia và Thái Lan (gồm GBC/RBC/JBC, ASEAN quan sát viên, "
+                   "nước thứ ba hòa giải) và các diễn biến an ninh khu vực (ASEAN, Biển Đông) có tác động trực tiếp tới hai nước. Phân biệt tin đã xác nhận, tuyên bố của "
+                   "các bên và đánh giá của giới phân tích. LOẠI: thể thao, du lịch, thương mại thông thường, tin xã hội địa phương không liên quan an ninh",
+        "hint": "Thailand Cambodia border",
+    },
 }
 
 # Các tên miền được coi là "báo chính thống" khi lấy tin qua Google News.
