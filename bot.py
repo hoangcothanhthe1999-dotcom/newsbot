@@ -631,6 +631,9 @@ def stat_src(key, items=None, err=None):
 def log_session_summary():
     S = SESSION_STATS
     log.info("=== TỔNG KẾT PHIÊN: gửi %d tin; AI loại %d lạc đề, %d trùng ===", S["sent"], S["ai_offtopic"], S["ai_dup"])
+    if S.get("kw_gate"):
+        log.info("Bị loại ở bước từ khóa (chưa tới AI), theo nguồn: %s",
+                 ", ".join(f"{k}={v}" for k, v in sorted(S["kw_gate"].items(), key=lambda kv: -kv[1])[:15]))
     rows = sorted(S["src"].items(), key=lambda kv: (kv[1]["n"] > 0, kv[1]["ok"] == 0, kv[0]))
     for k, d in rows:
         name = SRC_NAMES.get(k) or k
@@ -1126,7 +1129,11 @@ def kw_expansion(kw):
     if not x and needs_smart(kw):
         x = fallback_parse(kw)
     if x.get("smart"):
-        return {"vi": x.get("vi", []), "en": x.get("en", []), "gq": x.get("gq", []), "smart": True,
+        en = list(x.get("en", []))
+        if (any(re.search(r"campuchia\s*\+\s*ngoại giao", v, re.IGNORECASE) for v in x.get("vi", []))
+                and not any("diplomacy" in e.lower() for e in en)):
+            en.append("Cambodia diplomacy")      # chủ đề ngoại giao: AI từng chỉ sinh politics/military/economy
+        return {"vi": x.get("vi", []), "en": en, "gq": x.get("gq", []), "smart": True,
                 "desc": x.get("desc", kw), "title": x.get("title", kw), "lang": x.get("lang", "vi"),
                 "native": x.get("native", [])}
     en = x.get("en") or STATE["tr"].get(kw) or []
@@ -1359,10 +1366,15 @@ def collect_keyword(kw, fetched, now, when="1d", max_age=None, langs=()):
             continue
         for it in items:
             text = it["title"] + " " + it["desc"]
-            if (any(keyword_match(v, text) for v in vi_all)
+            if (item_tier(it) == 1      # nguồn chính thức: không chặn bằng chữ, để AI (ai_relevant) quyết định
+                    or any(keyword_match(v, text) for v in vi_all)
                     or (not it["vn"] and en and keyword_match(en, text))
                     or (not it["vn"] and any(keyword_match(t, text) for t in foreign))):
                 res.append(it)
+            else:
+                gate = SESSION_STATS.setdefault("kw_gate", {})
+                src = str(it.get("source") or it.get("domain") or "?")[:40]
+                gate[src] = gate.get(src, 0) + 1
     for u in gn:
         res.extend(fetched.get(u, []))
     return [it for it in res if fresh(it, now, max_age)]
