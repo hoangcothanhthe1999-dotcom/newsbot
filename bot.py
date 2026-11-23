@@ -1895,6 +1895,8 @@ def ai_relevant(pairs):
                 "- Có liên quan dù một phần, hoặc không chắc => CÓ.\n"
                 "Bài có thể bằng tiếng Khmer, Thái, Trung, Anh… – hãy đọc hiểu nội dung.\n"
                 "- Mọi tin có nhân vật lãnh đạo cấp cao (Quốc vương, Thủ tướng, Phó Thủ tướng, Chủ tịch Thượng viện / Quốc hội, Tổng tư lệnh quân đội, lãnh đạo Thái Lan đề cập Campuchia) phát biểu, gặp gỡ, đi thăm, chỉ đạo hoặc được nhắc tới => CÓ; cả Bộ trưởng Campuchia phát biểu hoặc tuyên bố => CÓ, kể cả khi diễn ra ở hội chợ, lễ khai mạc, hội nghị.\n"
+                "- Tin quân sự Thái Lan (mua sắm vũ khí, triển khai quân, tuyên bố của quân đội Thái) hoặc tin biên giới "
+                "Campuchia – Thái Lan => CÓ, kể cả khi tiêu đề không nhắc tên Campuchia (vì đây là bối cảnh căng thẳng song phương).\n"
                 "- RIÊNG với dòng có «chủ đề»: chủ đề đó có danh mục LOẠI. Bài thuộc danh mục LOẠI, hoặc chỉ là tin xã hội / "
                 "y tế / giáo dục / văn hoá / du lịch / môi trường / quảng bá doanh nghiệp / hội thảo nhỏ / bình luận chung chung / "
                 "tội phạm địa phương / thể thao / từ thiện / tôn giáo, không phải tin cấp quốc gia thuộc các mảng CẦN => KHÔNG, "
