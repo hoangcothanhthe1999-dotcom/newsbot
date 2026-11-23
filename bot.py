@@ -1388,7 +1388,7 @@ def chat_urls(c):
     intl = c["scope"].get("intl", True)
     langs = c.get("langs", []) if intl else []
     urls = []
-    for t in c["topics"]:
+    for t in eff_topics(c):
         if t in TOPICS:
             urls += topic_urls(t, intl)
     for kw in c["keywords"]:
@@ -1402,7 +1402,7 @@ def chat_urls(c):
 def chat_subs(c, fetched, now, max_age=None):
     langs = c.get("langs", []) if c["scope"].get("intl", True) else []
     subs = [("t:" + t, TOPICS[t]["name"], collect_topic(t, fetched, now, max_age))
-            for t in c["topics"] if t in TOPICS]
+            for t in eff_topics(c) if t in TOPICS]
     subs += [("k:" + kw, "🔎 " + kw, collect_keyword(kw, fetched, now, "1d", max_age, langs)) for kw in c["keywords"]]
     for src in c.get("sources", []):
         if src.get("all"):   # nguồn riêng chọn "nhận mọi tin"
@@ -1936,6 +1936,8 @@ def strict_ok(tag, it):
     có ≥ 2 cụm (vd campuchia + thái lan + xung đột) hoặc cụm ngôn ngữ gốc; từ khoá thường thì giữ."""
     if tag == CAMBO_TAG:
         return fallback_ok(it)
+    if tag in REGION_TAGS:      # nhóm khu vực: AI không chấm được thì bỏ, thà sót còn hơn tràn tin rác
+        return False
     if not tag.startswith("🔎 "):
         return True
     x = kw_expansion(tag[2:])
@@ -1980,6 +1982,19 @@ def hard_official(it):
 
 
 CAMBO_TAG = TOPICS["campuchia"]["name"]
+# Ba nhóm khu vực (Boss 22.11.26): vũ khí – viện trợ quân sự, quân sự Thái Lan, an ninh khu vực.
+REGION_KEYS = ("vukhi", "quansu_thailan", "anninh_khuvuc")
+REGION_TAGS = {TOPICS[k]["name"] for k in REGION_KEYS if k in TOPICS}
+
+
+def eff_topics(c):
+    """Chat đã bật chủ đề Campuchia tự nhận thêm ba nhóm khu vực (chỉ ở bộ nhớ, không ghi state.json)."""
+    t = list(c["topics"])
+    if "campuchia" in t:
+        t += [k for k in REGION_KEYS if k in TOPICS and k not in t]
+    return t
+
+
 # Chủ đề Campuchia: bước lọc bằng chữ TRƯỚC khi hỏi AI (tiết kiệm lượt AI, không đụng tới độ phủ).
 CORE_WORDS = ["biên giới", "cửa khẩu", "ngừng bắn", "trừng phạt", "border", "ceasefire", "cease-fire", "sanction",
               "hun manet", "hun sen", "minister", "bộ trưởng", "រដ្ឋមន្ត្រី", "รัฐมนตรี", "部长", "deputy prime minister", "samdech", "sar kheng", "prak sokhonn", "sun chanthol",
