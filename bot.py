@@ -2020,7 +2020,11 @@ def foreign_official(it):
 
 HARD_WORDS = ["biên giới", "bien gioi", "cột mốc", "cửa khẩu", "thái lan", "thailand", "thai-cambodia",
               "border", "trừng phạt", "sanction", "hun manet", "hun sen", "samdech", "cpp", "quốc hội", "senate",
-              "national assembly", "ព្រំដែន", "ថៃ", "ទណ្ឌកម្ម"]
+              "national assembly", "ព្រំដែន", "ថៃ", "ទណ្ឌកម្ម",
+              # Khmer / Thái / Hoa (Boss duyệt 23/11): biên giới, ngừng bắn, quân đội, lãnh đạo, trừng phạt
+              "ព្រំប្រទល់", "បទឈប់បាញ់", "កងទ័ព", "ហ៊ុន ម៉ាណែត", "ហ៊ុន សែន",
+              "ชายแดน", "กัมพูชา", "หยุดยิง", "ทุ่นระเบิด", "ปราสาทพระวิหาร", "คว่ำบาตร", "ฮุน มาเนต", "ฮุน เซน",
+              "边境", "柬泰", "制裁", "停火"]
 
 
 def hard_official(it):
@@ -2917,9 +2921,11 @@ def note_session_end():
         d["sent"] += S["sent"]
         d["off"] += S["ai_offtopic"]
         d["dup"] += S["ai_dup"]
+        d["stale"] = d.get("stale", 0) + STALE_DROPPED["n"]
         d["sessions"] += 1
         STATE["last_end"] = time.time()
         S["sent"] = S["ai_offtopic"] = S["ai_dup"] = 0
+        STALE_DROPPED["n"] = 0
         save_state()
 
 
@@ -2947,7 +2953,8 @@ def health_report():
     sent = d["sent"] + S["sent"]
     off = d["off"] + S["ai_offtopic"]
     dup = d["dup"] + S["ai_dup"]
-    lines = [f"{now.strftime('%H:%M')} Tổng kết hôm nay: gửi {sent} tin; AI loại {off} lạc đề, {dup} trùng.",
+    stale = d.get("stale", 0) + STALE_DROPPED["n"]
+    lines = [f"{now.strftime('%H:%M')} Tổng kết hôm nay: gửi {sent} tin; AI loại {off} lạc đề, {dup} trùng, {stale} quá tuổi.",
              f"Phiên chạy: {d['sessions']}; lúc chuyển phiên hở lâu nhất {d['max_gap']} phút.",
              f"AI: {AI['status']}."]
     if total:
