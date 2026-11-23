@@ -22,14 +22,14 @@ def bot(monkeypatch, tmp_path):
 
 
 def test_topics_defined(bot):
-    for k in ("vukhi", "quansu_thailan", "anninh_khuvuc"):
+    for k in bot.REGION_KEYS:
         assert k in bot.TOPICS and bot.TOPICS[k]["ai_desc"] and bot.TOPICS[k]["gnews_en"]
-    assert len(bot.REGION_TAGS) == 3
+    assert len(bot.REGION_TAGS) == len(bot.REGION_KEYS) == 6
 
 
 def test_eff_topics_adds_without_mutating(bot):
     c = {"topics": ["campuchia"]}
-    assert set(bot.eff_topics(c)) == {"campuchia", "vukhi", "quansu_thailan", "anninh_khuvuc"}
+    assert set(bot.eff_topics(c)) == {"campuchia", *bot.REGION_KEYS}
     assert c["topics"] == ["campuchia"]
     assert bot.eff_topics({"topics": []}) == []
 
@@ -41,7 +41,7 @@ def test_chat_urls_and_subs_include_region(bot):
     assert set(bot.chat_urls(c)) > base
     assert not bot.chat_urls(c0)
     subs = bot.chat_subs(c, {}, 1_000_000.0)
-    assert {s[0] for s in subs} == {"t:campuchia", "t:vukhi", "t:quansu_thailan", "t:anninh_khuvuc"}
+    assert {s[0] for s in subs} == {"t:campuchia", *("t:" + k for k in bot.REGION_KEYS)}
 
 
 def test_strict_ok_fail_closed_for_region(bot):
