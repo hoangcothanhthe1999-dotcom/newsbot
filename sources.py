@@ -167,16 +167,12 @@ OFFICIAL_SITES = [   # tầng 1 – bot tự dò RSS, không có thì theo dõi 
     {"name": "Bộ Ngoại giao Thái Lan", "url": "https://www.mfa.go.th/en/page/news"},
     {"name": "Bộ Quốc phòng Thái Lan", "url": "https://www.mod.go.th/"},
     {"name": "Văn phòng Thủ tướng Thái Lan", "url": "https://www.thaigov.go.th/"},
-    {"name": "Lục quân Hoàng gia Thái", "url": "https://www.rta.mi.th/"},
-    {"name": "Bộ Tư pháp", "url": "https://moj.gov.kh/"},
     {"name": "Hội đồng Hiến pháp", "url": "https://ccc.gov.kh/"},
     {"name": "Cơ quan Chống tham nhũng (ACU)", "url": "https://acu.gov.kh/"},
     {"name": "Ủy ban Quốc gia chống ma túy", "url": "https://nacd.gov.kh/"},
-    {"name": "Ủy ban Quản lý thiên tai", "url": "https://ncdm.gov.kh/"},
     {"name": "Bộ Kế hoạch", "url": "https://mop.gov.kh/"},
     {"name": "Bộ Mỏ & Năng lượng", "url": "https://mme.gov.kh/"},
     {"name": "Bộ Bưu chính & Viễn thông", "url": "https://mptc.gov.kh/"},
-    {"name": "Ủy ban Chứng khoán (SECC)", "url": "https://secc.gov.kh/"},
     {"name": "Bộ Quản lý đất đai", "url": "https://mlmupc.gov.kh/"},
     {"name": "Bộ Công nghiệp, Khoa học & Đổi mới", "url": "https://misti.gov.kh/"},
     {"name": "Chính phủ Thái Lan (thailand.go.th)", "url": "https://www.thailand.go.th/"},
@@ -229,7 +225,7 @@ GLOSSARY = {
 
 # Nguồn mới thêm 19/11/2026: chưa báo "nguồn lỗi" trước thời điểm này (cho bot tự thử rồi mới lọc bỏ trang hỏng)
 PROBATION_UNTIL = 1795280400
-PROBATION_URLS = ['https://freshnews.com.kh/', 'https://kh.usembassy.gov/', 'https://moj.gov.kh/', 'https://ccc.gov.kh/', 'https://acu.gov.kh/', 'https://nacd.gov.kh/', 'https://ncdm.gov.kh/', 'https://mop.gov.kh/', 'https://mme.gov.kh/', 'https://mptc.gov.kh/', 'https://secc.gov.kh/', 'https://mlmupc.gov.kh/', 'https://misti.gov.kh/', 'https://www.thailand.go.th/', 'https://thailand.prd.go.th/en']
+PROBATION_URLS = ['https://freshnews.com.kh/', 'https://kh.usembassy.gov/', 'https://ccc.gov.kh/', 'https://acu.gov.kh/', 'https://nacd.gov.kh/', 'https://mop.gov.kh/', 'https://mme.gov.kh/', 'https://mptc.gov.kh/', 'https://mlmupc.gov.kh/', 'https://misti.gov.kh/', 'https://www.thailand.go.th/', 'https://thailand.prd.go.th/en']
 
 
 # Cơ quan / tổ chức NƯỚC NGOÀI: tin của họ nói về Campuchia luôn được gửi (không qua bộ lọc "lạc đề" của AI)
