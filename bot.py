@@ -2018,13 +2018,13 @@ def foreign_official(it):
     return domain_in(it.get("domain", ""), FOREIGN_OFFICIAL_DOMAINS)
 
 
-HARD_WORDS = ["biên giới", "bien gioi", "cột mốc", "cửa khẩu", "việt nam", "viet nam", "thái lan", "thailand", "thai-cambodia",
-              "border", "vietnam", "trừng phạt", "sanction", "hun manet", "hun sen", "samdech", "cpp", "quốc hội", "senate",
-              "national assembly", "ព្រំដែន", "វៀតណាម", "ថៃ", "ទណ្ឌកម្ម"]
+HARD_WORDS = ["biên giới", "bien gioi", "cột mốc", "cửa khẩu", "thái lan", "thailand", "thai-cambodia",
+              "border", "trừng phạt", "sanction", "hun manet", "hun sen", "samdech", "cpp", "quốc hội", "senate",
+              "national assembly", "ព្រំដែន", "ថៃ", "ទណ្ឌកម្ម"]
 
 
 def hard_official(it):
-    """Tin của trang cơ quan chính thức có chứa từ khóa cốt lõi (biên giới, Việt Nam, Thái, trừng phạt…): chắc chắn
+    """Tin của trang cơ quan chính thức có chứa từ khóa cốt lõi (biên giới, Thái, trừng phạt…): chắc chắn
     liên quan, khỏi hỏi AI (tiết kiệm lượt AI). Tin chính thức không có từ cốt lõi vẫn qua AI như cũ."""
     d = it.get("domain", "")
     if not (domain_in(d, OFFICIAL_DOMAINS) and not domain_in(d, ["tvk.gov.kh"])):
