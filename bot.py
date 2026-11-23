@@ -157,6 +157,32 @@ HTTP.mount("http://", _adapter)
 state_lock = threading.RLock()
 
 
+def merge_default_channels(st):
+    """Thêm kênh mặc định MỚI (có trong DEFAULT_CHANNELS nhưng chưa từng được nạp) vào state.
+    Mỗi kênh chỉ được nạp 1 lần (meta.seeded_ch) nên kênh chủ bot đã gỡ sẽ không tự quay lại.
+    Lần chạy đầu sau khi có hàm này: coi mọi kênh mặc định hiện có là đã nạp, không đổi gì."""
+    if not DEFAULT_CHANNELS:
+        return []
+    meta = st.setdefault("meta", {})
+    chans = st.setdefault("channels", [])
+    if "seeded_ch" not in meta:
+        meta["seeded_ch"] = sorted(str(c["u"]).lower() for c in DEFAULT_CHANNELS)
+        return []
+    seen = set(meta["seeded_ch"])
+    have = {str(c.get("u", "")).lower() for c in chans}
+    added = []
+    for c in DEFAULT_CHANNELS:
+        u = str(c["u"]).lower()
+        if u in seen:
+            continue
+        if u not in have:
+            chans.append(dict(c))
+            added.append(c["u"])
+        seen.add(u)
+    meta["seeded_ch"] = sorted(seen)
+    return added
+
+
 def load_state():
     try:
         with open(STATE_FILE, encoding="utf-8") as f:
@@ -175,6 +201,7 @@ def load_state():
     if DEFAULT_CHANNELS and not st["channels"] and not st["meta"].get("seed_channels"):
         st["channels"] = [dict(c) for c in DEFAULT_CHANNELS]   # nạp 1 lần danh sách kênh công khai mặc định
         st["meta"]["seed_channels"] = 1
+    merge_default_channels(st)
     st.setdefault("glossary", {})  # thuật ngữ người dùng thêm (/thuatngu)
     st.setdefault("kt", {})        # từ khoá -> {ngôn ngữ: [cụm dịch]} (Khmer, Trung, Thái…)
     st.setdefault("resolved", {})  # trang báo -> {type: rss|page, url, name, at}
