@@ -30,4 +30,9 @@ def test_prompt_has_thai_military_rule(bot, monkeypatch):
     it = {"id": "t1", "title": "Thailand plans to buy US made rocket", "desc": ""}
     bot.ai_relevant([(it, "chủ đề quân sự Campuchia")])
     assert seen, "ai_relevant không gọi AI"
-    assert "quân sự Thái Lan" in seen[0] and "kể cả khi tiêu đề không nhắc tên Campuchia" in seen[0]
+    p = seen[0]
+    assert "quân đội Thái Lan mua sắm vũ khí" in p and "kể cả khi tiêu đề không nhắc tên Campuchia" in p
+    # phải có giới hạn (tin Thái không dính an ninh khu vực => KHÔNG) và nêu rõ thứ tự ưu tiên
+    assert "hoàn toàn không dính an ninh khu vực" in p and "ƯU TIÊN hơn danh mục LOẠI" in p
+    # quy tắc mới phải đứng TRƯỚC quy tắc LOẠI để AI đọc đúng thứ tự
+    assert p.index("quân đội Thái Lan mua sắm vũ khí") < p.index("RIÊNG với dòng có «chủ đề»")
