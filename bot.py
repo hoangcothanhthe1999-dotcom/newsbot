@@ -105,6 +105,7 @@ RSS_EVERY = env_int("RSS_EVERY", 60)                 # RSS báo: tải lại t�
 GNEWS_EVERY = env_int("GNEWS_EVERY", 240)            # Google News: mỗi 4 phút (tránh bị Google chặn)
 BOT_NAME = os.environ.get("BOT_NAME", "").strip() or "Hoang"
 MAX_AGE_HOURS = env_int("MAX_AGE_HOURS", 12)         # chỉ gửi bài đăng trong N giờ gần nhất
+CATCHUP_MAX_HOURS = env_int("CATCHUP_MAX_HOURS", 16)  # nguồn chính thức đăng lúc bot nghỉ: bắt bù tối đa N giờ
 RUN_MINUTES = env_int("RUN_MINUTES", 0)              # 0 = chạy mãi; >0 = tự dừng sau N phút
 END_TIME_VN = os.environ.get("END_TIME_VN", "").strip()   # vd "16:15": quá giờ này (giờ VN) thì phiên tự dừng / phiên mới thoát ngay
 
@@ -963,7 +964,15 @@ def fetch_many(urls, prefer_cache=0):
 def fresh(item, now, max_age=None):
     if item["ts"] is None:
         return True
-    return now - item["ts"] <= (max_age or MAX_AGE_HOURS) * 3600 and item["ts"] <= now + 600
+    if item["ts"] > now + 600:
+        return False
+    age = now - item["ts"]
+    if age <= (max_age or MAX_AGE_HOURS) * 3600:
+        return True
+    # Bắt bù: nguồn chính thức đăng trong lúc bot nghỉ (sau phiên trước kết thúc) vẫn được nhận, tối đa CATCHUP_MAX_HOURS giờ.
+    last_end = STATE.get("last_end", 0)
+    return bool(item.get("official") and last_end and item["ts"] >= last_end - 600
+                and age <= CATCHUP_MAX_HOURS * 3600)
 
 
 ALL_FEEDS = list(dict.fromkeys([u for t in TOPICS.values() for u in t.get("feeds", []) + t.get("filtered_feeds", [])]
