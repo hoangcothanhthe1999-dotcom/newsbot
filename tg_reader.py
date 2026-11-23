@@ -15,6 +15,7 @@ import logging
 import os
 import threading
 import time
+from typing import Any, cast
 
 log = logging.getLogger("newsbot")
 
@@ -24,6 +25,8 @@ try:
     HAVE_TELETHON = True
 except Exception:  # chưa cài telethon
     HAVE_TELETHON = False
+    # Mọi chỗ dùng đều đã chặn bằng HAVE_TELETHON; đặt None để Pyright không báo "possibly unbound".
+    TelegramClient = functions = types = StringSession = cast(Any, None)
 
 
 class Reader:
@@ -31,7 +34,7 @@ class Reader:
         self.api_id, self.api_hash, self.session = int(api_id), api_hash, session
         self.loop = asyncio.new_event_loop()
         threading.Thread(target=self.loop.run_forever, daemon=True, name="tg-reader").start()
-        self.client = None
+        self.client: Any = None
         self.ok = False
         self.error = ""
         self._ents = {}
