@@ -20,7 +20,7 @@ import threading
 import time
 import unicodedata
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from typing import Any, cast
 from urllib.parse import quote_plus, unquote, urljoin, urlparse
 
@@ -667,6 +667,16 @@ def log_session_summary():
         name = SRC_NAMES.get(k) or k
         tag = "ĐỌC ĐƯỢC" if d["n"] > 0 else ("TRANG TRỐNG" if d["ok"] else "LỖI")
         log.info("NGUỒN | %s | %s | bài=%d | ok=%d lỗi=%d %s", tag, name[:40], d["n"], d["ok"], d["fail"], d["err"])
+    try:   # số liệu theo nguồn của phiên vào sổ quyết định (để so sánh giữa các ngày)
+        with _trace_lock, open(DECISIONS_FILE, "a", encoding="utf-8") as f:
+            ts = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+            for k, d in S["src"].items():
+                f.write(json.dumps({"ts": ts, "run": os.environ.get("GITHUB_RUN_ID", ""), "stage": "source_stats",
+                                    "src": (SRC_NAMES.get(k) or k)[:40], "n": d["n"], "ok": d["ok"], "fail": d["fail"],
+                                    "kw_dropped": S.get("kw_gate", {}).get((SRC_NAMES.get(k) or k)[:40], 0)},
+                                   ensure_ascii=False) + "\n")
+    except Exception:
+        pass
 
 
 def fetch_source(home, name=""):
@@ -996,6 +1006,45 @@ def fetch_many(urls, prefer_cache=0):
 
 STALE_DROPPED = {"n": 0}
 
+# ---- Sổ quyết định (JSON Lines): mỗi quyết định về 1 bài ghi 1 dòng, để điều tra "vì sao bài X không được gửi".
+# Chỉ ghi sự kiện kỹ thuật: không khóa, không nội dung bài, không prompt/phản hồi AI. Tệp là artifact của run (không commit).
+DECISIONS_FILE = os.environ.get("DECISIONS_FILE", "decisions.jsonl")
+_trace_seen = set()
+_trace_lock = threading.Lock()
+
+
+def _trace_url(u):
+    """Chỉ giữ máy chủ + đường dẫn (bỏ tham số truy vấn, có thể chứa mã theo dõi)."""
+    try:
+        p = urlparse(str(u or ""))
+        return (p.netloc + p.path)[:160]
+    except Exception:
+        return ""
+
+
+def trace_id(it):
+    return hashlib.sha1((str(it.get("link") or it.get("title") or "")).encode("utf-8", "ignore")).hexdigest()[:8]
+
+
+def trace(stage, status, reason, it, **extra):
+    """Ghi 1 dòng sổ quyết định. Mỗi (bài, bước, lý do) chỉ ghi 1 lần mỗi phiên chạy. Không bao giờ làm bot lỗi."""
+    try:
+        tid = trace_id(it)
+        key = (tid, stage, reason)
+        with _trace_lock:
+            if key in _trace_seen:
+                return
+            _trace_seen.add(key)
+            rec = {"ts": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"), "run": os.environ.get("GITHUB_RUN_ID", ""),
+                   "tid": tid, "src": str(it.get("source") or it.get("domain") or "?")[:40],
+                   "title": str(it.get("title", ""))[:140], "url": _trace_url(it.get("link")),
+                   "stage": stage, "status": status, "reason": reason}
+            rec.update(extra)
+            with open(DECISIONS_FILE, "a", encoding="utf-8") as f:
+                f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+
 
 def fresh(item, now, max_age=None):
     if item["ts"] is None:
@@ -1011,6 +1060,7 @@ def fresh(item, now, max_age=None):
               and age <= CATCHUP_MAX_HOURS * 3600)
     if not ok:
         STALE_DROPPED["n"] += 1
+        trace("age", "dropped", "too_old", item, age_h=round(age / 3600, 1), limit_h=MAX_AGE_HOURS)
         if item.get("official") and STALE_DROPPED["n"] <= 30:   # bài chính thức bị bỏ vì quá tuổi: ghi lại để truy vết (không ghi nguồn thường cho đỡ ồn)
             log.info("BỊ BỎ | quá tuổi %.1fh | %s | %s", age / 3600, item.get("source", "?"), str(item.get("title", ""))[:100])
     return ok
@@ -1408,6 +1458,7 @@ def collect_keyword(kw, fetched, now, when="1d", max_age=None, langs=()):
                     or (not it["vn"] and any(keyword_match(t, text) for t in foreign))):
                 res.append(it)
             else:
+                trace("keyword", "dropped", "keyword_mismatch", it)
                 gate = SESSION_STATS.setdefault("kw_gate", {})
                 src = str(it.get("source") or it.get("domain") or "?")[:40]
                 gate[src] = gate.get(src, 0) + 1
@@ -2144,6 +2195,7 @@ def drop_irrelevant(entries):
             log.info("BỊ LOẠI | lạc đề | %s | %s", _it.get("source", "?"), _it.get("title", "")[:110])
         for _it in dropped:
             note_dropped("lạc đề", _it)
+            trace("ai_relevance", "dropped", "ai_irrelevant", _it)
         SESSION_STATS["ai_offtopic"] += len(dropped)
     return kept, dropped
 
@@ -2187,6 +2239,7 @@ def ai_dedupe(entries, sent_titles):
             log.info("BỊ LOẠI | trùng sự kiện | %s | %s", _it.get("source", "?"), _it.get("title", "")[:110])
         for _it in dropped:
             note_dropped("trùng sự kiện", _it)
+            trace("ai_dedupe", "dropped", "duplicate_event", _it)
         SESSION_STATS["ai_dup"] += len(dropped)
     return kept, dropped
 
@@ -2782,6 +2835,7 @@ def deliver(cid, cs, c, entries, now):
         SESSION_STATS["sent"] += 1
         store_item(it, cid, tags)
         r = send(cid, fmt_item(it, tags, c["summary"]), item_kb(it), silent=not should_ring(cs, it))
+        trace("send", "sent" if r else "error", "sent" if r else "send_error", it, chat=str(cid))
         if r and c["summary"] and not _summary_cache.get(it["id"], {}).get("summary"):
             queue_summary(cid, r.get("message_id"), it, tags)
         if n % 10 == 9:
