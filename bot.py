@@ -2486,9 +2486,13 @@ def check_alerts():
         send(target, "⚠️ <b>AI tóm tắt đang lỗi:</b> " + html.escape(AI["status"]) +
              "\nTin vẫn được gửi bình thường, chỉ thiếu phần tóm tắt. Lấy key mới tại aistudio.google.com/apikey")
     if newly:
-        lst = "\n".join("• " + html.escape(feed_label(u)) for u in newly[:15])
+        labels = [html.escape(feed_label(u)) for u in newly]
+        shown = labels[:15]
+        lst = "\n".join("• " + x for x in shown)
+        if len(labels) > len(shown):
+            lst += f"\n• … và {len(labels) - len(shown)} nguồn nữa"
         send(target, "⚠️ <b>Một số nguồn đang chặn hoặc lỗi hơn 3 giờ:</b>\n" + lst +
-             "\n\nBot đã tự chuyển sang lấy tin các báo này qua Google News. Gõ /nguon để xem chi tiết.")
+             "\n\nVới nguồn có truy vấn Google News dự phòng, bot vẫn lấy tin qua đó; các nguồn còn lại có thể thiếu tin. Gõ /nguon để xem chi tiết.")
 
 
 # ------------------------------------------------------------ vòng quét --
