@@ -1430,6 +1430,33 @@ def resolve_link(item):
     return link
 
 
+def public_url_ok(url):
+    """Chỉ cho tải http/https tới địa chỉ công khai (chặn IP riêng, loopback, link-local, metadata). Link bài đến từ nguồn bên ngoài."""
+    import ipaddress
+    import socket
+    try:
+        p = urlparse(url)
+        if p.scheme not in ("http", "https") or not p.hostname or p.username or p.password:
+            return False
+        infos = socket.getaddrinfo(p.hostname, p.port or (443 if p.scheme == "https" else 80), proto=socket.IPPROTO_TCP)
+        return bool(infos) and all(ipaddress.ip_address(i[4][0]).is_global for i in infos)
+    except Exception:
+        return False
+
+
+def safe_get(url, hops=4, **kw):
+    """HTTP.get có kiểm từng chặng chuyển hướng bằng public_url_ok (tự theo chuyển hướng, tối đa `hops`)."""
+    for _ in range(hops + 1):
+        if not public_url_ok(url):
+            raise RuntimeError("địa chỉ không công khai, bỏ qua")
+        r = HTTP.get(url, allow_redirects=False, **kw)
+        if r.status_code in (301, 302, 303, 307, 308) and r.headers.get("Location"):
+            url = requests.compat.urljoin(url, r.headers["Location"])
+            continue
+        return r
+    raise RuntimeError("quá nhiều chuyển hướng")
+
+
 _robots = {}          # domain -> RobotFileParser | None
 _article_block = {}   # domain -> thời điểm được thử lại
 
@@ -1442,7 +1469,7 @@ def robots_allows(url):
     if dom not in _robots:
         rp = RobotFileParser()
         try:
-            r = HTTP.get(f"{p.scheme}://{dom}/robots.txt", timeout=10)
+            r = safe_get(f"{p.scheme}://{dom}/robots.txt", timeout=10)
             if r.status_code == 200:
                 rp.parse(r.text.splitlines())
             else:
@@ -1471,7 +1498,7 @@ def fetch_text(item):
             return ""
         import trafilatura
         with domain_slot(url):
-            r = HTTP.get(url, timeout=15, headers={"Accept": "text/html,*/*;q=0.8"})
+            r = safe_get(url, timeout=15, headers={"Accept": "text/html,*/*;q=0.8"})
         if r.status_code in BLOCK_CODES:
             _article_block[dom] = time.time() + 6 * 3600
             log.info("Báo %s không cho đọc toàn văn (HTTP %s) – dùng mô tả RSS", dom, r.status_code)
