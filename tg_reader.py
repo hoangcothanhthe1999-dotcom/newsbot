@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Đọc tin từ KÊNH TELEGRAM công khai (Thủ tướng, Bộ Ngoại giao, Bộ Quốc phòng, Fresh News…).
 

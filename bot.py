@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 NewsBot – Bot Telegram tự động săn tin tức mới nhất từ báo chính thống.
 
@@ -7,34 +6,46 @@ NewsBot – Bot Telegram tự động săn tin tức mới nhất từ báo chí
 - Tóm tắt từng bài bằng AI (Google Gemini – có gói miễn phí)
 - Chạy liên tục (máy tính) hoặc theo phiên (GitHub Actions, biến RUN_MINUTES)
 """
+import calendar
+import email.utils
+import hashlib
+import html
+import json
+import logging
 import os
+import random
 import re
 import sys
-import json
-import time
-import random
-import html
-import hashlib
-import email.utils
-import logging
-import calendar
 import threading
+import time
 import unicodedata
-from datetime import datetime, timezone, timedelta
-from urllib.parse import quote_plus, urlparse
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timedelta, timezone
+from urllib.parse import quote_plus, urlparse
 
-import requests
 import feedparser
+import requests
 
 from sources import TOPICS, TRUSTED_DOMAINS
+
 try:
     from sources import LANG_SOURCES
 except ImportError:
     LANG_SOURCES = {}
 try:
-    from sources import (FOREIGN_OFFICIAL_DOMAINS, PROBATION_UNTIL, PROBATION_URLS, OFFICIAL_SITES, OFFICIAL_DOMAINS, MAINSTREAM_KH, STATEMENT_WORDS, BLOCK_DOMAINS,
-                         TG_PRESET_SEARCHES, GLOSSARY, DEFAULT_CHANNELS)
+    from sources import (
+        BLOCK_DOMAINS,
+        DEFAULT_CHANNELS,
+        FOREIGN_OFFICIAL_DOMAINS,
+        GLOSSARY,
+        MAINSTREAM_KH,
+        OFFICIAL_DOMAINS,
+        OFFICIAL_SITES,
+        PROBATION_UNTIL,
+        PROBATION_URLS,
+        STATEMENT_WORDS,
+        TG_PRESET_SEARCHES,
+    )
 except ImportError:
     OFFICIAL_SITES, OFFICIAL_DOMAINS, MAINSTREAM_KH, STATEMENT_WORDS = [], [], [], []
     PROBATION_UNTIL, PROBATION_URLS = 0, []
@@ -46,7 +57,7 @@ try:
 except Exception:
     tg_reader = None
 try:
-    import web_reader   # đọc kênh công khai qua t.me/s (không cần tài khoản phụ)
+    import web_reader  # đọc kênh công khai qua t.me/s (không cần tài khoản phụ)
 except Exception:
     web_reader = None
 
@@ -219,7 +230,7 @@ def prune_state():
             STATE["items"] = {x["id"]: x for x in keep if now - x.get("stored", 0) < 8 * 86400}
         STATE["health"] = {u: h for u, h in STATE.get("health", {}).items()
                            if now - max(h.get("last_ok", 0), h.get("since", 0), h.get("skip_until", 0)) < 7 * 86400
-                           and not is_vn(domain_of(u[4:] if u.startswith("src:") else u))}
+                           and not is_vn(domain_of(u.removeprefix("src:")))}
         # nguồn báo Việt Nam đã bỏ: xóa dấu vết cũ để bot không báo "nguồn lỗi" cho nguồn không còn đọc
         for k in ("resolved", "pg"):
             if isinstance(STATE.get(k), dict):
@@ -360,7 +371,7 @@ def is_ascii(s):
 def domain_of(url):
     try:
         d = urlparse(url).netloc.lower()
-        return d[4:] if d.startswith("www.") else d
+        return d.removeprefix("www.")
     except Exception:
         return ""
 
@@ -475,7 +486,7 @@ def looks_like_feed(content):
 
 
 def page_title(html_text):
-    m = re.search(r"<title[^>]*>(.*?)</title>", html_text, re.S | re.I)
+    m = re.search(r"<title[^>]*>(.*?)</title>", html_text, re.DOTALL | re.IGNORECASE)
     return strip_html(m.group(1))[:80] if m else ""
 
 
@@ -497,8 +508,8 @@ def resolve_source(url, force=False):
         elif resp.status_code == 200:
             text = resp.text
             res["name"] = page_title(text)
-            cands = re.findall(r'<link[^>]+type=["\']application/(?:rss|atom)\+xml["\'][^>]*>', text, re.I)
-            hrefs = [re.search(r'href=["\']([^"\']+)', c, re.I) for c in cands]
+            cands = re.findall(r'<link[^>]+type=["\']application/(?:rss|atom)\+xml["\'][^>]*>', text, re.IGNORECASE)
+            hrefs = [re.search(r'href=["\']([^"\']+)', c, re.IGNORECASE) for c in cands]
             tries = [requests.compat.urljoin(resp.url, h.group(1)) for h in hrefs if h]
             base = resp.url if resp.url.endswith("/") else resp.url.rsplit("/", 1)[0] + "/"
             tries += [requests.compat.urljoin(base, p) for p in FEED_PATHS]
@@ -529,7 +540,7 @@ def _page_links(text, base_url):
     """Lấy các link bài viết (cùng tên miền) từ HTML của trang chủ."""
     dom = domain_of(base_url)
     links = {}
-    for m in re.finditer(r'<a\s[^>]*href=["\']([^"\'#]+)["\'][^>]*>(.*?)</a>', text, re.S | re.I):
+    for m in re.finditer(r'<a\s[^>]*href=["\']([^"\'#]+)["\'][^>]*>(.*?)</a>', text, re.DOTALL | re.IGNORECASE):
         href, label = m.group(1), strip_html(m.group(2))
         full = requests.compat.urljoin(base_url, href)
         if domain_of(full).split(".")[-2:] != dom.split(".")[-2:]:
@@ -537,7 +548,7 @@ def _page_links(text, base_url):
         n = len(compact(label))
         if n < 12 or n > 300 or full.rstrip("/") == base_url.rstrip("/"):
             continue
-        if re.search(r"/(tag|tags|category|categories|author|page|search|login|contact|about)(/|$|\?)", full, re.I):
+        if re.search(r"/(tag|tags|category|categories|author|page|search|login|contact|about)(/|$|\?)", full, re.IGNORECASE):
             continue
         if full not in links or len(label) > len(links[full]):
             links[full] = label
@@ -1045,7 +1056,7 @@ def smart_parse(kw):
         try:
             d = json.loads(raw)
         except Exception:
-            m = re.search(r"\{.*\}", raw, re.S)
+            m = re.search(r"\{.*\}", raw, re.DOTALL)
             try:
                 d = json.loads(m.group(0)) if m else None
             except Exception:
@@ -1148,7 +1159,7 @@ def ensure_expansions(kws):
             try:
                 d = json.loads(raw)
             except Exception:
-                m = re.search(r"\{.*\}", raw, re.S)
+                m = re.search(r"\{.*\}", raw, re.DOTALL)
                 try:
                     d = json.loads(m.group(0)) if m else None
                 except Exception:
@@ -1748,7 +1759,7 @@ def ai_json(raw, key=None):
     try:
         data = json.loads(raw)
     except Exception:
-        m = re.search(r"[\[{].*[\]}]", raw, re.S)
+        m = re.search(r"[\[{].*[\]}]", raw, re.DOTALL)
         if not m:
             return None
         try:
@@ -2289,7 +2300,7 @@ def apply_cambodia_preset(cid):
 
 
 
-URL_RE = re.compile(r"^(https?://)?([a-z0-9\-]+\.)+[a-z]{2,}(/\S*)?$", re.I)
+URL_RE = re.compile(r"^(https?://)?([a-z0-9\-]+\.)+[a-z]{2,}(/\S*)?$", re.IGNORECASE)
 
 
 
@@ -2350,7 +2361,7 @@ def request_access(msg):
 
 
 GENERIC_RE = re.compile(r"^(gửi|cho|xem|lấy|có)?\s*(\d+\s*)?(cái\s*)?(tin|tin tức|bài|bản tin|thời sự)?\s*"
-                        r"(mới nhất|mới|hot|nóng|hôm nay|nổi bật)(\s*(đi|nào|với|ạ|nhé|nha))?\W*$", re.I)
+                        r"(mới nhất|mới|hot|nóng|hôm nay|nổi bật)(\s*(đi|nào|với|ạ|nhé|nha))?\W*$", re.IGNORECASE)
 
 
 
@@ -2958,9 +2969,7 @@ def main():
             note = None
             if c["paused"]:
                 note = "Bot đang tắt. Gõ /bat để mở lại."
-            elif not c["topics"] and not c["keywords"]:
-                note = None
-            elif time.time() - c.get("last_notice", 0) > 6 * 3600:
+            elif not c["topics"] and not c["keywords"] or time.time() - c.get("last_notice", 0) > 6 * 3600:
                 note = None
             if note:
                 send(cid, note, MAIN_KB, silent=True)
