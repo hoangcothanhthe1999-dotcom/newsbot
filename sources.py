@@ -135,6 +135,47 @@ TOPICS = {
                    "các bên và đánh giá của giới phân tích. LOẠI: thể thao, du lịch, thương mại thông thường, tin xã hội địa phương không liên quan an ninh",
         "hint": "Thailand Cambodia border",
     },
+    # Đợt 1 (Boss 23.11.26): kinh tế, hạ tầng chiến lược, đối ngoại song phương của Campuchia.
+    "hatang_chienluoc": {
+        "name": "🏗️ Dự án chiến lược và hạ tầng Campuchia (Funan Techo, Ream, năng lượng, Mekong)",
+        "feeds": [],
+        "gnews_en": ["Funan Techo canal", "Ream naval base Cambodia", "Cambodia Mekong dam water Vietnam", "Cambodia Techo airport Siem Reap",
+                     "Cambodia expressway railway project", "Cambodia power plant energy project", "Cambodia Belt and Road project",
+                     "Cambodia port Sihanoukville investment", "Cambodia Vietnam Funan Techo canal"],
+        "gnews_zh": ["柬埔寨 扶南 运河", "柬埔寨 云壤 海军基地", "柬埔寨 基础设施 项目 中国"],
+        "ai_desc": "dự án hạ tầng, năng lượng, cảng, sân bay, kênh đào, đập thủy điện, căn cứ ở quy mô quốc gia hoặc có ý nghĩa chiến lược của Campuchia "
+                   "(Funan Techo, Ream, Mekong, nguồn nước, điện, cao tốc, đường sắt, cảng Sihanoukville), cùng tác động tới Việt Nam, Thái Lan, Trung Quốc, "
+                   "Mỹ; khoản vốn, hợp đồng, tiến độ, tranh cãi quốc tế về các dự án này. "
+                   "LOẠI: khởi công hoặc khánh thành công trình nhỏ ở địa phương, quảng bá doanh nghiệp xây dựng, bất động sản dân dụng, tin giao thông thường ngày",
+        "hint": "Cambodia infrastructure",
+    },
+    "kinhte_taichinh": {
+        "name": "💰 Kinh tế vĩ mô và tài chính Campuchia (NBC, tỷ giá, nợ, thương mại, đầu tư)",
+        "feeds": [],
+        "gnews_en": ["Cambodia National Bank NBC", "Cambodia riel dollarization exchange rate", "Cambodia public debt", "Cambodia US tariffs",
+                     "Cambodia garment exports", "Cambodia EU EBA trade preference", "Cambodia CDC investment approved", "Cambodia GDP growth forecast",
+                     "Cambodia trade deficit exports", "Cambodia Bakong digital payment"],
+        "gnews_zh": ["柬埔寨 经济 增长", "柬埔寨 外资 投资", "柬埔寨 出口 关税"],
+        "ai_desc": "kinh tế vĩ mô và tài chính cấp quốc gia của Campuchia: Ngân hàng Quốc gia (NBC), tỷ giá và đô la hóa, nợ công, ngân sách, thuế, "
+                   "tăng trưởng GDP và dự báo, thương mại và xuất nhập khẩu, thuế quan của Mỹ, ưu đãi thương mại EBA của EU, "
+                   "đầu tư nước ngoài lớn, xếp hạng tín nhiệm, vốn vay và viện trợ, hệ thống thanh toán quốc gia. "
+                   "LOẠI: giá hàng hóa hoặc nông sản nhỏ lẻ, bất động sản dân dụng, khuyến mãi, quảng bá ngân hàng hoặc doanh nghiệp thương mại, "
+                   "bình luận chung chung",
+        "hint": "Cambodia economy",
+    },
+    "doingoai_songphuong": {
+        "name": "🤝 Đối ngoại song phương Campuchia (Trung Quốc, Mỹ, Việt Nam, Nhật, EU, ASEAN)",
+        "feeds": [],
+        "gnews_en": ["China Cambodia relations", "Cambodia United States relations", "Cambodia Japan cooperation", "Cambodia Vietnam relations visit",
+                     "Cambodia Laos Vietnam development triangle", "Cambodia ASEAN summit", "Hun Manet visit", "Hun Manet meets",
+                     "Cambodia European Union relations", "Cambodia Russia relations"],
+        "gnews_zh": ["中柬 关系", "洪玛奈 访问 会见"],
+        "ai_desc": "ngoại giao song phương và đa phương cấp cao của Campuchia: chuyến thăm, hội đàm, tuyên bố chung, ký kết hiệp định với Trung Quốc, Mỹ, "
+                   "Việt Nam, Nhật, Hàn Quốc, EU, Nga, Ấn Độ, Thái Lan, Lào và ASEAN; vai trò của Campuchia trong ASEAN và Liên Hợp Quốc; "
+                   "tuyên bố của Bộ Ngoại giao và Thủ tướng về quan hệ đối ngoại. "
+                   "LOẠI: giao lưu văn hóa, du lịch, thể thao, học bổng, hợp tác giáo dục hoặc y tế nhỏ, lễ kỷ niệm thông thường, bình luận chung chung",
+        "hint": "Cambodia diplomacy",
+    },
 }
 
 # Các tên miền được coi là "báo chính thống" khi lấy tin qua Google News.

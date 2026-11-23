@@ -1982,13 +1982,13 @@ def hard_official(it):
 
 
 CAMBO_TAG = TOPICS["campuchia"]["name"]
-# Ba nhóm khu vực (Boss 22.11.26): vũ khí – viện trợ quân sự, quân sự Thái Lan, an ninh khu vực.
-REGION_KEYS = ("vukhi", "quansu_thailan", "anninh_khuvuc")
+# Nhóm bổ sung cho chủ đề Campuchia: vũ khí, quân sự Thái, an ninh khu vực (Boss 22.11.26); hạ tầng, kinh tế, đối ngoại (23.11.26).
+REGION_KEYS = ("vukhi", "quansu_thailan", "anninh_khuvuc", "hatang_chienluoc", "kinhte_taichinh", "doingoai_songphuong")
 REGION_TAGS = {TOPICS[k]["name"] for k in REGION_KEYS if k in TOPICS}
 
 
 def eff_topics(c):
-    """Chat đã bật chủ đề Campuchia tự nhận thêm ba nhóm khu vực (chỉ ở bộ nhớ, không ghi state.json)."""
+    """Chat đã bật chủ đề Campuchia tự nhận thêm các nhóm bổ sung (chỉ ở bộ nhớ, không ghi state.json)."""
     t = list(c["topics"])
     if "campuchia" in t:
         t += [k for k in REGION_KEYS if k in TOPICS and k not in t]
