@@ -21,10 +21,12 @@ import time
 import unicodedata
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
-from urllib.parse import quote_plus, urljoin, urlparse
+from typing import Any, cast
+from urllib.parse import quote_plus, unquote, urljoin, urlparse
 
 import feedparser
 import requests
+from requests.adapters import HTTPAdapter
 
 from sources import TOPICS, TRUSTED_DOMAINS
 
@@ -146,7 +148,7 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)   # DEBUG của urllib3 g
 HTTP = requests.Session()
 HTTP.headers.update({"User-Agent": UA, "Accept-Language": "vi,en;q=0.8",
                      "Accept": "application/rss+xml, application/xml;q=0.9, text/xml;q=0.8, */*;q=0.5"})
-_adapter = requests.adapters.HTTPAdapter(pool_connections=40, pool_maxsize=40)
+_adapter = HTTPAdapter(pool_connections=40, pool_maxsize=40)
 HTTP.mount("https://", _adapter)
 HTTP.mount("http://", _adapter)
 
@@ -270,7 +272,7 @@ def detect_lang(text):
             if a <= o <= b:
                 counts[code] = counts.get(code, 0) + 1
     if counts:
-        best = max(counts, key=counts.get)
+        best = max(counts, key=lambda k: counts[k])
         if best == "zh" and "ja" in counts:
             best = "ja"
         return best
@@ -697,7 +699,7 @@ def fetch_channel(username):
         return cache.get("items", [])
     conf = next((c for c in STATE["channels"] if c["u"].lower() == username.lower()), {})
     try:
-        msgs = r.fetch(username, 25) if r else web_reader.fetch(username, 25)   # không có tài khoản phụ -> đọc qua t.me/s
+        msgs = r.fetch(username, 25) if r else cast(Any, web_reader).fetch(username, 25)   # không có tài khoản phụ -> đọc qua t.me/s
         mark_ok(key)
     except Exception as e:
         mark_fail(key, e)
@@ -1422,7 +1424,7 @@ def resolve_link(item):
     if item["gnews"]:
         try:
             from googlenewsdecoder import gnewsdecoder
-            r = gnewsdecoder(link)
+            r: Any = gnewsdecoder(link)
             if r.get("status"):
                 return r["decoded_url"]
         except Exception as e:
@@ -2513,7 +2515,7 @@ def feed_label(url):
         return (SRC_NAMES.get(url) or domain_of(url[4:])) + f" ({kind})"
     if "news.google.com" in url:
         m = re.search(r"q=([^&]+)", url)
-        q = requests.utils.unquote(m.group(1)).replace("+", " ").replace(" when:1d", "") if m else ""
+        q = unquote(m.group(1)).replace("+", " ").replace(" when:1d", "") if m else ""
         return "Google News: " + q
     p = urlparse(url)
     return domain_of(url) + " › " + p.path.rsplit("/", 1)[-1].replace(".rss", "")
