@@ -21,7 +21,7 @@ import time
 import unicodedata
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
-from urllib.parse import quote_plus, urlparse
+from urllib.parse import quote_plus, urljoin, urlparse
 
 import feedparser
 import requests
@@ -511,9 +511,9 @@ def resolve_source(url, force=False):
             res["name"] = page_title(text)
             cands = re.findall(r'<link[^>]+type=["\']application/(?:rss|atom)\+xml["\'][^>]*>', text, re.IGNORECASE)
             hrefs = [re.search(r'href=["\']([^"\']+)', c, re.IGNORECASE) for c in cands]
-            tries = [requests.compat.urljoin(resp.url, h.group(1)) for h in hrefs if h]
+            tries = [urljoin(resp.url, h.group(1)) for h in hrefs if h]
             base = resp.url if resp.url.endswith("/") else resp.url.rsplit("/", 1)[0] + "/"
-            tries += [requests.compat.urljoin(base, p) for p in FEED_PATHS]
+            tries += [urljoin(base, p) for p in FEED_PATHS]
             for t in list(dict.fromkeys(tries))[:14]:
                 try:
                     with domain_slot(t):
@@ -543,7 +543,7 @@ def _page_links(text, base_url):
     links = {}
     for m in re.finditer(r'<a\s[^>]*href=["\']([^"\'#]+)["\'][^>]*>(.*?)</a>', text, re.DOTALL | re.IGNORECASE):
         href, label = m.group(1), strip_html(m.group(2))
-        full = requests.compat.urljoin(base_url, href)
+        full = urljoin(base_url, href)
         if domain_of(full).split(".")[-2:] != dom.split(".")[-2:]:
             continue
         n = len(compact(label))
@@ -777,7 +777,7 @@ def _proxy_fetch(url):
         loc = r.headers.get("Location", "")
         if not loc:
             raise RuntimeError("chuyển hướng thiếu địa chỉ")
-        nxt = requests.compat.urljoin(r.url, loc)
+        nxt = urljoin(r.url, loc)
         if not _proxy_host_ok(nxt):
             raise RuntimeError("chuyển hướng tới host/giao thức không cho phép")
         r = HTTP.get(nxt, timeout=170, allow_redirects=False)
@@ -1451,7 +1451,7 @@ def safe_get(url, hops=4, **kw):
             raise RuntimeError("địa chỉ không công khai, bỏ qua")
         r = HTTP.get(url, allow_redirects=False, **kw)
         if r.status_code in (301, 302, 303, 307, 308) and r.headers.get("Location"):
-            url = requests.compat.urljoin(url, r.headers["Location"])
+            url = urljoin(url, r.headers["Location"])
             continue
         return r
     raise RuntimeError("quá nhiều chuyển hướng")
