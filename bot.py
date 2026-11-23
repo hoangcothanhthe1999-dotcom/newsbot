@@ -631,6 +631,7 @@ def stat_src(key, items=None, err=None):
 def log_session_summary():
     S = SESSION_STATS
     log.info("=== TỔNG KẾT PHIÊN: gửi %d tin; AI loại %d lạc đề, %d trùng ===", S["sent"], S["ai_offtopic"], S["ai_dup"])
+    log.info("Bỏ vì quá tuổi (mọi nguồn): %d bài", STALE_DROPPED["n"])
     if S.get("kw_gate"):
         log.info("Bị loại ở bước từ khóa (chưa tới AI), theo nguồn: %s",
                  ", ".join(f"{k}={v}" for k, v in sorted(S["kw_gate"].items(), key=lambda kv: -kv[1])[:15]))
@@ -966,6 +967,9 @@ def fetch_many(urls, prefer_cache=0):
 
 
 
+STALE_DROPPED = {"n": 0}
+
+
 def fresh(item, now, max_age=None):
     if item["ts"] is None:
         return True
@@ -976,8 +980,13 @@ def fresh(item, now, max_age=None):
         return True
     # Bắt bù: nguồn chính thức đăng trong lúc bot nghỉ (sau phiên trước kết thúc) vẫn được nhận, tối đa CATCHUP_MAX_HOURS giờ.
     last_end = STATE.get("last_end", 0)
-    return bool(item.get("official") and last_end and item["ts"] >= last_end - 600
-                and age <= CATCHUP_MAX_HOURS * 3600)
+    ok = bool(item.get("official") and last_end and item["ts"] >= last_end - 600
+              and age <= CATCHUP_MAX_HOURS * 3600)
+    if not ok:
+        STALE_DROPPED["n"] += 1
+        if item.get("official") and STALE_DROPPED["n"] <= 30:   # bài chính thức bị bỏ vì quá tuổi: ghi lại để truy vết (không ghi nguồn thường cho đỡ ồn)
+            log.info("BỊ BỎ | quá tuổi %.1fh | %s | %s", age / 3600, item.get("source", "?"), str(item.get("title", ""))[:100])
+    return ok
 
 
 ALL_FEEDS = list(dict.fromkeys([u for t in TOPICS.values() for u in t.get("feeds", []) + t.get("filtered_feeds", [])]
