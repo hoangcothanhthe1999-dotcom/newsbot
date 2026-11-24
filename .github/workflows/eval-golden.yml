@@ -1,9 +1,16 @@
 name: EvalGolden
 
 # Chạy TAY hoặc tự động sau merge (3 lần đo để thấy độ dao động) để đo độ sót/độ chính xác của bộ lọc AI trên bộ tin chuẩn (golden/golden_set.jsonl).
-# Không gửi Telegram, không ghi repo. Chỉ chạy trên nhánh main (code đã duyệt).
+# Không gửi Telegram, không ghi repo. Tự động chỉ trên main (code đã duyệt).
+# Đo TRƯỚC khi merge: chạy tay (Actions > EvalGolden > Run workflow) và nhập tên nhánh PR vào ô "ref".
+# Chỉ người có quyền ghi vào repo mới chạy tay được; khóa AI chỉ vào bước đo, không có token Telegram.
 on:
   workflow_dispatch:
+    inputs:
+      ref:
+        description: "Nhánh hoặc SHA cần đo (mặc định main)"
+        required: false
+        default: main
   push:                      # tự đo sau mỗi lần merge đụng lọc tin hoặc bộ chuẩn
     branches: [main]
     paths: ["bot.py", "sources.py", "eval_golden.py", "golden/**"]
@@ -17,13 +24,12 @@ concurrency:
 
 jobs:
   eval:
-    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || 'main' }}
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
