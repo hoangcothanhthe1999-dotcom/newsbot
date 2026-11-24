@@ -25,7 +25,7 @@ concurrency:
 jobs:
   eval:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -41,5 +41,14 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        # Ngưỡng: sót 0% (recall 1.0), chính xác ≥ 90%, AI phải chấm đủ. Đỏ khi ≥ 2/3 lần đo không đạt (chịu được 1 lần AI dao động).
         run: |
-          for i in 1 2 3; do echo "=== Lần đo $i/3 ==="; python eval_golden.py || true; done
+          fails=0
+          for i in 1 2 3; do
+            echo "=== Lần đo $i/3 ==="
+            python eval_golden.py --min-recall 1.0 --min-precision 0.9 || fails=$((fails+1))
+          done
+          echo "Số lần đo không đạt ngưỡng: $fails/3"
+          if [ "$fails" -ge 2 ]; then echo "::error::EvalGolden không đạt ngưỡng ở $fails/3 lần đo"; exit 1; fi
