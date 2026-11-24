@@ -2085,6 +2085,7 @@ def ai_relevant(pairs):
             chunk = todo[i:i + 20]
             lines = [f"{n}. Theo dõi: «{kw}» | Tiêu đề: {_untrusted(it['title'], 300)} | Mô tả: {_untrusted(it['desc'])}"
                      + (" | Nguồn: cơ quan chính thức" if item_tier(it) == 1 else "")
+                     + (f" | Trang nguồn nước ngoài: {_untrusted(it.get('domain', ''), 60)}" if it.get("domain") and not str(it["domain"]).endswith(".kh") else "")
                      for n, (it, kw) in enumerate(chunk, 1)]
             prompt = (
                 "Người dùng đang theo dõi tin tức theo từ khoá hoặc chủ đề. Với mỗi bài dưới đây, cho biết bài "
@@ -2100,6 +2101,10 @@ def ai_relevant(pairs):
                 "về an ninh biên giới => CÓ, kể cả khi tiêu đề không nhắc tên Campuchia (bối cảnh căng thẳng song phương); quy tắc này "
                 "ĐƯỢC ƯU TIÊN hơn danh mục LOẠI bên dưới. Tin quân đội Thái hoàn toàn không dính an ninh khu vực (nhân sự, lễ nghi, "
                 "tập trận đa quốc gia xa biên giới, thể thao quân đội) => KHÔNG.\n"
+                "- Tin chính phủ / báo của nước KHÁC (Lào, Thái, Myanmar, Việt Nam, ASEAN chung…) về kinh tế, hiệp định, dự án, "
+                "chính sách trong nước họ mà KHÔNG nhắc Campuchia, biên giới Thái–Campuchia hay an ninh quân sự khu vực "
+                "(vd lộ trình xe điện của Lào, Thái gia nhập OECD, hiệp định kinh tế số ASEAN) => KHÔNG, kể cả khi không chắc "
+                "(Boss 24/11). Tin có nhắc Campuchia hoặc quân sự / biên giới Thái–Campuchia vẫn theo các quy tắc trên.\n"
                 "- RIÊNG với dòng có «chủ đề»: chủ đề đó có danh mục LOẠI. Bài thuộc danh mục LOẠI, hoặc chỉ là tin xã hội / "
                 "y tế / giáo dục / văn hoá / du lịch / môi trường / quảng bá doanh nghiệp / hội thảo nhỏ / bình luận chung chung / "
                 "tội phạm địa phương / thể thao / từ thiện / tôn giáo, không phải tin cấp quốc gia thuộc các mảng CẦN => KHÔNG, "
