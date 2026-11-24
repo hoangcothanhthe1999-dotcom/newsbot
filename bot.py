@@ -1783,6 +1783,12 @@ def _openrouter_call(prompt):
     elif r.status_code in (401, 402, 403):
         _orr["off_until"] = time.time() + 3600
         log.warning("Khóa OpenRouter bị từ chối (HTTP %s)", r.status_code)
+    elif r.status_code == 404:
+        # Model không còn (vd bản :free đã thành bản trả phí, 24/11): gọi lại chỉ phí 3 giây chờ + log rác mỗi lượt.
+        # Tắt 1 giờ; KHÔNG tự đổi sang bản trả phí (Boss: OpenRouter không trả phí). Đổi model qua biến OPENROUTER_MODEL.
+        _orr["off_until"] = time.time() + 3600
+        log.warning("OpenRouter: model %s không dùng được (HTTP 404), tắt 1 giờ; cần đặt OPENROUTER_MODEL khác: %s",
+                    OPENROUTER_MODEL, r.text[:150])
     else:
         log.warning("OpenRouter trả lỗi %s: %s", r.status_code, r.text[:150])
     return None
