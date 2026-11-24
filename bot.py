@@ -93,7 +93,7 @@ TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
 GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "").strip() or "gemini-flash-lite-latest"
 GROQ_KEY = os.environ.get("GROQ_API_KEY", "").strip()      # AI dự phòng khi Gemini hết lượt miễn phí
-GROQ_MODEL = os.environ.get("GROQ_MODEL", "").strip() or "llama-3.3-70b-versatile"
+GROQ_MODEL = os.environ.get("GROQ_MODEL", "").strip() or "openai/gpt-oss-120b"
 OPENROUTER_KEY = os.environ.get("OPENROUTER_API_KEY", "").strip()   # AI dự phòng thứ ba (chỉ dùng khi Gemini và Groq đều hết lượt)
 OPENROUTER_MODEL = os.environ.get("OPENROUTER_MODEL", "").strip() or "meta-llama/llama-3.3-70b-instruct:free"
 CF_ACCOUNT = os.environ.get("CF_ACCOUNT_ID", "").strip()      # AI dự phòng thứ tư: Cloudflare Workers AI (gói miễn phí theo ngày)
@@ -1842,7 +1842,7 @@ def _gemini_call(prompt):
         url = f"{GEMINI_API}models/{model}:generateContent"
         for attempt in range(2):
             try:
-                r = requests.post(url, headers={"x-goog-api-key": GEMINI_KEY}, json=body, timeout=25)
+                r = requests.post(url, headers={"x-goog-api-key": GEMINI_KEY}, json=body, timeout=40)
             except Exception as e:
                 log.warning("Gemini lỗi mạng: %s", e)
                 ai_set(False, f"lỗi mạng: {str(e)[:80]}")
