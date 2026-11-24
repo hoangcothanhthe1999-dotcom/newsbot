@@ -89,6 +89,37 @@ def parse_runs(text):
     return sums, ledger
 
 
+def _norm_tokens(title):
+    return {w for w in re.findall(r"\w+", title.lower()) if len(w) > 2}
+
+
+def find_dup_sent(titles, thr=0.8):
+    """Cặp tin ĐÃ GỬI trong ngày có tiêu đề gần như giống nhau (Jaccard >= thr). Không gọi AI."""
+    toks = [(t, _norm_tokens(t)) for t in titles]
+    pairs = []
+    for i in range(len(toks)):
+        for j in range(i + 1, len(toks)):
+            a, b = toks[i][1], toks[j][1]
+            if len(a) >= 3 and len(b) >= 3 and len(a & b) / len(a | b) >= thr:
+                pairs.append((toks[i][0], toks[j][0]))
+    return pairs
+
+
+DROP_RATE_WARN = 0.9   # loại hơn 90% số tin vào bước AI là bất thường
+DROP_MIN_N = 20
+
+
+def drop_rate(day_runs):
+    """(số tin vào bộ lọc AI, số bị loại) theo dòng DEC của cả ngày; (0, 0) nếu log không có DEC."""
+    seen = {}
+    for _rid, text in day_runs:
+        for ln in text.splitlines():
+            m = re.search(r"DEC\|([^|]*)\|(ai_relevance|relevance)\|(dropped|passed)\|", ln)
+            if m:
+                seen[m.group(1)] = m.group(3)
+    return len(seen), sum(1 for v in seen.values() if v == "dropped")
+
+
 def summarize_day(day_runs):
     """day_runs: list of (run_id, text). Gom cả ngày thành tối đa MAX_LINES dòng. Không gọi AI."""
     out = []
@@ -123,6 +154,12 @@ def summarize_day(day_runs):
     out.append(f"📅 {n_runs} phiên; gửi {sent_total} tin; đọc {fetched_total} bài" + (f"; {no_sum} phiên thiếu RUNSUM" if no_sum else ""))
     if tb:
         out.append(f"🔴 {tb} phiên có Traceback")
+    dups = find_dup_sent([t.split(" | ", 1)[-1] for t in sent_titles])
+    if dups:
+        out.append(f"🔴 {len(dups)} cặp tin gửi trong ngày có tiêu đề gần giống nhau, ví dụ: {dups[0][0][:60]} ~ {dups[0][1][:60]}")
+    n_in, n_drop = drop_rate(day_runs)
+    if n_in >= DROP_MIN_N and n_drop / n_in > DROP_RATE_WARN:
+        out.append(f"🟡 Bộ lọc loại {n_drop}/{n_in} tin ({n_drop * 100 // n_in}%): nghi lọc quá tay")
     if flags:
         out.append("🚩 Cờ: " + ", ".join(f"{k}×{v}" for k, v in sorted(flags.items(), key=lambda kv: -kv[1])))
     chronic = sorted(((n, c) for n, c in src_fail_runs.items() if c >= max(2, n_runs // 2)), key=lambda x: -x[1])
