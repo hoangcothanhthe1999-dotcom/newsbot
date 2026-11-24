@@ -38,3 +38,27 @@ def test_deliver_groups_night_items_into_one_list(monkeypatch):
     assert lst.count("🌙 ") == 3 and lst.index("night1") < lst.index("night2")
     assert "day1" not in lst
     assert sent[1] == "ITEM day1"
+
+
+def test_night_items_are_traced(monkeypatch):
+    traced = []
+    monkeypatch.setattr(bot, "send", lambda *a, **k: {"message_id": 1})
+    monkeypatch.setattr(bot, "trace", lambda stage, status, reason, it, **kw: traced.append((stage, status, reason, it["id"])))
+    monkeypatch.setattr(bot, "store_item", lambda *a, **k: None)
+    monkeypatch.setattr(bot, "remember_sent", lambda *a, **k: None)
+    monkeypatch.setattr(bot, "save_state", lambda: None)
+    it = {"id": "n1", "title": "n1", "link": "http://x/n1", "source": "s", "ts": ts_vn(22, 23)}
+    bot.deliver("1", {"titles": [], "sent": {}}, {"summary": False, "topics": []}, [(it, ["t"])], 0.0)
+    assert ("send", "sent", "sent_night_list", "n1") in traced
+
+
+def test_night_send_failure_not_marked_sent(monkeypatch):
+    marked = []
+    monkeypatch.setattr(bot, "send", lambda *a, **k: None)
+    monkeypatch.setattr(bot, "trace", lambda *a, **k: None)
+    monkeypatch.setattr(bot, "store_item", lambda *a, **k: marked.append("store"))
+    monkeypatch.setattr(bot, "remember_sent", lambda *a, **k: marked.append("remember"))
+    monkeypatch.setattr(bot, "save_state", lambda: None)
+    it = {"id": "n2", "title": "n2", "link": "http://x/n2", "source": "s", "ts": ts_vn(22, 23)}
+    bot.deliver("1", {"titles": [], "sent": {}}, {"summary": False, "topics": []}, [(it, ["t"])], 0.0)
+    assert marked == []

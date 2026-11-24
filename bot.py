@@ -2860,15 +2860,18 @@ def deliver(cid, cs, c, entries, now):
             hhmm = datetime.fromtimestamp(it["ts"], VN_TZ).strftime("%H:%M")
             lines.append(f'🌙 {hhmm} <a href="{html.escape(it["link"], quote=True)}">{html.escape(title)}</a> '
                          f'<i>({html.escape(it["source"])})</i>')
-        chunk = ""
+        chunk, night_ok = "", True
         for ln in lines:
             if len(chunk) + len(ln) > 3900:
-                send(cid, chunk, silent=True)
+                night_ok = bool(send(cid, chunk, silent=True)) and night_ok
                 chunk = ""
             chunk += ln + "\n"
         if chunk:
-            send(cid, chunk, silent=True)
+            night_ok = bool(send(cid, chunk, silent=True)) and night_ok
         for it, tags in night:
+            trace("send", "sent" if night_ok else "error", "sent_night_list" if night_ok else "send_error", it, chat=str(cid))
+            if not night_ok:
+                continue      # gửi lỗi: không đánh dấu đã gửi, phiên sau thử lại
             SESSION_STATS["sent"] += 1
             store_item(it, cid, tags)
             remember_sent(cs, it, now)
