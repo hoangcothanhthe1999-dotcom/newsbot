@@ -59,3 +59,22 @@ def test_trace_item_by_full_link(bot, caplog):
     assert "k.example" not in caplog.text
     out = "\n".join(trace_item.trace(link, [(1, caplog.text)]))
     assert "không khớp từ khóa" in out
+
+
+def test_trace_item_unseen_link_unknown_source_is_A():
+    out = "\n".join(trace_item.trace("https://nikkei-unknown-site.example/a/1", [(1, "DEC|t1|age|dropped|too_old|S|Tin khác\n")]))
+    assert "KHÔNG có trong" in out and "KẾT LUẬN: A" in out
+
+
+def test_trace_item_unseen_link_failing_source_is_B(tmp_path):
+    (tmp_path / "sources.py").write_text("FEEDS = ['https://khmertimeskh.com/feed']", encoding="utf-8")
+    has, _ = trace_item.source_coverage("khmertimeskh.com", str(tmp_path))
+    assert has
+    log = "NGUỒN | rss | khmertimeskh | bài=0 | ok=0 lỗi=3 HTTP 403\n"
+    out = "\n".join(trace_item.trace("https://khmertimeskh.com/a/2", [(1, log)]))
+    assert "KẾT LUẬN: B" in out
+
+
+def test_need_hints_uses_golden_and_vn_rule():
+    out = "\n".join(trace_item.need_hints("Thailand plans to buy rocket systems", "https://vnexpress.net/a"))
+    assert "Nguồn Việt Nam" in out and "gần giống" in out and "hỏi Boss" in out

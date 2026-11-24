@@ -4,13 +4,15 @@
   python trace_item.py "từ khóa" --file log.txt                                    # đọc log có sẵn
 
 In theo từng phiên: các bước bot đã xử lý tin đó (bước/trạng thái/lý do bằng tiếng Việt), kết luận cuối, và nếu bot KHÔNG hề thấy tin
-thì in nguồn cùng tên đang lỗi (gợi ý nguyên nhân A/B). Tối đa 40 dòng.
+thì in nguồn cùng tên đang lỗi (gợi ý nguyên nhân A/B). Tối đa 40 dòng, rồi mục CÂU 2 (gợi ý tin chuẩn gần nhất để C chốt cần/không cần).
 Log KHÔNG in link (quy tắc riêng tư): đưa link đầy đủ thì script tự tính mã tin = sha1(link)[:8] như bot và tra theo mã đó.
 Link khác từng ký tự với link bot đọc (tham số theo dõi, http/https...) thì mã lệch: khi đó tra theo từ khóa tiêu đề.
 """
 import hashlib
+import os
 import re
 import sys
+from urllib.parse import urlparse
 
 import check_run
 from investigate import WHY
@@ -50,6 +52,48 @@ def src_fail_lines(text):
     return sorted({m.group(0).strip() for ln in text.splitlines() if (m := re.search(r"NGUỒN \|.*lỗi=[1-9].*", ln))})
 
 
+def domain_of(query):
+    """Máy chủ của link (bỏ www.), hoặc "" nếu query không phải link."""
+    if not query.startswith("http"):
+        return ""
+    return (urlparse(query).netloc or "").lower().removeprefix("www.")
+
+
+def source_coverage(domain, root=None):
+    """Nguồn của link có nằm trong cấu hình bot không (sources.py, bot.py)? Trả về (có_không, ghi_chú)."""
+    root = root or os.path.dirname(os.path.abspath(__file__))
+    for name in ("sources.py", "bot.py"):
+        try:
+            with open(os.path.join(root, name), encoding="utf-8") as f:
+                if domain and domain in f.read().lower():
+                    return True, f"«{domain}» CÓ trong {name}"
+        except OSError:
+            continue
+    return False, f"«{domain}» KHÔNG có trong sources.py/bot.py"
+
+
+def need_hints(title, query="", k=3):
+    """Gợi ý trả lời câu 2 "tin này có CẦN cho Boss không": tin chuẩn gần nhất trong bộ golden (theo từ chung) kèm nhãn và cơ sở.
+    Chỉ là căn cứ cho C phán đoán, KHÔNG phải kết luận; ca không chắc thì hỏi Boss."""
+    import eval_golden
+    dom = domain_of(query)
+    lines = []
+    if dom.endswith(".vn") or dom in ("vnexpress.net", "baomoi.com", "soha.vn"):
+        lines.append("⇒ Nguồn Việt Nam: Boss KHÔNG cần (chỉ lấy nguồn Campuchia/nước ngoài).")
+    words = {w for w in re.findall(r"\w{4,}", title.lower())}
+    if not words:
+        return lines
+    scored = []
+    for r in eval_golden.load():
+        common = words & set(re.findall(r"\w{4,}", (r["title"] + " " + r["desc"]).lower()))
+        if common:
+            scored.append((len(common), r))
+    for _, r in sorted(scored, key=lambda x: -x[0])[:k]:
+        lines.append(f"  gần giống [{r['label']}/{r['clarity']}] {r['title'][:55]} — {r['basis'][:70]}")
+    lines.append("→ Đối chiếu quy tắc Boss (CURRENT_STATUS) để chốt CẦN/KHÔNG CẦN; không chắc thì hỏi Boss.")
+    return lines
+
+
 def trace(query, runs):
     """runs: list of (run_id, text). Trả về danh sách dòng kết quả."""
     q = query.lower()
@@ -70,9 +114,22 @@ def trace(query, runs):
         out.append(f"  ⇒ kết luận phiên: {last['status']} ở bước {last['stage']} ({why(last['reason'])})")
     if not seen_any:
         out.append(f"Không run nào có tin khớp «{query}». Nghĩa là bot KHÔNG hề xử lý tin này (hoặc log bị cắt ở DEC_MAX).")
-        out.append("→ Nghi A (nguồn chưa có trong bot) hoặc B (nguồn lỗi/bị chặn) hoặc tin đăng ngoài khung giờ chạy. Nguồn lỗi trong các phiên:")
-        for ln in sorted(set(fails))[:15]:
-            out.append("  " + ln[:110])
+        dom = domain_of(query)
+        has = None
+        if dom:
+            has, note = source_coverage(dom)
+            out.append("→ " + note)
+            if not has:
+                out.append("⇒ KẾT LUẬN: A (nguồn chưa có trong bot) → cần thêm nguồn, nếu tin đáng gửi theo mục đích Boss.")
+        if has is not False:
+            out.append("→ Nghi B (nguồn lỗi/bị chặn), tin đăng ngoài khung giờ chạy, hoặc bot đã thấy ở phiên trước (tra ngày khác). Nguồn lỗi trong các phiên:")
+            matched = [ln for ln in sorted(set(fails)) if dom and dom.split(".")[0] in ln.lower()]
+            for ln in (matched or sorted(set(fails)))[:15]:
+                out.append("  " + ln[:110])
+            if dom and matched:
+                out.append("⇒ KẾT LUẬN: B (nguồn đang lỗi/bị chặn) → xem nguồn trên, sửa cách đọc hoặc bỏ.")
+            elif dom:
+                out.append("⇒ Nguồn có trong bot, không báo lỗi, nhưng không thấy tin: nghi RSS thiếu bài hoặc bài đăng ngoài khung (G nếu chưa rõ) → đọc trực tiếp trang nguồn để kiểm.")
     return out[:MAX_LINES]
 
 
@@ -94,6 +151,9 @@ def main(argv):
             except Exception:
                 pass
     print("\n".join(trace(query, runs)))
+    title = next((r["title"] for _, tx in runs for r in parse_dec(tx) if query.lower() in r["title"].lower()), "") if not query.startswith("http") else ""
+    print("--- CÂU 2: tin này có CẦN cho Boss không? ---")
+    print("\n".join(need_hints(title or query, query)))
     return 0
 
 
