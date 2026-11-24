@@ -2904,11 +2904,38 @@ def recent_titles(cs, hours=12):
     return [t[2] for t in cs["titles"] if len(t) > 2 and now - t[1] < hours * 3600]
 
 
+_EVENT_ACTORS = {"cambodia": "kh", "cambodian": "kh", "cambodias": "kh", "china": "cn", "chinese": "cn",
+                 "thailand": "th", "thai": "th", "vietnam": "vn", "vietnamese": "vn", "laos": "la", "lao": "la",
+                 "japan": "jp", "japanese": "jp", "russia": "ru", "russian": "ru", "india": "in", "indian": "in",
+                 "france": "fr", "french": "fr", "singapore": "sg", "malaysia": "my", "indonesia": "id",
+                 "us": "us", "american": "us", "korea": "kr", "korean": "kr", "australia": "au"}
+_EVENT_NOUNS = {"exercise": "exercise", "exercises": "exercise", "drill": "exercise", "drills": "exercise",
+                "wargames": "exercise", "maneuvers": "exercise", "manoeuvres": "exercise"}
+
+
+def event_key(title):
+    """(các nước, loại sự kiện) của một tiêu đề tiếng Anh, hoặc None nếu không đủ chắc (cần ≥2 nước + 1 loại sự kiện).
+    Bắt cặp tin cùng sự kiện mà AI so tiêu đề bỏ sót (vd tập trận Campuchia–Trung Quốc: Khmer Times gọi 'Golden Dragon',
+    Cambodianess chỉ ghi 'Joint Military Exercises'). Cố ý hẹp: chỉ tập trận/diễn tập."""
+    words = re.findall(r"[a-z]+", str(title or "").lower())
+    actors = {_EVENT_ACTORS[w] for w in words if w in _EVENT_ACTORS}
+    kinds = {_EVENT_NOUNS[w] for w in words if w in _EVENT_NOUNS}
+    if len(actors) < 2 or not kinds:
+        return None
+    return frozenset(actors), frozenset(kinds)
+
+
+def same_event_rule(t1, t2):
+    k1, k2 = event_key(t1), event_key(t2)
+    return bool(k1 and k2 and k1 == k2)
+
+
 def filter_new(cs, c, entries, now):
     """Lọc 3 lớp: trùng tiêu đề -> AI lạc đề -> AI trùng sự kiện. Trả về danh sách gửi được."""
     with state_lock:
         recent = [set(t[0]) for t in cs["titles"]]
     out, same = [], []
+    event_titles = recent_titles(cs)
     for it, tags in sorted(entries, key=lambda x: x[0]["ts"] or now):
         tk = title_tokens(it["title"])
         dk = desc_tokens(it)     # tin kênh Telegram tiêu đề Khmer nhưng mô tả = tiêu đề tiếng Anh của bản web
@@ -2918,9 +2945,16 @@ def filter_new(cs, c, entries, now):
             with state_lock:
                 cs["sent"][it["id"]] = now
             continue
+        if any(same_event_rule(it["title"], t) for t in event_titles):
+            same.append(it)       # cùng sự kiện (luật xác định), giữ bản đến trước
+            trace("event_dedupe", "dropped", "duplicate_event_rule", it, chat=str(cs.get("_id", "")))
+            with state_lock:
+                cs["sent"][it["id"]] = now
+            continue
         recent.append(tk)
         if dk:
             recent.append(dk)
+        event_titles.append(it["title"])
         out.append((it, tags))
     n_in = len(entries)
     out, dropped = drop_irrelevant(out)
