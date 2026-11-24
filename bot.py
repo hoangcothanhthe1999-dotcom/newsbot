@@ -659,7 +659,22 @@ def fetch_page(url, name=""):
              "vn": is_vn(dom), "lang": detect_lang(label)} for link, label in list(links.items())[:120]]
 
 
-SESSION_STATS = {"src": {}, "sent": 0, "ai_offtopic": 0, "ai_dup": 0}
+SESSION_STATS = {"src": {}, "sent": 0, "ai_offtopic": 0, "ai_dup": 0, "ai": {}}
+
+
+def ai_track(name, fn, prompt):
+    """Gọi 1 nhà cung cấp AI và ghi số lần gọi / thành công / tổng giây vào SESSION_STATS["ai"] (để vào RUNSUM). Không đổi kết quả."""
+    t0 = time.time()
+    out = fn(prompt)
+    try:
+        with state_lock:
+            d = SESSION_STATS["ai"].setdefault(name, {"calls": 0, "ok": 0, "sec": 0.0})
+            d["calls"] += 1
+            d["ok"] += 1 if out is not None else 0
+            d["sec"] = round(d["sec"] + time.time() - t0, 1)
+    except Exception:
+        pass
+    return out
 
 
 def stat_src(key, items=None, err=None):
@@ -674,6 +689,27 @@ def stat_src(key, items=None, err=None):
             d["err"] = str(err)[:60]
 
 
+def run_flags(runsum):
+    """Cờ bất thường tính ngay trong Python (không gọi AI): danh sách mã ngắn để tác vụ cuối ngày chỉ cần đọc."""
+    flags = []
+    ai = runsum.get("ai") or {}
+    g = ai.get("gemini")
+    if g and g["calls"] and g["ok"] == 0:
+        flags.append("gemini_all_failed")
+    if any(k != "gemini" and v["calls"] for k, v in ai.items()):
+        flags.append("ai_fallback_used")
+    if ai and all(v["calls"] and v["ok"] == 0 for v in ai.values()):
+        flags.append("ai_all_failed")
+    tot = runsum.get("src_total") or 0
+    if tot and runsum.get("src_fail", 0) * 4 >= tot:
+        flags.append("many_sources_failed")
+    if tot and runsum.get("fetched", 0) == 0:
+        flags.append("fetched_zero")
+    if runsum.get("sent", 0) == 0 and runsum.get("passed", 0) >= 5:
+        flags.append("passed_but_sent_zero")
+    return flags
+
+
 def log_run_ledger():
     """In vào log: 1 dòng RUNSUM (JSON) + các dòng LEDGER cắt gọn, để lọc bằng grep qua `gh api .../logs` (không cần tải artifact).
     Không in khóa, nội dung bài, prompt hay phản hồi AI; tiêu đề cắt 60 ký tự; URL không in."""
@@ -682,7 +718,11 @@ def log_run_ledger():
         src_fail = sorted(k for k, d in S["src"].items() if d["ok"] == 0)
         runsum = {"sent": S["sent"], "ai_offtopic": S["ai_offtopic"], "ai_dup": S["ai_dup"], "stale": STALE_DROPPED["n"],
                   "trace": dict(sorted(TRACE_COUNTS.items(), key=lambda kv: -kv[1])[:30]), "src_total": len(S["src"]),
-                  "src_fail": len(src_fail), "src_fail_names": src_fail[:15], "ledger_cut": len(LEDGER_BUF) >= LEDGER_MAX}
+                  "src_fail": len(src_fail), "src_fail_names": src_fail[:15], "ledger_cut": len(LEDGER_BUF) >= LEDGER_MAX,
+                  "fetched": sum(d["n"] for d in S["src"].values()), "ai": S.get("ai", {}),
+                  "passed": sum(v for k, v in TRACE_COUNTS.items() if k.startswith("relevance/passed/")),
+                  "v": 2}
+        runsum["flags"] = run_flags(runsum)
         log.info("RUNSUM %s", json.dumps(runsum, ensure_ascii=False))
         for line in LEDGER_BUF:
             log.info("LEDGER|%s", line)
@@ -1821,15 +1861,15 @@ def gemini(prompt):
             if wait > 0:
                 time.sleep(wait)
             _ai_last[0] = time.time()
-            out = _gemini_call(prompt)
+            out = ai_track("gemini", _gemini_call, prompt)
             if out is None and (GROQ_KEY or OPENROUTER_KEY or CF_KEY):
                 _gem_cool[0] = time.time() + 300    # Gemini đang hết lượt: 5 phút tới đi thẳng Groq
         if out is None and GROQ_KEY:
-            out = _groq_call(prompt)
+            out = ai_track("groq", _groq_call, prompt)
         if out is None and OPENROUTER_KEY:
-            out = _openrouter_call(prompt)
+            out = ai_track("openrouter", _openrouter_call, prompt)
         if out is None and CF_KEY:
-            out = _cf_call(prompt)
+            out = ai_track("cloudflare", _cf_call, prompt)
         return out
 
 
