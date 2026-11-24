@@ -705,6 +705,8 @@ def run_flags(runsum):
         flags.append("many_sources_failed")
     if tot and runsum.get("fetched", 0) == 0:
         flags.append("fetched_zero")
+    if runsum.get("dec_cut"):
+        flags.append("dec_cut")
     if runsum.get("sent", 0) == 0 and runsum.get("passed", 0) >= 5:
         flags.append("passed_but_sent_zero")
     return flags
@@ -718,7 +720,7 @@ def log_run_ledger():
         src_fail = sorted(k for k, d in S["src"].items() if d["ok"] == 0)
         runsum = {"sent": S["sent"], "ai_offtopic": S["ai_offtopic"], "ai_dup": S["ai_dup"], "stale": STALE_DROPPED["n"],
                   "trace": dict(sorted(TRACE_COUNTS.items(), key=lambda kv: -kv[1])[:30]), "src_total": len(S["src"]),
-                  "src_fail": len(src_fail), "src_fail_names": src_fail[:15], "ledger_cut": len(LEDGER_BUF) >= LEDGER_MAX, "dec_n": len(DEC_BUF), "dec_cut": len(DEC_BUF) >= DEC_MAX,
+                  "src_fail": len(src_fail), "src_fail_names": src_fail[:15], "ledger_cut": len(LEDGER_BUF) >= LEDGER_MAX, "dec_n": len(DEC_BUF), "dec_cut": DEC_DROPPED["n"] > 0, "dec_dropped": DEC_DROPPED["n"], "dec_dropped_low": DEC_DROPPED["low"],
                   "fetched": sum(d["n"] for d in S["src"].values()), "ai": S.get("ai", {}),
                   "passed": sum(v for k, v in TRACE_COUNTS.items() if k.startswith("relevance/passed/")),
                   "v": 2}
@@ -1096,6 +1098,9 @@ LEDGER_BUF = []   # bản cắt gọn các quyết định đáng chú ý (khôn
 LEDGER_MAX = 150
 DEC_BUF = []   # MỌI quyết định (kể cả too_old/keyword_mismatch/trùng tiêu đề) để in vào log dạng DEC|..., cho C truy từng tin bằng trace_item.py
 DEC_MAX = 4000
+DEC_LOW_MAX = 3000   # quyết định ít giá trị (too_old/keyword_mismatch/trùng tiêu đề) chỉ được ghi tới mốc này; 1000 chỗ cuối dành cho quyết định quan trọng (ai_*, event_dedupe...)
+DEC_LOW_REASONS = {"too_old", "keyword_mismatch", "title_dedupe"}
+DEC_DROPPED = {"n": 0, "low": 0}   # số quyết định bị bỏ vì buffer đầy (trước đây im lặng)
 LEDGER_SKIP = {"too_old", "keyword_mismatch"}
 TRACE_COUNTS = {}   # (bước, trạng thái, lý do) -> số bài, để in 1 dòng tóm tắt vào log (đọc được mà không cần tải artifact)
 
@@ -1124,9 +1129,14 @@ def trace(stage, status, reason, it, **extra):
             _trace_seen.add(key)
             ck = f"{stage}/{status}/{reason}"
             TRACE_COUNTS[ck] = TRACE_COUNTS.get(ck, 0) + 1
-            if len(DEC_BUF) < DEC_MAX:
+            is_low = reason in DEC_LOW_REASONS or stage in DEC_LOW_REASONS
+            if len(DEC_BUF) < (DEC_LOW_MAX if is_low else DEC_MAX):
                 DEC_BUF.append("|".join([tid, stage, status, str(reason), str(it.get("source") or it.get("domain") or "?")[:24],
                                          str(it.get("title", "")).replace("|", "/").replace("\n", " ")[:300], _trace_url(it.get("link")).replace("|", "/")]))
+            else:
+                DEC_DROPPED["n"] += 1
+                if is_low:
+                    DEC_DROPPED["low"] += 1
             if reason not in LEDGER_SKIP and len(LEDGER_BUF) < LEDGER_MAX:
                 LEDGER_BUF.append("|".join([tid, str(it.get("source") or it.get("domain") or "?")[:24], stage, status, str(reason),
                                             str(it.get("title", "")).replace("|", "/").replace("\n", " ")[:60]]))
