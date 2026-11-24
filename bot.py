@@ -2239,11 +2239,24 @@ def _cambo_text(it):
     return (it["title"] + " " + it.get("desc", "")[:300]).lower()
 
 
+GREETING_TITLE_WORDS = ["happy birthday", "birthday", "sinh nhật", "ខួបកំណើត"]
+GREETING_SAFE_WORDS = ["border", "military", "army", "troop", "war ", "attack", "clash", "ceasefire", "thai",
+                       "biên giới", "quân", "ព្រំដែន", "កងទ័ព"]
+
+
+def is_greeting_only(it):
+    """Tiêu đề chúc mừng sinh nhật mà không gắn an ninh/biên giới: Boss đã dặn loại (kể cả lãnh đạo cấp cao)."""
+    t = it["title"].lower()
+    return any(w in t for w in GREETING_TITLE_WORDS) and not any(w in t for w in GREETING_SAFE_WORDS)
+
+
 def pre_decide(tag, it):
     """Chủ đề Campuchia: True = chắc chắn giữ, False = chắc chắn bỏ (tin thể thao/giải trí rõ ràng), None = hỏi AI.
     Chỉ áp dụng cho bài có nhắc Campuchia để không giữ nhầm tin về nước khác."""
     if tag != CAMBO_TAG:
         return None
+    if is_greeting_only(it):
+        return False
     text = _cambo_text(it)
     has_core = any(w in text for w in CORE_WORDS)
     if not has_core and any(w in it["title"].lower() for w in JUNK_TITLE_WORDS):

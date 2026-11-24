@@ -39,8 +39,10 @@ def main(argv):
     rows = load()
     crit = bot.tag_criterion(bot.CAMBO_TAG)
     items = [{"id": r["id"], "title": r["title"], "desc": r["desc"], "domain": r["domain"], "official": r["official"]} for r in rows]
-    ok, unknown = bot.ai_relevant([(it, crit) for it in items])
-    kept = {i for i, _ in ok}
+    pre = {it["id"]: bot.pre_decide(bot.CAMBO_TAG, {**it, "source": it["domain"], "link": ""}) for it in items}  # như bot thật: luật chặn cứng chạy trước AI
+    to_ai = [it for it in items if pre[it["id"]] is None]
+    ok, unknown = bot.ai_relevant([(it, crit) for it in to_ai])
+    kept = {i for i, _ in ok} | {i for i, v in pre.items() if v}
     if unknown:
         print(f"⚠ AI chưa chấm được {len(unknown)} tin; kết quả không đáng tin, chạy lại sau.")
     res = score(rows, kept)
