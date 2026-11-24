@@ -678,6 +678,9 @@ def log_session_summary():
     S = SESSION_STATS
     log.info("=== TỔNG KẾT PHIÊN: gửi %d tin; AI loại %d lạc đề, %d trùng ===", S["sent"], S["ai_offtopic"], S["ai_dup"])
     log.info("Bỏ vì quá tuổi (mọi nguồn): %d bài", STALE_DROPPED["n"])
+    if TRACE_COUNTS:
+        log.info("SỔ QUYẾT ĐỊNH (tóm tắt phiên): %s",
+                 "; ".join(f"{k}={v}" for k, v in sorted(TRACE_COUNTS.items(), key=lambda kv: -kv[1])[:25]))
     if S.get("kw_gate"):
         log.info("Bị loại ở bước từ khóa (chưa tới AI), theo nguồn: %s",
                  ", ".join(f"{k}={v}" for k, v in sorted(S["kw_gate"].items(), key=lambda kv: -kv[1])[:15]))
@@ -1030,6 +1033,7 @@ STALE_DROPPED = {"n": 0}
 DECISIONS_FILE = os.environ.get("DECISIONS_FILE", "decisions.jsonl")
 _trace_seen = set()
 _trace_lock = threading.Lock()
+TRACE_COUNTS = {}   # (bước, trạng thái, lý do) -> số bài, để in 1 dòng tóm tắt vào log (đọc được mà không cần tải artifact)
 
 
 def _trace_url(u):
@@ -1054,6 +1058,8 @@ def trace(stage, status, reason, it, **extra):
             if key in _trace_seen:
                 return
             _trace_seen.add(key)
+            ck = f"{stage}/{status}/{reason}"
+            TRACE_COUNTS[ck] = TRACE_COUNTS.get(ck, 0) + 1
             rec = {"ts": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"), "run": os.environ.get("GITHUB_RUN_ID", ""),
                    "tid": tid, "src": str(it.get("source") or it.get("domain") or "?")[:40],
                    "title": str(it.get("title", ""))[:140], "url": _trace_url(it.get("link")),

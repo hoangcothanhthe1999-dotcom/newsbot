@@ -50,3 +50,12 @@ def test_filter_new_dedupes_telegram_khmer_title_vs_web_english():
     cs = {"titles": [], "sent": {}, "_id": "1"}
     out = bot.filter_new(cs, {"topics": []}, [(web, ["x"]), (tg, ["x"])], 10.0)
     assert len(out) == 1
+
+
+def test_trace_counts_summary(tmp_path, monkeypatch):
+    monkeypatch.setattr(bot, "DECISIONS_FILE", str(tmp_path / "d.jsonl"))
+    monkeypatch.setattr(bot, "TRACE_COUNTS", {})
+    monkeypatch.setattr(bot, "_trace_seen", set())
+    bot.trace("title_dedupe", "dropped", "duplicate_title", {"link": "https://a.kh/x", "title": "t"})
+    bot.trace("title_dedupe", "dropped", "duplicate_title", {"link": "https://a.kh/y", "title": "u"})
+    assert bot.TRACE_COUNTS == {"title_dedupe/dropped/duplicate_title": 2}
