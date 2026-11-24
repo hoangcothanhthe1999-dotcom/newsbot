@@ -1,0 +1,35 @@
+name: EvalGolden
+
+# Chạy TAY để đo độ sót/độ chính xác của bộ lọc AI trên bộ tin chuẩn (golden/golden_set.jsonl).
+# Không gửi Telegram, không ghi repo. Chỉ chạy trên nhánh main (code đã duyệt).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read             # quyền tối thiểu
+
+concurrency:
+  group: eval-golden         # không chạy chồng, tiết kiệm hạn mức AI
+  cancel-in-progress: false
+
+jobs:
+  eval:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Đo bộ lọc AI (chỉ khóa AI, KHÔNG có token Telegram)
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: python eval_golden.py
