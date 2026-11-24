@@ -718,7 +718,7 @@ def log_run_ledger():
         src_fail = sorted(k for k, d in S["src"].items() if d["ok"] == 0)
         runsum = {"sent": S["sent"], "ai_offtopic": S["ai_offtopic"], "ai_dup": S["ai_dup"], "stale": STALE_DROPPED["n"],
                   "trace": dict(sorted(TRACE_COUNTS.items(), key=lambda kv: -kv[1])[:30]), "src_total": len(S["src"]),
-                  "src_fail": len(src_fail), "src_fail_names": src_fail[:15], "ledger_cut": len(LEDGER_BUF) >= LEDGER_MAX,
+                  "src_fail": len(src_fail), "src_fail_names": src_fail[:15], "ledger_cut": len(LEDGER_BUF) >= LEDGER_MAX, "dec_n": len(DEC_BUF), "dec_cut": len(DEC_BUF) >= DEC_MAX,
                   "fetched": sum(d["n"] for d in S["src"].values()), "ai": S.get("ai", {}),
                   "passed": sum(v for k, v in TRACE_COUNTS.items() if k.startswith("relevance/passed/")),
                   "v": 2}
@@ -726,6 +726,8 @@ def log_run_ledger():
         log.info("RUNSUM %s", json.dumps(runsum, ensure_ascii=False))
         for line in LEDGER_BUF:
             log.info("LEDGER|%s", line)
+        for line in DEC_BUF:
+            log.info("DEC|%s", line)
     except Exception:
         pass
 
@@ -1092,6 +1094,8 @@ _trace_seen = set()
 _trace_lock = threading.Lock()
 LEDGER_BUF = []   # bản cắt gọn các quyết định đáng chú ý (không gồm too_old/keyword_mismatch) để in vào log, tối đa LEDGER_MAX dòng
 LEDGER_MAX = 150
+DEC_BUF = []   # MỌI quyết định (kể cả too_old/keyword_mismatch/trùng tiêu đề) để in vào log dạng DEC|..., cho C truy từng tin bằng trace_item.py
+DEC_MAX = 4000
 LEDGER_SKIP = {"too_old", "keyword_mismatch"}
 TRACE_COUNTS = {}   # (bước, trạng thái, lý do) -> số bài, để in 1 dòng tóm tắt vào log (đọc được mà không cần tải artifact)
 
@@ -1120,6 +1124,9 @@ def trace(stage, status, reason, it, **extra):
             _trace_seen.add(key)
             ck = f"{stage}/{status}/{reason}"
             TRACE_COUNTS[ck] = TRACE_COUNTS.get(ck, 0) + 1
+            if len(DEC_BUF) < DEC_MAX:
+                DEC_BUF.append("|".join([tid, stage, status, str(reason), str(it.get("source") or it.get("domain") or "?")[:24],
+                                         str(it.get("title", "")).replace("|", "/").replace("\n", " ")[:60]]))
             if reason not in LEDGER_SKIP and len(LEDGER_BUF) < LEDGER_MAX:
                 LEDGER_BUF.append("|".join([tid, str(it.get("source") or it.get("domain") or "?")[:24], stage, status, str(reason),
                                             str(it.get("title", "")).replace("|", "/").replace("\n", " ")[:60]]))
