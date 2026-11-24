@@ -2844,11 +2844,13 @@ def claim_send(cs, it):
     lk = _send_locks.setdefault(cs.get("_id", "?"), threading.Lock())
     with lk:
         if it["id"] in cs["sent"]:
+            trace("claim_send", "dropped", "already_sent", it, chat=str(cs.get("_id", "")))
             return False
         tk = title_tokens(it["title"])
         now = time.time()
         for t in cs["titles"][-400:]:
             if now - t[1] < 48 * 3600 and similar(tk, set(t[0])):
+                trace("claim_send", "dropped", "similar_title_48h", it, chat=str(cs.get("_id", "")))
                 return False
         remember_sent(cs, it, now)
         return True

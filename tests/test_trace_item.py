@@ -90,3 +90,11 @@ def test_dec_has_full_title_and_link_and_parses(bot, caplog):
     rows = trace_item.parse_dec(caplog.text)
     assert rows and rows[0]["title"].startswith(t.strip()[:100]) and len(rows[0]["title"]) > 60
     assert rows[0]["link"] == "k.example/n/7" and "SECRET" not in caplog.text
+
+
+def test_claim_send_refusals_are_traced(bot):
+    cs = {"_id": "c1", "sent": {}, "titles": []}
+    it = {"id": "x1", "title": "Cambodia border clash news today", "link": "https://z.example/1", "source": "Z"}
+    assert bot.claim_send(cs, it) is True
+    assert bot.claim_send(cs, it) is False
+    assert any("claim_send|dropped|already_sent" in d for d in bot.DEC_BUF)
