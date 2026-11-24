@@ -300,6 +300,10 @@ OFFICIAL_SITES = [   # tầng 1 – bot tự dò RSS, không có thì theo dõi 
     {"name": "Bộ Công nghiệp, Khoa học & Đổi mới", "url": "https://misti.gov.kh/"},
     {"name": "Chính phủ Thái Lan (thailand.go.th)", "url": "https://www.thailand.go.th/"},
     {"name": "Cục Quan hệ công chúng Thái Lan (PRD)", "url": "https://thailand.prd.go.th/en"},
+    # RSS riêng của phía Thái (24/11): trang chủ không khai báo RSS nên bot không tự dò được; kênh 'useful' có tin biên giới/ngừng bắn/Hội đồng An ninh.
+    {"name": "Chính phủ Thái Lan – thông tin hữu ích (RSS)", "url": "https://thailand.go.th/useful-rss"},
+    {"name": "Chính phủ Thái Lan – vấn đề nổi bật (RSS)", "url": "https://thailand.go.th/issue-rss"},
+    {"name": "PRD Thái Lan – Thái Lan–Campuchia/UNCLOS (RSS)", "url": "https://thailand.prd.go.th/en/content/category/xml/id/3243"},
     {"name": "Đại sứ quán Mỹ tại Campuchia", "url": "https://kh.usembassy.gov/"},
     {"name": "ASEAN", "url": "https://asean.org/"},
     {"name": "ADB – tin Campuchia", "url": "https://www.adb.org/where-we-work/cambodia"},
