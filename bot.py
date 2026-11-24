@@ -27,6 +27,8 @@ from urllib.parse import quote_plus, unquote, urljoin, urlparse
 import feedparser
 import requests
 from requests.adapters import HTTPAdapter
+from urllib3.connection import HTTPConnection, HTTPSConnection
+from urllib3.connectionpool import HTTPConnectionPool, HTTPSConnectionPool
 
 from sources import TOPICS, TRUSTED_DOMAINS
 
@@ -148,7 +150,56 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)   # DEBUG của urllib3 g
 HTTP = requests.Session()
 HTTP.headers.update({"User-Agent": UA, "Accept-Language": "vi,en;q=0.8",
                      "Accept": "application/rss+xml, application/xml;q=0.9, text/xml;q=0.8, */*;q=0.5"})
-_adapter = HTTPAdapter(pool_connections=40, pool_maxsize=40)
+
+
+def _public_connect(conn):
+    """Tự phân giải DNS ở lúc kết nối, chỉ nhận IP công khai rồi nối thẳng vào IP đó (ghim IP, chống DNS rebinding).
+    Tên miền gốc vẫn được dùng cho SNI/kiểm chứng chứng chỉ."""
+    import ipaddress
+    import socket
+
+    from urllib3.util import connection as _uconn
+    infos = socket.getaddrinfo(conn._dns_host, conn.port, proto=socket.IPPROTO_TCP)
+    ips = [i[4][0] for i in infos]
+    if not ips or not all(ipaddress.ip_address(ip).is_global for ip in ips):
+        raise OSError("địa chỉ không công khai, bỏ qua")
+    err = None
+    for ip in ips:
+        try:
+            return _uconn.create_connection((str(ip), int(conn.port)), conn.timeout, source_address=conn.source_address,
+                                            socket_options=conn.socket_options)
+        except OSError as e:
+            err = e
+    raise err or OSError("không kết nối được")
+
+
+class _PinnedHTTPConnection(HTTPConnection):
+    def _new_conn(self):
+        return _public_connect(self)
+
+
+class _PinnedHTTPSConnection(HTTPSConnection):
+    def _new_conn(self):
+        return _public_connect(self)
+
+
+class _PinnedHTTPPool(HTTPConnectionPool):
+    ConnectionCls = _PinnedHTTPConnection  # pyright: ignore[reportAssignmentType]
+
+
+class _PinnedHTTPSPool(HTTPSConnectionPool):
+    ConnectionCls = _PinnedHTTPSConnection  # pyright: ignore[reportAssignmentType]
+
+
+class _PinnedAdapter(HTTPAdapter):
+    """Adapter ghim IP: mọi kết nối của HTTP đi qua _public_connect (đóng khe giữa public_url_ok và lúc nối)."""
+
+    def init_poolmanager(self, *args, **kwargs):
+        super().init_poolmanager(*args, **kwargs)
+        self.poolmanager.pool_classes_by_scheme = {"http": _PinnedHTTPPool, "https": _PinnedHTTPSPool}
+
+
+_adapter = _PinnedAdapter(pool_connections=40, pool_maxsize=40)
 HTTP.mount("https://", _adapter)
 HTTP.mount("http://", _adapter)
 
