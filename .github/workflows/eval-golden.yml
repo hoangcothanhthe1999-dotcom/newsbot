@@ -1,9 +1,12 @@
 name: EvalGolden
 
-# Chạy TAY để đo độ sót/độ chính xác của bộ lọc AI trên bộ tin chuẩn (golden/golden_set.jsonl).
+# Chạy TAY hoặc tự động sau merge (3 lần đo để thấy độ dao động) để đo độ sót/độ chính xác của bộ lọc AI trên bộ tin chuẩn (golden/golden_set.jsonl).
 # Không gửi Telegram, không ghi repo. Chỉ chạy trên nhánh main (code đã duyệt).
 on:
   workflow_dispatch:
+  push:                      # tự đo sau mỗi lần merge đụng lọc tin hoặc bộ chuẩn
+    branches: [main]
+    paths: ["bot.py", "sources.py", "eval_golden.py", "golden/**"]
 
 permissions:
   contents: read             # quyền tối thiểu
@@ -32,4 +35,5 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-        run: python eval_golden.py
+        run: |
+          for i in 1 2 3; do echo "=== Lần đo $i/3 ==="; python eval_golden.py || true; done

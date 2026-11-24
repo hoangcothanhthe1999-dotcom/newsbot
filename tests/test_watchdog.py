@@ -31,4 +31,5 @@ def test_morning_reference_is_6am_not_last_night():
 def test_runs_parse():
     runs = [{"status": "completed", "conclusion": "failure", "updated_at": "2026-11-24T05:00:00Z"},
             {"status": "completed", "conclusion": "success", "updated_at": "2026-11-24T03:00:00Z"}]
-    assert watchdog.last_activity_from_runs(runs).hour == 3
+    last = watchdog.last_activity_from_runs(runs)
+    assert last is not None and last.hour == 3
