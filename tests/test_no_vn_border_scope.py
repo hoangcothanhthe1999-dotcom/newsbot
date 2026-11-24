@@ -36,4 +36,22 @@ def test_thai_border_still_hard_pass(bot):
 def test_ai_desc_excludes_vn_border(bot):
     d = bot.TOPICS["campuchia"]["ai_desc"]
     assert "(Việt Nam–Campuchia và" not in d
-    assert "Boss không quan tâm" in d
+    assert "Boss chưa yêu cầu" in d      # Boss làm rõ 24/11: chỉ biên giới/an ninh VN–CPC còn loại; kinh tế, thương mại, ngoại giao–chính trị được giữ
+
+
+def test_vietnam_topics_kept_but_vietnamese_sources_blocked():
+    from sources import TOPICS
+    d = TOPICS["doingoai_songphuong"]
+    assert "Việt Nam" in d["name"] and any("Vietnam relations" in q for q in d["gnews_en"])
+    main = TOPICS["campuchia"]["ai_desc"]
+    assert "hợp tác kinh tế, thương mại, kim ngạch" in main and "chính trị – ngoại giao cấp cao" in main
+    assert "KHÔNG loại tin hợp tác kinh tế" in main
+    assert any("Vietnam Cambodia trade" in q for q in TOPICS["kinhte_taichinh"]["gnews_en"])
+
+
+def test_vn_press_blocks_vietnamese_domains_only():
+    import bot
+    for d in ("vnexpress.net", "baomoi.com", "vietnamplus.vn", "www.thanhnien.vn"):
+        assert bot.vn_press({"domain": d}), d
+    for d in ("khmertimeskh.com", "phnompenhpost.com", "reuters.com", "mfaic.gov.kh"):
+        assert not bot.vn_press({"domain": d}), d
