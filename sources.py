@@ -58,7 +58,7 @@ TOPICS = {
                    "LOẠI: tin xã hội / địa phương (dọn vệ sinh phường xã, lễ hội, triển lãm du học, giáo dục, y tế "
                    "thường ngày, vắc-xin, bệnh viện, sức khỏe), tai nạn giao thông, cháy nổ, trọng án dân sự, thời tiết, thể thao, giải trí, "
                    "văn hoá, nghệ thuật, lịch sử, du lịch, ẩm thực, môi trường, từ thiện, tôn giáo, quảng bá doanh nghiệp, hội thảo hoặc "
-                   "ký kết hợp tác nhỏ của công ty, bài bình luận chung chung, ma túy và tội phạm cấp tỉnh, quyết định hành chính hoặc nhân sự cấp thấp (xã, huyện, trường học, bệnh viện, doanh nghiệp), tin biên giới hoặc an ninh Việt Nam–Campuchia (Boss chưa yêu cầu; KHÔNG loại tin hợp tác kinh tế, thương mại, kim ngạch, đầu tư, ngoại giao – chính trị cấp cao giữa hai nước), mọi tin về Việt Nam không liên quan Campuchia",
+                   "ký kết hợp tác nhỏ của công ty, bài bình luận chung chung, ma túy và tội phạm cấp tỉnh, quyết định hành chính hoặc nhân sự cấp thấp (xã, huyện, trường học, bệnh viện, doanh nghiệp), mọi tin về Việt Nam không liên quan Campuchia (KHÔNG loại mọi tin Việt Nam–Campuchia do báo Campuchia hoặc nước ngoài đưa: biên giới, an ninh, kinh tế, thương mại, đầu tư, ngoại giao – chính trị; Boss chỉ loại báo tiếng Việt)",
         "hint": "Campuchia",
     },
     # Nhóm ĐỘC LẬP (Boss 22.11.26): mua bán vũ khí, viện trợ quân sự, hợp tác quốc phòng của các nước lớn với nước

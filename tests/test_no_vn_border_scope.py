@@ -33,10 +33,10 @@ def test_thai_border_still_hard_pass(bot):
     assert bot.hard_official(_it("Cambodia Thailand border talks resume"))
 
 
-def test_ai_desc_excludes_vn_border(bot):
+def test_ai_desc_keeps_vn_cpc_from_foreign_sources(bot):
     d = bot.TOPICS["campuchia"]["ai_desc"]
-    assert "(Việt Nam–Campuchia và" not in d
-    assert "Boss chưa yêu cầu" in d      # Boss làm rõ 24/11: chỉ biên giới/an ninh VN–CPC còn loại; kinh tế, thương mại, ngoại giao–chính trị được giữ
+    assert "Boss chưa yêu cầu" not in d  # Boss làm rõ 24/11 13:29: chỉ loại báo TIẾNG VIỆT; tin VN–CPC từ báo Campuchia/nước ngoài (cả biên giới) được giữ
+    assert "biên giới, an ninh, kinh tế" in d
 
 
 def test_vietnam_topics_kept_but_vietnamese_sources_blocked():
@@ -45,7 +45,7 @@ def test_vietnam_topics_kept_but_vietnamese_sources_blocked():
     assert "Việt Nam" in d["name"] and any("Vietnam relations" in q for q in d["gnews_en"])
     main = TOPICS["campuchia"]["ai_desc"]
     assert "hợp tác kinh tế, thương mại, kim ngạch" in main and "chính trị – ngoại giao cấp cao" in main
-    assert "KHÔNG loại tin hợp tác kinh tế" in main
+    assert "KHÔNG loại mọi tin Việt Nam–Campuchia do báo Campuchia" in main
     assert any("Vietnam Cambodia trade" in q for q in TOPICS["kinhte_taichinh"]["gnews_en"])
 
 
