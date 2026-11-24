@@ -2194,31 +2194,44 @@ def drop_irrelevant(entries):
         return entries, []
     ok, unknown = ai_relevant(pairs)
 
-    def keep(it, t):
+    def route(it, t):
+        """(giữ?, lý do) cho một cặp (bài, tag) – lý do được ghi vào sổ quyết định."""
         crit = tag_criterion(t)
-        if not crit or strong_match(t, it) or foreign_official(it) or hard_official(it):
-            return True
+        if not crit:
+            return True, "no_criterion"
+        if strong_match(t, it):
+            return True, "strong_keyword_match"
+        if foreign_official(it):
+            return True, "foreign_official_bypass"
+        if hard_official(it):
+            return True, "hard_word_official_bypass"
         pd = pre_decide(t, it)
         if pd is not None:
-            return pd
+            return pd, "pre_decide_keep" if pd else "pre_decide_drop"
         if (it["id"], crit) in unknown:
-            return strict_ok(t, it)
-        return (it["id"], crit) in ok
+            sk = strict_ok(t, it)
+            return sk, "ai_unavailable_strict_keep" if sk else "ai_unavailable_strict_drop"
+        sk = (it["id"], crit) in ok
+        return sk, "ai_relevant" if sk else "ai_irrelevant"
 
-    kept, dropped = [], []
+    kept, dropped, why = [], [], {}
     for it, tags in entries:
-        new = {t for t in tags if keep(it, t)}
+        res = {t: route(it, t) for t in tags}
+        new = {t for t, (k, _) in res.items() if k}
         if new:
             kept.append((it, new))
+            first = min(new)
+            trace("relevance", "passed", res[first][1], it, tags=sorted(new))
         else:
             dropped.append(it)
+            why[it["id"]] = min(r for _, r in res.values()) if res else "no_tags"
     if dropped:
         log.info("AI loại %d bài lạc đề", len(dropped))
         for _it in dropped[:20]:
             log.info("BỊ LOẠI | lạc đề | %s | %s", _it.get("source", "?"), _it.get("title", "")[:110])
         for _it in dropped:
             note_dropped("lạc đề", _it)
-            trace("ai_relevance", "dropped", "ai_irrelevant", _it)
+            trace("ai_relevance", "dropped", why.get(_it["id"], "ai_irrelevant"), _it)
         SESSION_STATS["ai_offtopic"] += len(dropped)
     return kept, dropped
 
@@ -2783,6 +2796,7 @@ def filter_new(cs, c, entries, now):
         dk = desc_tokens(it)     # tin kênh Telegram tiêu đề Khmer nhưng mô tả = tiêu đề tiếng Anh của bản web
         if any(similar(tk, o) for o in recent) or (dk and any(similar(dk, o) for o in recent)):
             same.append(it)
+            trace("title_dedupe", "dropped", "duplicate_title", it, chat=str(cs.get("_id", "")))
             with state_lock:
                 cs["sent"][it["id"]] = now
             continue
@@ -2868,8 +2882,10 @@ def deliver(cid, cs, c, entries, now):
             chunk += ln + "\n"
         if chunk:
             night_ok = bool(send(cid, chunk, silent=True)) and night_ok
-        for it, tags in night:
-            trace("send", "sent" if night_ok else "error", "sent_night_list" if night_ok else "send_error", it, chat=str(cid))
+        for pos, (it, tags) in enumerate(night, 1):
+            trace("send", "sent" if night_ok else "error", "sent_night_list" if night_ok else "send_error", it,
+                  chat=str(cid), tags=sorted(tags), pos=pos, of=len(night),
+                  pub=datetime.fromtimestamp(it["ts"], VN_TZ).strftime("%d/%m %H:%M"))
             if not night_ok:
                 continue      # gửi lỗi: không đánh dấu đã gửi, phiên sau thử lại
             SESSION_STATS["sent"] += 1
@@ -2890,6 +2906,7 @@ def deliver(cid, cs, c, entries, now):
         if chunk:
             send(cid, chunk, silent=True)
         for it, tags in overflow:
+            trace("send", "sent", "sent_overflow_list", it, chat=str(cid), tags=sorted(tags))
             store_item(it, cid, tags)
             remember_sent(cs, it, now)
     for n, (it, tags) in enumerate(lst):
@@ -2900,7 +2917,8 @@ def deliver(cid, cs, c, entries, now):
         SESSION_STATS["sent"] += 1
         store_item(it, cid, tags)
         r = send(cid, fmt_item(it, tags, c["summary"]), item_kb(it), silent=not should_ring(cs, it))
-        trace("send", "sent" if r else "error", "sent" if r else "send_error", it, chat=str(cid))
+        trace("send", "sent" if r else "error", "sent" if r else "send_error", it, chat=str(cid), tags=sorted(tags),
+              msg=(r or {}).get("message_id") if isinstance(r, dict) else None)
         if r and c["summary"] and not _summary_cache.get(it["id"], {}).get("summary"):
             queue_summary(cid, r.get("message_id"), it, tags)
         if n % 10 == 9:
