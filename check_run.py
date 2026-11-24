@@ -48,6 +48,10 @@ def analyse(text, show_all=False):
             out.append(f"🔴 Gửi {s['sent']} tin trong 1 phiên (ngưỡng {SENT_FLOOD}): nghi lọt bộ lọc")
         if s["src_fail"] >= SRC_FAIL_WARN:
             out.append(f"🟡 {s['src_fail']} nguồn không đọc được: {', '.join(s['src_fail_names'])}")
+        if s.get("flags"):
+            out.append("🚩 Cờ: " + ", ".join(s["flags"]))
+        if s.get("ai"):
+            out.append("ℹ AI: " + "; ".join(f"{k} {v['ok']}/{v['calls']} lượt, {v['sec']}s" for k, v in s["ai"].items()))
         if s.get("ledger_cut"):
             out.append("🟡 Sổ LEDGER bị cắt ở giới hạn, có thể thiếu dòng")
     seen = {}

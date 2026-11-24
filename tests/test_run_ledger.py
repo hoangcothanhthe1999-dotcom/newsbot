@@ -47,3 +47,25 @@ def test_check_run_flags_flood_and_dup():
     assert "Gửi 20 tin" in out and "Gửi trùng" in out
     assert len(check_run.analyse(log)) <= 30
     sys.path.remove(ROOT)
+
+
+def test_runsum_v2_has_ai_and_flags(bot, caplog):
+    bot.SESSION_STATS["ai"].clear()
+    bot.SESSION_STATS["src"].clear()
+    bot.stat_src("A", items=[1, 2, 3])
+    bot.ai_track("gemini", lambda p: None, "x")
+    bot.ai_track("groq", lambda p: "ok", "x")
+    with caplog.at_level(logging.INFO):
+        bot.log_run_ledger()
+    line = [ln for ln in caplog.text.splitlines() if "RUNSUM" in ln][-1]
+    data = json.loads(line.split("RUNSUM ", 1)[1])
+    assert data["v"] == 2 and data["fetched"] == 3
+    assert data["ai"]["gemini"]["ok"] == 0 and data["ai"]["groq"]["ok"] == 1
+    assert "gemini_all_failed" in data["flags"] and "ai_fallback_used" in data["flags"]
+
+
+def test_run_flags_fetched_zero_and_passed_but_sent_zero(bot):
+    f = bot.run_flags({"src_total": 10, "src_fail": 0, "fetched": 0, "sent": 0, "passed": 0, "ai": {}})
+    assert "fetched_zero" in f
+    f = bot.run_flags({"src_total": 10, "src_fail": 0, "fetched": 50, "sent": 0, "passed": 8, "ai": {}})
+    assert "passed_but_sent_zero" in f and "fetched_zero" not in f
