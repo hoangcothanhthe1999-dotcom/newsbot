@@ -164,16 +164,16 @@ TOPICS = {
         "hint": "Cambodia economy",
     },
     "doingoai_songphuong": {
-        "name": "🤝 Đối ngoại song phương Campuchia (Trung Quốc, Mỹ, Việt Nam, Nhật, EU, ASEAN)",
+        "name": "🤝 Đối ngoại song phương Campuchia (Trung Quốc, Mỹ, Nhật, EU, ASEAN)",
         "feeds": [],
-        "gnews_en": ["China Cambodia relations", "Cambodia United States relations", "Cambodia Japan cooperation", "Cambodia Vietnam relations visit",
-                     "Cambodia Laos Vietnam development triangle", "Cambodia ASEAN summit", "Hun Manet visit", "Hun Manet meets",
+        "gnews_en": ["China Cambodia relations", "Cambodia United States relations", "Cambodia Japan cooperation", "Cambodia ASEAN summit", "Hun Manet visit", "Hun Manet meets",
                      "Cambodia European Union relations", "Cambodia Russia relations"],
         "gnews_zh": ["中柬 关系", "洪玛奈 访问 会见"],
         "ai_desc": "ngoại giao song phương và đa phương cấp cao của Campuchia: chuyến thăm, hội đàm, tuyên bố chung, ký kết hiệp định với Trung Quốc, Mỹ, "
-                   "Việt Nam, Nhật, Hàn Quốc, EU, Nga, Ấn Độ, Thái Lan, Lào và ASEAN; vai trò của Campuchia trong ASEAN và Liên Hợp Quốc; "
+                   "Nhật, Hàn Quốc, EU, Nga, Ấn Độ, Thái Lan, Lào và ASEAN; vai trò của Campuchia trong ASEAN và Liên Hợp Quốc; "
                    "tuyên bố của Bộ Ngoại giao và Thủ tướng về quan hệ đối ngoại. "
-                   "LOẠI: giao lưu văn hóa, du lịch, thể thao, học bổng, hợp tác giáo dục hoặc y tế nhỏ, lễ kỷ niệm thông thường, bình luận chung chung",
+                   "LOẠI: mọi tin quan hệ song phương Việt Nam – Campuchia (thăm, hội đàm, ký kết, giao lưu, kỷ niệm), "
+                   "giao lưu văn hóa, du lịch, thể thao, học bổng, hợp tác giáo dục hoặc y tế nhỏ, lễ kỷ niệm thông thường, bình luận chung chung",
         "hint": "Cambodia diplomacy",
     },
 }

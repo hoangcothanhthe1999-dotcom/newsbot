@@ -37,3 +37,13 @@ def test_ai_desc_excludes_vn_border(bot):
     d = bot.TOPICS["campuchia"]["ai_desc"]
     assert "(Việt Nam–Campuchia và" not in d
     assert "Boss không quan tâm" in d
+
+
+def test_bilateral_topic_drops_vietnam():
+    from sources import TOPICS
+    t = TOPICS["doingoai_songphuong"]
+    assert "Việt Nam" not in t["name"]
+    assert not any("Vietnam" in q for q in t["gnews_en"])
+    head, _, loai = t["ai_desc"].partition("LOẠI:")
+    assert "Việt Nam" not in head
+    assert "Việt Nam – Campuchia" in loai
