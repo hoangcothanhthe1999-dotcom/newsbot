@@ -1,0 +1,28 @@
+name: Watchdog
+
+on:
+  schedule:
+    - cron: "10 * * * *"      # mỗi giờ; script tự bỏ qua ngoài 06:00-16:15 VN
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: watchdog
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Kiểm tra bot có im quá 4 giờ không
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: python3 watchdog.py
