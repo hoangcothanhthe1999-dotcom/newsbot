@@ -23,3 +23,30 @@ def test_prompt_has_official_admin_rule(monkeypatch):
     bot.ai_relevant([(it, "chủ đề campuchia")])
     assert "Nguồn: cơ quan chính thức" in sent["p"]
     assert "thuế, hải quan, đào tạo" in sent["p"]
+
+
+def test_prompt_blocks_birthday_and_culture(monkeypatch):
+    sent = {}
+    monkeypatch.setattr(bot, "GEMINI_KEY", "x")
+    monkeypatch.setattr(bot, "gemini", lambda p: sent.setdefault("p", p) and "[]")
+    monkeypatch.setattr(bot, "_relevance_cache", {})
+    it = {"id": "t2", "title": "x", "desc": "", "official": True, "domain": "mfaic.gov.kh"}
+    bot.ai_relevant([(it, "chủ đề campuchia")])
+    assert "sinh nhật" in sent["p"] and "sự kiện văn hoá" in sent["p"]
+
+
+def test_desc_tokens_bounds():
+    assert bot.desc_tokens({"desc": ""}) is None
+    assert bot.desc_tokens({"desc": "x" * 300}) is None
+    assert bot.desc_tokens({"desc": "Cambodia Protests against Thailand Continued Violations"})
+
+
+def test_filter_new_dedupes_telegram_khmer_title_vs_web_english():
+    web = {"id": "w", "title": "Cambodia Protests against Thailand’s Continued Violations of Cambodian Sovereignty and Territorial Integrity 23 Nov 2026",
+           "desc": "", "ts": 1.0, "source": "MFAIC", "domain": "mfaic.gov.kh"}
+    tg = {"id": "t", "title": "កម្ពុជាតវ៉ាប្រឆាំងនឹងការបំពានជាបន្តបន្ទាប់របស់ថៃ",
+          "desc": "Cambodia Protests against Thailand’s Continued Violations of Cambodian Sovereignty and Territorial Integrity",
+          "ts": 2.0, "source": "MFAICNEWS", "domain": "t.me"}
+    cs = {"titles": [], "sent": {}, "_id": "1"}
+    out = bot.filter_new(cs, {"topics": []}, [(web, ["x"]), (tg, ["x"])], 10.0)
+    assert len(out) == 1
