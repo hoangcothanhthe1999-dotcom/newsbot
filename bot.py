@@ -148,7 +148,51 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)   # DEBUG của urllib3 g
 HTTP = requests.Session()
 HTTP.headers.update({"User-Agent": UA, "Accept-Language": "vi,en;q=0.8",
                      "Accept": "application/rss+xml, application/xml;q=0.9, text/xml;q=0.8, */*;q=0.5"})
-_adapter = HTTPAdapter(pool_connections=40, pool_maxsize=40)
+
+
+class _PinGuard:
+    """Kiểm IP thật của ổ cắm ngay sau khi nối TCP (trước TLS và trước khi gửi yêu cầu).
+    Chặn khe DNS rebinding: public_url_ok phân giải tên một lần, urllib3 phân giải lại lúc nối."""
+
+    def _new_conn(self):
+        import ipaddress
+        sock = super()._new_conn()  # type: ignore[misc]
+        try:
+            ok = ipaddress.ip_address(sock.getpeername()[0]).is_global
+        except Exception:
+            ok = False
+        if not ok:
+            try:
+                sock.close()
+            finally:
+                raise OSError("địa chỉ nối không công khai, bỏ qua")
+        return sock
+
+
+class _GuardedAdapter(HTTPAdapter):
+    """Chỉ áp cho kết nối trực tiếp; kết nối qua proxy (HTTPS_PROXY) giữ nguyên vì IP thấy được là của proxy."""
+
+    def init_poolmanager(self, *args, **kwargs):
+        super().init_poolmanager(*args, **kwargs)
+        from urllib3.connection import HTTPConnection, HTTPSConnection
+        from urllib3.connectionpool import HTTPConnectionPool, HTTPSConnectionPool
+
+        class _C(_PinGuard, HTTPConnection):
+            pass
+
+        class _CS(_PinGuard, HTTPSConnection):
+            pass
+
+        class _P(HTTPConnectionPool):
+            ConnectionCls = _C  # pyright: ignore[reportAssignmentType]
+
+        class _PS(HTTPSConnectionPool):
+            ConnectionCls = _CS  # pyright: ignore[reportAssignmentType]
+
+        self.poolmanager.pool_classes_by_scheme = {"http": _P, "https": _PS}
+
+
+_adapter = _GuardedAdapter(pool_connections=40, pool_maxsize=40)
 HTTP.mount("https://", _adapter)
 HTTP.mount("http://", _adapter)
 
