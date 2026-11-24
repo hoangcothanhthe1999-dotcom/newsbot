@@ -20,10 +20,18 @@ SRC_FAIL_WARN = 15   # số nguồn không đọc được
 MAX_LINES = 30
 
 
+def join_log_files(files):
+    """files = {tên tệp trong zip: bytes}. Zip log của GitHub chứa MỖI job hai lần (0_job.txt ở gốc và
+    job/<bước>.txt); nối cả hai làm mọi dòng bị đếm đôi (báo trùng giả). Có tệp ở gốc thì chỉ dùng chúng."""
+    txt = [n for n in files if n.endswith(".txt")]
+    top = [n for n in txt if "/" not in n]
+    return "\n".join(files[n].decode("utf-8", "replace") for n in (top or txt))
+
+
 def get_log(run_id):
     jobs = subprocess.run(["gh", "api", f"repos/{REPO}/actions/runs/{run_id}/logs"], capture_output=True, check=True).stdout
     with zipfile.ZipFile(io.BytesIO(jobs)) as z:
-        return "\n".join(z.read(n).decode("utf-8", "replace") for n in z.namelist() if n.endswith(".txt"))
+        return join_log_files({n: z.read(n) for n in z.namelist()})
 
 
 def analyse(text, show_all=False):
