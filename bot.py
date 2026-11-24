@@ -674,6 +674,22 @@ def stat_src(key, items=None, err=None):
             d["err"] = str(err)[:60]
 
 
+def log_run_ledger():
+    """In vào log: 1 dòng RUNSUM (JSON) + các dòng LEDGER cắt gọn, để lọc bằng grep qua `gh api .../logs` (không cần tải artifact).
+    Không in khóa, nội dung bài, prompt hay phản hồi AI; tiêu đề cắt 60 ký tự; URL không in."""
+    try:
+        S = SESSION_STATS
+        src_fail = sorted(k for k, d in S["src"].items() if d["ok"] == 0)
+        runsum = {"sent": S["sent"], "ai_offtopic": S["ai_offtopic"], "ai_dup": S["ai_dup"], "stale": STALE_DROPPED["n"],
+                  "trace": dict(sorted(TRACE_COUNTS.items(), key=lambda kv: -kv[1])[:30]), "src_total": len(S["src"]),
+                  "src_fail": len(src_fail), "src_fail_names": src_fail[:15], "ledger_cut": len(LEDGER_BUF) >= LEDGER_MAX}
+        log.info("RUNSUM %s", json.dumps(runsum, ensure_ascii=False))
+        for line in LEDGER_BUF:
+            log.info("LEDGER|%s", line)
+    except Exception:
+        pass
+
+
 def log_session_summary():
     S = SESSION_STATS
     log.info("=== TỔNG KẾT PHIÊN: gửi %d tin; AI loại %d lạc đề, %d trùng ===", S["sent"], S["ai_offtopic"], S["ai_dup"])
@@ -681,6 +697,7 @@ def log_session_summary():
     if TRACE_COUNTS:
         log.info("SỔ QUYẾT ĐỊNH (tóm tắt phiên): %s",
                  "; ".join(f"{k}={v}" for k, v in sorted(TRACE_COUNTS.items(), key=lambda kv: -kv[1])[:25]))
+    log_run_ledger()
     if S.get("kw_gate"):
         log.info("Bị loại ở bước từ khóa (chưa tới AI), theo nguồn: %s",
                  ", ".join(f"{k}={v}" for k, v in sorted(S["kw_gate"].items(), key=lambda kv: -kv[1])[:15]))
@@ -1033,6 +1050,9 @@ STALE_DROPPED = {"n": 0}
 DECISIONS_FILE = os.environ.get("DECISIONS_FILE", "decisions.jsonl")
 _trace_seen = set()
 _trace_lock = threading.Lock()
+LEDGER_BUF = []   # bản cắt gọn các quyết định đáng chú ý (không gồm too_old/keyword_mismatch) để in vào log, tối đa LEDGER_MAX dòng
+LEDGER_MAX = 150
+LEDGER_SKIP = {"too_old", "keyword_mismatch"}
 TRACE_COUNTS = {}   # (bước, trạng thái, lý do) -> số bài, để in 1 dòng tóm tắt vào log (đọc được mà không cần tải artifact)
 
 
@@ -1060,6 +1080,9 @@ def trace(stage, status, reason, it, **extra):
             _trace_seen.add(key)
             ck = f"{stage}/{status}/{reason}"
             TRACE_COUNTS[ck] = TRACE_COUNTS.get(ck, 0) + 1
+            if reason not in LEDGER_SKIP and len(LEDGER_BUF) < LEDGER_MAX:
+                LEDGER_BUF.append("|".join([tid, str(it.get("source") or it.get("domain") or "?")[:24], stage, status, str(reason),
+                                            str(it.get("title", "")).replace("|", "/").replace("\n", " ")[:60]]))
             rec = {"ts": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"), "run": os.environ.get("GITHUB_RUN_ID", ""),
                    "tid": tid, "src": str(it.get("source") or it.get("domain") or "?")[:40],
                    "title": str(it.get("title", ""))[:140], "url": _trace_url(it.get("link")),
