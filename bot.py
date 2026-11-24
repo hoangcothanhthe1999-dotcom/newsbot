@@ -2085,7 +2085,7 @@ def ai_relevant(pairs):
             chunk = todo[i:i + 20]
             lines = [f"{n}. Theo dõi: «{kw}» | Tiêu đề: {_untrusted(it['title'], 300)} | Mô tả: {_untrusted(it['desc'])}"
                      + (" | Nguồn: cơ quan chính thức" if item_tier(it) == 1 else "")
-                     + (f" | Trang: {_untrusted(it.get('domain', ''), 60)}" if it.get("domain") else "")
+                     + (f" | Trang nguồn nước ngoài: {_untrusted(it.get('domain', ''), 60)}" if it.get("domain") and not str(it["domain"]).endswith(".kh") else "")
                      for n, (it, kw) in enumerate(chunk, 1)]
             prompt = (
                 "Người dùng đang theo dõi tin tức theo từ khoá hoặc chủ đề. Với mỗi bài dưới đây, cho biết bài "
