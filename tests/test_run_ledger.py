@@ -83,3 +83,26 @@ def test_check_run_day_summary():
     assert any("A(2/2)" in ln for ln in out)
     assert any("ai_fallback_used×1" in ln for ln in out)
     assert any("Tin 1" in ln for ln in out)
+
+
+def test_check_run_day_lists_lowconf():
+    sys.path.insert(0, ROOT)
+    import check_run
+    log = 'RUNSUM ' + json.dumps({"sent": 0, "fetched": 5, "src_fail_names": [], "flags": [], "ai": {}}) + \
+          "\nLEDGER|t9|Src|ai_relevance|dropped|ai_irrelevant_lowconf|Tin lưng chừng\n"
+    out = check_run.summarize_day([(1, log)])
+    assert any("1 quyết định lưng chừng" in ln for ln in out)
+    assert any("[t9] AI loại" in ln for ln in out)
+    assert len(out) <= 30
+
+
+def test_ai_relevant_records_lowconf(bot, monkeypatch):
+    bot.GEMINI_KEY = "x"
+    bot._relevance_cache.clear()
+    bot._relevance_lowconf.clear()
+    monkeypatch.setattr(bot, "gemini", lambda p: '[{"i":1,"ok":false,"c":"lo"},{"i":2,"ok":true,"c":"hi"}]')
+    a = {"id": "a1", "title": "A", "desc": "", "domain": "x.com"}
+    b = {"id": "b1", "title": "B", "desc": "", "domain": "x.com"}
+    ok, unknown = bot.ai_relevant([(a, "chủ đề X"), (b, "chủ đề X")])
+    assert ok == {("b1", "chủ đề X")} and not unknown
+    assert bot._relevance_lowconf == {("a1", "chủ đề X")}
