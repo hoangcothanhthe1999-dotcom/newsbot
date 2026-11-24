@@ -39,11 +39,18 @@ def test_ai_desc_excludes_vn_border(bot):
     assert "Boss không quan tâm" in d
 
 
-def test_bilateral_topic_drops_vietnam():
+def test_bilateral_topic_drops_vietnam_politics_but_keeps_trade():
     from sources import TOPICS
     t = TOPICS["doingoai_songphuong"]
     assert "Việt Nam" not in t["name"]
     assert not any("Vietnam" in q for q in t["gnews_en"])
     head, _, loai = t["ai_desc"].partition("LOẠI:")
     assert "Việt Nam" not in head
-    assert "Việt Nam – Campuchia" in loai
+    assert "Việt Nam – Campuchia" in loai and "KHÔNG loại tin thương mại" in loai
+
+
+def test_vietnam_trade_is_kept_and_searched():
+    from sources import TOPICS
+    main = TOPICS["campuchia"]["ai_desc"]
+    assert "kim ngạch thương mại" in main and "NGOẠI LỆ GIỮ: thương mại" in main
+    assert any("Vietnam Cambodia trade" in q for q in TOPICS["kinhte_taichinh"]["gnews_en"])

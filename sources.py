@@ -48,6 +48,7 @@ TOPICS = {
                    " gồm ngừng bắn, GBC/RBC/JBC, ASEAN, nước thứ ba), ngoại giao, kinh tế – "
                    "tài chính – thương mại, vốn vay và viện trợ quốc tế, thuế, hải quan của Campuchia (kể cả quan hệ với Thái Lan, Việt Nam, Trung Quốc, Mỹ…); báo cáo, xếp hạng, trừng phạt, cáo buộc của nước ngoài hoặc tổ chức quốc tế (Mỹ, EU, LHQ, FATF…) nhắm vào Campuchia; khoản viện trợ, vốn vay, tài trợ mới của nước ngoài và tổ chức quốc tế (ADB, Ngân hàng Thế giới, Nhật, Trung Quốc, EU…) cho Campuchia; tội phạm lừa đảo trực tuyến và buôn người ở tầm quốc gia hoặc quốc tế (khu lừa đảo, truy quét, dẫn độ). "
                    "LUÔN GIỮ: mọi tin có lãnh đạo cấp cao (Quốc vương, Thủ tướng Hun Manet, Samdech Hun Sen, Phó Thủ tướng, Chủ tịch Thượng viện / Quốc hội, Tổng tư lệnh quân đội) phát biểu, gặp gỡ, đi thăm, chỉ đạo hoặc được nhắc tới; cả Bộ trưởng Campuchia phát biểu hoặc tuyên bố, kể cả khi diễn ra ở hội chợ, lễ khai mạc, hội nghị. "
+                   "LUÔN GIỮ THÊM: kim ngạch thương mại, xuất nhập khẩu, đầu tư và hợp tác kinh tế song phương Việt Nam–Campuchia (Boss rất quan tâm). "
                    "LUÔN GIỮ THÊM (1) VĂN BẢN CHÍNH THỨC cấp quốc gia của Campuchia: sắc lệnh hoàng gia (ព្រះរាជក្រឹត្យ, royal decree), "
                    "nghị định phụ (អនុក្រឹត្យ, sub-decree), quyết định hoặc chỉ thị của Thủ tướng / Chính phủ về quốc phòng, biên giới, "
                    "ngân sách, thuế, hải quan, đầu tư, luật; (2) NHÂN SỰ CẤP CAO: bổ nhiệm, bãi nhiệm, thăng cấp, điều động, "
@@ -57,7 +58,7 @@ TOPICS = {
                    "LOẠI: tin xã hội / địa phương (dọn vệ sinh phường xã, lễ hội, triển lãm du học, giáo dục, y tế "
                    "thường ngày, vắc-xin, bệnh viện, sức khỏe), tai nạn giao thông, cháy nổ, trọng án dân sự, thời tiết, thể thao, giải trí, "
                    "văn hoá, nghệ thuật, lịch sử, du lịch, ẩm thực, môi trường, từ thiện, tôn giáo, quảng bá doanh nghiệp, hội thảo hoặc "
-                   "ký kết hợp tác nhỏ của công ty, bài bình luận chung chung, ma túy và tội phạm cấp tỉnh, quyết định hành chính hoặc nhân sự cấp thấp (xã, huyện, trường học, bệnh viện, doanh nghiệp), mọi tin về biên giới hoặc tình hình Việt Nam–Campuchia (Boss không quan tâm), mọi tin về Việt Nam không liên quan Campuchia",
+                   "ký kết hợp tác nhỏ của công ty, bài bình luận chung chung, ma túy và tội phạm cấp tỉnh, quyết định hành chính hoặc nhân sự cấp thấp (xã, huyện, trường học, bệnh viện, doanh nghiệp), mọi tin về biên giới hoặc tình hình chính trị – an ninh Việt Nam–Campuchia (Boss không quan tâm; NGOẠI LỆ GIỮ: thương mại, kim ngạch, đầu tư, hợp tác kinh tế song phương Việt Nam–Campuchia), mọi tin về Việt Nam không liên quan Campuchia",
         "hint": "Campuchia",
     },
     # Nhóm ĐỘC LẬP (Boss 22.11.26): mua bán vũ khí, viện trợ quân sự, hợp tác quốc phòng của các nước lớn với nước
@@ -154,7 +155,8 @@ TOPICS = {
         "feeds": [],
         "gnews_en": ["Cambodia National Bank NBC", "Cambodia riel dollarization exchange rate", "Cambodia public debt", "Cambodia US tariffs",
                      "Cambodia garment exports", "Cambodia EU EBA trade preference", "Cambodia CDC investment approved", "Cambodia GDP growth forecast",
-                     "Cambodia trade deficit exports", "Cambodia Bakong digital payment"],
+                     "Cambodia trade deficit exports", "Cambodia Bakong digital payment",
+                     "Cambodia Vietnam bilateral trade", "Vietnam Cambodia trade turnover"],
         "gnews_zh": ["柬埔寨 经济 增长", "柬埔寨 外资 投资", "柬埔寨 出口 关税"],
         "ai_desc": "kinh tế vĩ mô và tài chính cấp quốc gia của Campuchia: Ngân hàng Quốc gia (NBC), tỷ giá và đô la hóa, nợ công, ngân sách, thuế, "
                    "tăng trưởng GDP và dự báo, thương mại và xuất nhập khẩu, thuế quan của Mỹ, ưu đãi thương mại EBA của EU, "
@@ -172,7 +174,7 @@ TOPICS = {
         "ai_desc": "ngoại giao song phương và đa phương cấp cao của Campuchia: chuyến thăm, hội đàm, tuyên bố chung, ký kết hiệp định với Trung Quốc, Mỹ, "
                    "Nhật, Hàn Quốc, EU, Nga, Ấn Độ, Thái Lan, Lào và ASEAN; vai trò của Campuchia trong ASEAN và Liên Hợp Quốc; "
                    "tuyên bố của Bộ Ngoại giao và Thủ tướng về quan hệ đối ngoại. "
-                   "LOẠI: mọi tin quan hệ song phương Việt Nam – Campuchia (thăm, hội đàm, ký kết, giao lưu, kỷ niệm), "
+                   "LOẠI: tin quan hệ ngoại giao – chính trị song phương Việt Nam – Campuchia (thăm, hội đàm, giao lưu, kỷ niệm; KHÔNG loại tin thương mại, kim ngạch, đầu tư, hợp tác kinh tế), "
                    "giao lưu văn hóa, du lịch, thể thao, học bổng, hợp tác giáo dục hoặc y tế nhỏ, lễ kỷ niệm thông thường, bình luận chung chung",
         "hint": "Cambodia diplomacy",
     },
