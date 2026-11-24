@@ -16,6 +16,8 @@ WHY = {
     "too_old": "quá tuổi (cũ hơn giới hạn MAX_AGE_HOURS, không thuộc diện bắt bù)",
     "keyword_mismatch": "không khớp từ khóa của chat (bị chặn trước khi tới AI)",
     "ai_irrelevant": "AI cho là lạc đề",
+    "ai_irrelevant_lowconf": "AI loại nhưng lưng chừng (không chắc)",
+    "ai_relevant_lowconf": "AI giữ nhưng lưng chừng (không chắc)",
     "duplicate_event": "AI cho là trùng sự kiện với tin đã gửi",
     "send_error": "gửi Telegram lỗi",
     "sent": "ĐÃ GỬI",

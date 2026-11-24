@@ -93,7 +93,7 @@ def summarize_day(day_runs):
     """day_runs: list of (run_id, text). Gom cả ngày thành tối đa MAX_LINES dòng. Không gọi AI."""
     out = []
     n_runs = len(day_runs)
-    sent_titles, flags, src_fail_runs, ai_tot = [], {}, {}, {}
+    sent_titles, flags, src_fail_runs, ai_tot, lowconf = [], {}, {}, {}, {}
     no_sum, tb = 0, 0
     sent_total = fetched_total = 0
     for rid, text in day_runs:
@@ -118,6 +118,8 @@ def summarize_day(day_runs):
         for r in ledger:
             if len(r) >= 6 and r[4] == "sent":
                 sent_titles.append(f"{r[1]} | {r[5]}")
+            if len(r) >= 6 and r[4].endswith("_lowconf"):
+                lowconf[r[0]] = ("loại" if r[3] == "dropped" else "giữ", r[1], r[5])
     out.append(f"📅 {n_runs} phiên; gửi {sent_total} tin; đọc {fetched_total} bài" + (f"; {no_sum} phiên thiếu RUNSUM" if no_sum else ""))
     if tb:
         out.append(f"🔴 {tb} phiên có Traceback")
@@ -128,6 +130,10 @@ def summarize_day(day_runs):
         out.append("🟡 Nguồn lỗi kéo dài: " + ", ".join(f"{n}({c}/{n_runs})" for n, c in chronic[:10]))
     if ai_tot:
         out.append("ℹ AI: " + "; ".join(f"{k} {v[1]}/{v[0]} lượt {round(v[2])}s" for k, v in ai_tot.items()))
+    if lowconf:
+        out.append(f"❓ {len(lowconf)} quyết định lưng chừng (Boss chấm đúng/sai):")
+        for tid, (act, src, title) in list(lowconf.items())[:10]:
+            out.append(f"  [{tid}] AI {act}: {src} | {title}")
     for t in sent_titles[:12]:
         out.append("  gửi: " + t)
     if len(sent_titles) > 12:
