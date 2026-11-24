@@ -2190,6 +2190,9 @@ HARD_WORDS = ["biên giới", "bien gioi", "cột mốc", "cửa khẩu", "thái
               "边境", "柬泰", "制裁", "停火"]
 
 
+THAI_GOV_SELF_DOMAINS = ["thailand.go.th", "thaigov.go.th", "prd.go.th"]
+
+
 def hard_official(it):
     """Tin của trang cơ quan chính thức có chứa từ khóa cốt lõi (biên giới, Thái, trừng phạt…): chắc chắn
     liên quan, khỏi hỏi AI (tiết kiệm lượt AI). Tin chính thức không có từ cốt lõi vẫn qua AI như cũ."""
@@ -2197,7 +2200,12 @@ def hard_official(it):
     if not (domain_in(d, OFFICIAL_DOMAINS) and not domain_in(d, ["tvk.gov.kh"])):
         return False
     text = (it["title"] + " " + it.get("desc", "")).lower()
-    return any(w in text for w in HARD_WORDS)
+    words = HARD_WORDS
+    if domain_in(d, THAI_GOV_SELF_DOMAINS):
+        # trang chính phủ Thái luôn nhắc "Thailand" trong tiêu đề: không phải bằng chứng liên quan Campuchia
+        # (Boss 24/11: OECD, DEFA = BỎ). Tin Thái thật sự về biên giới/quân sự vẫn khớp từ khóa khác.
+        words = [w for w in HARD_WORDS if w not in ("thái lan", "thailand", "ថៃ", "thai-cambodia")]
+    return any(w in text for w in words)
 
 
 CAMBO_TAG = TOPICS["campuchia"]["name"]
