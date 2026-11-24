@@ -44,7 +44,9 @@ def parse_dec(text):
         if m:
             f = m.group(1).split("|")
             if len(f) >= 6:
-                rows.append({"tid": f[0], "stage": f[1], "status": f[2], "reason": f[3], "src": f[4], "title": "|".join(f[5:])})
+                link = f[-1] if len(f) >= 7 else ""  # định dạng mới: trường cuối là link (đã bỏ tham số truy vấn)
+                title = "|".join(f[5:-1] if len(f) >= 7 else f[5:])
+                rows.append({"tid": f[0], "stage": f[1], "status": f[2], "reason": f[3], "src": f[4], "title": title, "link": link})
     return rows
 
 
