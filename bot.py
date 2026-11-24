@@ -1126,7 +1126,7 @@ def trace(stage, status, reason, it, **extra):
             TRACE_COUNTS[ck] = TRACE_COUNTS.get(ck, 0) + 1
             if len(DEC_BUF) < DEC_MAX:
                 DEC_BUF.append("|".join([tid, stage, status, str(reason), str(it.get("source") or it.get("domain") or "?")[:24],
-                                         str(it.get("title", "")).replace("|", "/").replace("\n", " ")[:60]]))
+                                         str(it.get("title", "")).replace("|", "/").replace("\n", " ")[:300], _trace_url(it.get("link")).replace("|", "/")]))
             if reason not in LEDGER_SKIP and len(LEDGER_BUF) < LEDGER_MAX:
                 LEDGER_BUF.append("|".join([tid, str(it.get("source") or it.get("domain") or "?")[:24], stage, status, str(reason),
                                             str(it.get("title", "")).replace("|", "/").replace("\n", " ")[:60]]))
@@ -2844,11 +2844,13 @@ def claim_send(cs, it):
     lk = _send_locks.setdefault(cs.get("_id", "?"), threading.Lock())
     with lk:
         if it["id"] in cs["sent"]:
+            trace("claim_send", "dropped", "already_sent", it, chat=str(cs.get("_id", "")))
             return False
         tk = title_tokens(it["title"])
         now = time.time()
         for t in cs["titles"][-400:]:
             if now - t[1] < 48 * 3600 and similar(tk, set(t[0])):
+                trace("claim_send", "dropped", "similar_title_48h", it, chat=str(cs.get("_id", "")))
                 return False
         remember_sent(cs, it, now)
         return True

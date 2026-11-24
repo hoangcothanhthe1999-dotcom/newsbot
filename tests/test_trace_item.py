@@ -56,7 +56,7 @@ def test_trace_item_by_full_link(bot, caplog):
     bot.trace("keyword", "dropped", "keyword_mismatch", {"title": "Bài lạ", "link": link, "source": "K"})
     with caplog.at_level(logging.INFO):
         bot.log_run_ledger()
-    assert "k.example" not in caplog.text
+    assert "k.example/n/77" in caplog.text  # Boss duyệt 24/11: DEC có link (đã bỏ tham số truy vấn)
     out = "\n".join(trace_item.trace(link, [(1, caplog.text)]))
     assert "không khớp từ khóa" in out
 
@@ -78,3 +78,23 @@ def test_trace_item_unseen_link_failing_source_is_B(tmp_path):
 def test_need_hints_uses_golden_and_vn_rule():
     out = "\n".join(trace_item.need_hints("Thailand plans to buy rocket systems", "https://vnexpress.net/a"))
     assert "Nguồn Việt Nam" in out and "gần giống" in out and "hỏi Boss" in out
+
+
+def test_dec_has_full_title_and_link_and_parses(bot, caplog):
+    t = "Tiêu đề rất dài " * 8
+    it = {"title": t, "link": "https://k.example/n/7?x=SECRET", "source": "K"}
+    bot.trace("age", "dropped", "too_old", it)
+    with caplog.at_level(logging.INFO):
+        bot.log_run_ledger()
+    import trace_item
+    rows = trace_item.parse_dec(caplog.text)
+    assert rows and rows[0]["title"].startswith(t.strip()[:100]) and len(rows[0]["title"]) > 60
+    assert rows[0]["link"] == "k.example/n/7" and "SECRET" not in caplog.text
+
+
+def test_claim_send_refusals_are_traced(bot):
+    cs = {"_id": "c1", "sent": {}, "titles": []}
+    it = {"id": "x1", "title": "Cambodia border clash news today", "link": "https://z.example/1", "source": "Z"}
+    assert bot.claim_send(cs, it) is True
+    assert bot.claim_send(cs, it) is False
+    assert any("claim_send|dropped|already_sent" in d for d in bot.DEC_BUF)

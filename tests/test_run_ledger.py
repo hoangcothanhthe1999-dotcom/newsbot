@@ -35,7 +35,7 @@ def test_ledger_skips_noise_and_has_no_url(bot, caplog):
         bot.log_run_ledger()
     text = caplog.text
     assert "RUNSUM" in text and "LEDGER|" in text
-    assert "SECRET" not in text and "a.example" not in text
+    assert "SECRET" not in text and "LEDGER|" in text and "a.example" not in "".join(l for l in text.splitlines() if "LEDGER|" in l)  # link chỉ ở dòng DEC (Boss duyệt 24/11)
 
 
 def test_check_run_flags_flood_and_dup():
