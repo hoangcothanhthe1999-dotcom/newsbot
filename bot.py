@@ -2849,8 +2849,29 @@ def deliver(cid, cs, c, entries, now):
     overflow, lst = entries[:-MAX_PER_CYCLE], entries[-MAX_PER_CYCLE:]
     lst = sorted(lst, key=lambda e: prio_key(e[0], c))
     night = [e for e in lst if is_night_item(e[0])]
-    day = [e for e in lst if not is_night_item(e[0])]
-    lst = night + day                       # tin đêm qua đi trước, giữ thứ tự ưu tiên trong từng nhóm
+    lst = [e for e in lst if not is_night_item(e[0])]
+    night += [e for e in overflow if is_night_item(e[0])]     # tin đêm tràn cũng vào danh sách đêm
+    overflow = [e for e in overflow if not is_night_item(e[0])]
+    if night:
+        night.sort(key=lambda e: e[0].get("ts") or 0)         # cũ -> mới
+        lines = [f"🌙 <b>TIN ĐÊM QUA</b> (16h hôm trước – 06h): {len(night)} tin"]
+        for it, _ in night:
+            title = _summary_cache.get(it["id"], {}).get("title_vi") or it["title"]
+            hhmm = datetime.fromtimestamp(it["ts"], VN_TZ).strftime("%H:%M")
+            lines.append(f'🌙 {hhmm} <a href="{html.escape(it["link"], quote=True)}">{html.escape(title)}</a> '
+                         f'<i>({html.escape(it["source"])})</i>')
+        chunk = ""
+        for ln in lines:
+            if len(chunk) + len(ln) > 3900:
+                send(cid, chunk, silent=True)
+                chunk = ""
+            chunk += ln + "\n"
+        if chunk:
+            send(cid, chunk, silent=True)
+        for it, tags in night:
+            SESSION_STATS["sent"] += 1
+            store_item(it, cid, tags)
+            remember_sent(cs, it, now)
     if overflow:
         lines = [f"📚 <b>{len(overflow)} tin khác</b> (gộp để tránh làm phiền):"]
         for it, _ in overflow:
@@ -2871,10 +2892,6 @@ def deliver(cid, cs, c, entries, now):
     for n, (it, tags) in enumerate(lst):
         if STOP.is_set() and RUN_MINUTES:
             break
-        if night and n == 0:
-            send(cid, f"🌙 <b>TIN ĐÊM QUA</b> (16h hôm trước – 06h): {len(night)} tin", silent=True)
-        elif night and day and n == len(night):
-            send(cid, "☀️ <b>TIN TRONG NGÀY</b>", silent=True)
         if not claim_send(cs, it):
             continue
         SESSION_STATS["sent"] += 1
@@ -2886,7 +2903,7 @@ def deliver(cid, cs, c, entries, now):
         if n % 10 == 9:
             save_state()
         time.sleep(1.1)
-    log.info("Đã gửi %d tin cho chat %s", len(lst) + len(overflow), cid)
+    log.info("Đã gửi %d tin cho chat %s", len(lst) + len(overflow) + len(night), cid)
 
 
 def run_cycle():
