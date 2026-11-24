@@ -102,6 +102,10 @@ CF_ACCOUNT = os.environ.get("CF_ACCOUNT_ID", "").strip()      # AI dự phòng t
 CF_TOKEN = os.environ.get("CF_API_TOKEN", "").strip()
 CF_KEY = CF_TOKEN if (CF_ACCOUNT and CF_TOKEN) else ""
 CF_MODEL = os.environ.get("CF_AI_MODEL", "").strip() or "@cf/meta/llama-3.1-8b-instruct"
+try:
+    CF_MAX_TOKENS = max(256, min(int(os.environ.get("CF_AI_MAX_TOKENS", "") or 2048), 8192))
+except ValueError:
+    CF_MAX_TOKENS = 2048
 IS_ACTIONS = os.environ.get("GITHUB_ACTIONS", "").lower() == "true"   # trên Actions không tự gán chủ bot cho người nhắn đầu tiên
 ALLOWED_USERS = {x.strip() for x in os.environ.get("ALLOWED_USERS", "").split(",") if x.strip()}
 CHECK_INTERVAL = env_int("CHECK_INTERVAL", 60)       # giây giữa 2 lần quét
@@ -1863,20 +1867,24 @@ def _cf_call(prompt):
     if wait > 0:
         time.sleep(wait)
     _cf["last"] = time.time()
-    body = {"messages": [{"role": "user", "content": prompt + "\n\nChỉ trả lời bằng JSON hợp lệ, không thêm chữ nào khác."}]}
+    # Workers AI mặc định max_tokens = 256 → JSON của lô 20–30 bài bị cắt cụt; đặt rõ trần đủ dài
+    body = {"max_tokens": CF_MAX_TOKENS, "temperature": 0.2,
+            "messages": [{"role": "user", "content": prompt + "\n\nChỉ trả lời bằng JSON hợp lệ, không thêm chữ nào khác."}]}
     try:
         r = requests.post(f"https://api.cloudflare.com/client/v4/accounts/{CF_ACCOUNT}/ai/run/{CF_MODEL}",
                           headers={"Authorization": "Bearer " + CF_KEY}, json=body, timeout=60)
     except Exception as e:
-        log.warning("Workers AI lỗi mạng: %s", e)
+        log.warning("Workers AI lỗi mạng: %s", type(e).__name__)   # chuỗi lỗi requests chứa URL có mã tài khoản CF → không in ra log công khai
         return None
     if r.status_code == 200:
         try:
             out = r.json()["result"]["response"]
-            ai_set(True, f"hoạt động tốt (Cloudflare Workers AI dự phòng, {CF_MODEL})")
-            return out
         except Exception:
             return None
+        if not isinstance(out, str) or not out.strip():
+            return None
+        ai_set(True, f"hoạt động tốt (Cloudflare Workers AI dự phòng, {CF_MODEL})")
+        return out
     if r.status_code == 429:
         _cf["off_until"] = time.time() + 120
     elif r.status_code in (401, 403):
@@ -1906,10 +1914,13 @@ def _groq_call(prompt):
         return None
     if r.status_code == 200:
         try:
-            ai_set(True, f"hoạt động tốt (Groq dự phòng, {GROQ_MODEL})")
-            return r.json()["choices"][0]["message"]["content"]
+            out = r.json()["choices"][0]["message"]["content"]
         except Exception:
             return None
+        if not isinstance(out, str) or not out.strip():
+            return None   # model suy luận có thể trả content rỗng → không báo "hoạt động tốt"
+        ai_set(True, f"hoạt động tốt (Groq dự phòng, {GROQ_MODEL})")
+        return out
     if r.status_code == 429:
         try:
             ra = float(r.headers.get("retry-after", "30"))
@@ -1919,6 +1930,9 @@ def _groq_call(prompt):
     elif r.status_code in (401, 403):
         _groq["off_until"] = time.time() + 3600
         log.warning("Khóa Groq bị từ chối (HTTP %s)", r.status_code)
+    elif r.status_code == 413 or r.status_code >= 500:
+        _groq["off_until"] = time.time() + (600 if r.status_code == 413 else 120)   # không gọi lại mỗi lô khi chắc chắn lỗi tiếp
+        log.warning("Groq trả lỗi %s, tạm ngừng: %s", r.status_code, r.text[:150])
     else:
         log.warning("Groq trả lỗi %s: %s", r.status_code, r.text[:150])
     return None
