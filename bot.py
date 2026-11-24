@@ -2832,10 +2832,25 @@ def apply_hot_filter(cs, c, entries, now):
     return kept
 
 
+NIGHT_START_HOUR, NIGHT_END_HOUR = 16, 6   # giờ VN: bot nghỉ từ 16h đến 06h sáng
+
+
+def is_night_item(it):
+    """Tin đăng trong lúc bot nghỉ (16h hôm trước – 06h): gửi riêng thành nhóm 'tin đêm qua' cho dễ phân biệt."""
+    ts = it.get("ts")
+    if not ts:
+        return False
+    h = datetime.fromtimestamp(ts, VN_TZ).hour
+    return h >= NIGHT_START_HOUR or h < NIGHT_END_HOUR
+
+
 def deliver(cid, cs, c, entries, now):
     entries = sorted(entries, key=lambda e: prio_key(e[0], c), reverse=True)
     overflow, lst = entries[:-MAX_PER_CYCLE], entries[-MAX_PER_CYCLE:]
     lst = sorted(lst, key=lambda e: prio_key(e[0], c))
+    night = [e for e in lst if is_night_item(e[0])]
+    day = [e for e in lst if not is_night_item(e[0])]
+    lst = night + day                       # tin đêm qua đi trước, giữ thứ tự ưu tiên trong từng nhóm
     if overflow:
         lines = [f"📚 <b>{len(overflow)} tin khác</b> (gộp để tránh làm phiền):"]
         for it, _ in overflow:
@@ -2856,6 +2871,10 @@ def deliver(cid, cs, c, entries, now):
     for n, (it, tags) in enumerate(lst):
         if STOP.is_set() and RUN_MINUTES:
             break
+        if night and n == 0:
+            send(cid, f"🌙 <b>TIN ĐÊM QUA</b> (16h hôm trước – 06h): {len(night)} tin", silent=True)
+        elif night and day and n == len(night):
+            send(cid, "☀️ <b>TIN TRONG NGÀY</b>", silent=True)
         if not claim_send(cs, it):
             continue
         SESSION_STATS["sent"] += 1
