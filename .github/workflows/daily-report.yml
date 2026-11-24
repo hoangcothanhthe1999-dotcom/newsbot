@@ -1,0 +1,32 @@
+name: DailyReport
+
+# Báo cáo cuối ngày không cần AI: gom log các phiên trong ngày (check_run.py --day) vào tóm tắt job.
+# Chỉ gửi Telegram cho chủ bot khi có 🔴 / 🚩 / ngày gửi 0 tin. Quyền chỉ đọc, không ghi repo.
+on:
+  schedule:
+    - cron: "35 9 * * *"     # 16:35 giờ VN, sau khi phiên cuối (dừng 16:15) kết thúc
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: daily-report
+  cancel-in-progress: false
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Tóm tắt ngày và cảnh báo nếu bất thường
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        run: python3 daily_alert.py
