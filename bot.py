@@ -1493,8 +1493,9 @@ def collect_keyword(kw, fetched, now, when="1d", max_age=None, langs=()):
 
 
 def vn_press(it):
-    """Báo/trang Việt Nam (đuôi .vn): Boss không cần đọc, chặn cứng bất kể cài đặt chat."""
-    return (it.get("domain") or "").endswith(".vn")
+    """Báo/trang có nguồn từ Việt Nam (đuôi .vn, vnexpress.net, baomoi.com…): Boss không cần đọc, chặn cứng bất kể cài đặt chat.
+    Chủ đề Việt Nam–Campuchia vẫn quan tâm, nhưng chỉ lấy từ nguồn Campuchia và nước ngoài."""
+    return is_vn(it.get("domain") or "")
 
 
 def scope_ok(it, scope):
