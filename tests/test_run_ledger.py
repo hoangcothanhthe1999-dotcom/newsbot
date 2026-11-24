@@ -69,3 +69,17 @@ def test_run_flags_fetched_zero_and_passed_but_sent_zero(bot):
     assert "fetched_zero" in f
     f = bot.run_flags({"src_total": 10, "src_fail": 0, "fetched": 50, "sent": 0, "passed": 8, "ai": {}})
     assert "passed_but_sent_zero" in f and "fetched_zero" not in f
+
+
+def test_check_run_day_summary():
+    sys.path.insert(0, ROOT)
+    import check_run
+    log1 = 'x RUNSUM ' + json.dumps({"sent": 2, "fetched": 40, "src_fail_names": ["A", "B"], "flags": ["ai_fallback_used"],
+                                     "ai": {"gemini": {"calls": 3, "ok": 1, "sec": 9.0}}}) + "\nLEDGER|t1|Src|send|sent|sent|Tin 1\n"
+    log2 = 'RUNSUM ' + json.dumps({"sent": 0, "fetched": 30, "src_fail_names": ["A"], "flags": [], "ai": {}}) + "\n"
+    out = check_run.summarize_day([(1, log1), (2, log2)])
+    assert len(out) <= 30
+    assert "2 phiên; gửi 2 tin; đọc 70 bài" in out[0]
+    assert any("A(2/2)" in ln for ln in out)
+    assert any("ai_fallback_used×1" in ln for ln in out)
+    assert any("Tin 1" in ln for ln in out)

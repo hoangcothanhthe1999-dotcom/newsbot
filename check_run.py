@@ -4,6 +4,7 @@ Cách dùng:
   python check_run.py RUN_ID            # lấy log qua gh (cần gh đã đăng nhập), repo mặc định hoangcothanhthe1999-dotcom/newsbot
   python check_run.py --file log.txt    # đọc log đã có sẵn
   Thêm --all để in cả các dòng LEDGER của bài đã gửi.
+  python check_run.py --day [YYYY-MM-DD]  # gom MỌI phiên đã xong của ngày (giờ VN, mặc định hôm nay) thành ~30 dòng
 """
 import io
 import json
@@ -11,6 +12,7 @@ import re
 import subprocess
 import sys
 import zipfile
+from datetime import datetime, timedelta, timezone
 
 REPO = "hoangcothanhthe1999-dotcom/newsbot"
 SENT_FLOOD = 15      # gửi nhiều hơn ngưỡng này trong 1 phiên là đáng ngờ
@@ -71,10 +73,93 @@ def analyse(text, show_all=False):
     return out[:MAX_LINES]
 
 
+def parse_runs(text):
+    """Trả về (danh sách RUNSUM, danh sách dòng LEDGER) của 1 log."""
+    sums, ledger = [], []
+    for ln in text.splitlines():
+        m = re.search(r"RUNSUM (\{.*\})", ln)
+        if m:
+            try:
+                sums.append(json.loads(m.group(1)))
+            except ValueError:
+                pass
+        m = re.search(r"LEDGER\|(.*)", ln)
+        if m:
+            ledger.append(m.group(1).split("|"))
+    return sums, ledger
+
+
+def summarize_day(day_runs):
+    """day_runs: list of (run_id, text). Gom cả ngày thành tối đa MAX_LINES dòng. Không gọi AI."""
+    out = []
+    n_runs = len(day_runs)
+    sent_titles, flags, src_fail_runs, ai_tot = [], {}, {}, {}
+    no_sum, tb = 0, 0
+    sent_total = fetched_total = 0
+    for rid, text in day_runs:
+        sums, ledger = parse_runs(text)
+        if "Traceback" in text:
+            tb += 1
+        if not sums:
+            no_sum += 1
+            continue
+        s = sums[-1]
+        sent_total += s.get("sent", 0)
+        fetched_total += s.get("fetched", 0)
+        for f in s.get("flags", []):
+            flags[f] = flags.get(f, 0) + 1
+        for n in s.get("src_fail_names", []):
+            src_fail_runs[n] = src_fail_runs.get(n, 0) + 1
+        for k, v in (s.get("ai") or {}).items():
+            t = ai_tot.setdefault(k, [0, 0, 0.0])
+            t[0] += v["calls"]
+            t[1] += v["ok"]
+            t[2] += v["sec"]
+        for r in ledger:
+            if len(r) >= 6 and r[4] == "sent":
+                sent_titles.append(f"{r[1]} | {r[5]}")
+    out.append(f"📅 {n_runs} phiên; gửi {sent_total} tin; đọc {fetched_total} bài" + (f"; {no_sum} phiên thiếu RUNSUM" if no_sum else ""))
+    if tb:
+        out.append(f"🔴 {tb} phiên có Traceback")
+    if flags:
+        out.append("🚩 Cờ: " + ", ".join(f"{k}×{v}" for k, v in sorted(flags.items(), key=lambda kv: -kv[1])))
+    chronic = sorted(((n, c) for n, c in src_fail_runs.items() if c >= max(2, n_runs // 2)), key=lambda x: -x[1])
+    if chronic:
+        out.append("🟡 Nguồn lỗi kéo dài: " + ", ".join(f"{n}({c}/{n_runs})" for n, c in chronic[:10]))
+    if ai_tot:
+        out.append("ℹ AI: " + "; ".join(f"{k} {v[1]}/{v[0]} lượt {round(v[2])}s" for k, v in ai_tot.items()))
+    for t in sent_titles[:12]:
+        out.append("  gửi: " + t)
+    if len(sent_titles) > 12:
+        out.append(f"  … và {len(sent_titles) - 12} tin nữa")
+    return out[:MAX_LINES]
+
+
+def list_day_run_ids(day):
+    """Run đã xong của ngày `day` (YYYY-MM-DD, giờ VN) theo created_at UTC."""
+    raw = subprocess.run(["gh", "api", f"repos/{REPO}/actions/runs?per_page=100&status=completed"], capture_output=True, check=True).stdout
+    ids = []
+    for r in json.loads(raw).get("workflow_runs", []):
+        created = datetime.strptime(r["created_at"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc) + timedelta(hours=7)
+        if created.strftime("%Y-%m-%d") == day:
+            ids.append(r["id"])
+    return sorted(ids)
+
+
 def main(argv):
     if len(argv) < 2:
         print(__doc__)
         return 2
+    if argv[1] == "--day":
+        day = argv[2] if len(argv) > 2 else (datetime.now(timezone.utc) + timedelta(hours=7)).strftime("%Y-%m-%d")
+        runs = []
+        for rid in list_day_run_ids(day):
+            try:
+                runs.append((rid, get_log(rid)))
+            except Exception:
+                pass
+        print("\n".join(summarize_day(runs)))
+        return 0
     show_all = "--all" in argv
     args = [a for a in argv[1:] if a != "--all"]
     if args[0] == "--file":
