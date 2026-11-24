@@ -1149,6 +1149,10 @@ def fresh(item, now, max_age=None):
     age = now - item["ts"]
     if age <= (max_age or MAX_AGE_HOURS) * 3600:
         return True
+    # Tin đêm (Boss 24/11): phiên buổi sáng (trước 08h VN) nhận MỌI nguồn đăng trong lúc bot nghỉ (16h hôm trước – 06h), tối đa
+    # NIGHT_MAX_HOURS giờ, để danh sách 🌙 phủ đủ cả đêm thay vì chỉ ~6 giờ cuối; các phiên ban ngày giữ nguyên giới hạn tuổi.
+    if datetime.fromtimestamp(now, VN_TZ).hour < NIGHT_MORNING_UNTIL_HOUR and is_night_item(item) and age <= NIGHT_MAX_HOURS * 3600:
+        return True
     # Bắt bù: nguồn chính thức đăng trong lúc bot nghỉ (sau phiên trước kết thúc) vẫn được nhận, tối đa CATCHUP_MAX_HOURS giờ.
     last_end = STATE.get("last_end", 0)
     ok = bool(item.get("official") and last_end and item["ts"] >= last_end - 600
@@ -2933,6 +2937,8 @@ def apply_hot_filter(cs, c, entries, now):
 
 
 NIGHT_START_HOUR, NIGHT_END_HOUR = 16, 6   # giờ VN: bot nghỉ từ 16h đến 06h sáng
+NIGHT_MORNING_UNTIL_HOUR = 8                # phiên chạy trước giờ này (VN) được nhận tin đêm quá MAX_AGE_HOURS
+NIGHT_MAX_HOURS = 16                        # tuổi tối đa của tin đêm khi nhận ở phiên sáng
 
 
 def is_night_item(it):
