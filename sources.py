@@ -27,7 +27,7 @@ TOPICS = {
                   "src:https://cambodianess.com/", "src:https://cambojanews.com/", "src:https://kiripost.com/",
                   "src:https://www.cc-times.com/", "src:https://jianhuadaily.com/"],
         # Báo chung (VN, quốc tế): chỉ lấy bài có nhắc tới Campuchia
-        "filtered_feeds": ["https://www.bangkokpost.com/rss/data/topstories.xml", "https://www.nationthailand.com/rss",
+        "filtered_feeds": ["https://www.bangkokpost.com/rss/data/topstories.xml",
                            "https://www.straitstimes.com/news/asia/rss.xml"],
         "filter": ["Campuchia", "Cam-pu-chia", "Cambodia", "Cambodian", "Khmer", "Phnom Penh", "Hun Manet",
                    "Hun Sen", "Funan Techo", "Ream", "Preah Vihear", "Siem Reap", "กัมพูชา", "เขมร", "ฮุน มาเนต",
