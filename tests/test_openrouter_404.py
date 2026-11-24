@@ -3,8 +3,10 @@ import bot
 
 class _R:
     status_code = 404
-    headers: dict = {}
     text = "unavailable for free"
+
+    def __init__(self):
+        self.headers = {}
 
 
 def test_404_tat_openrouter_mot_gio(monkeypatch):
