@@ -58,3 +58,20 @@ def test_diplomacy_expansion_added_once(bot):
     assert en.count("Cambodia diplomacy") == 1
     bot.STATE["kx"][KW]["en"].append("Cambodia diplomacy")
     assert bot.kw_expansion(KW)["en"].count("Cambodia diplomacy") == 1
+
+
+def test_english_anchor_lets_cambodia_news_reach_ai(bot):
+    """25/11: 'Cambodia protests Thai military construction' bị chặn vì không chứa nguyên cụm 'Cambodia military'."""
+    got = run(bot, [("Cambodia protests Thai military construction, unauthorised tours of occupied territory", False, "Phnom Penh Post"),
+                    ("Cambodia looks to support international trade through digitalisation", False, "Phnom Penh Post"),
+                    ("Mother recalls how Thai shell killed her 13-year-old son: Cambodian family", False, "Phnom Penh Post"),
+                    ("South Korea toughens school exam rules", False, "Straits Times"),
+                    ("High aviation costs limit expansion during peak season", False, "Bangkok Post")])
+    assert len(got) == 3
+    assert not any("Korea" in t or "aviation" in t for t in got)
+
+
+def test_en_anchors_requires_common_first_word(bot):
+    assert bot.en_anchors(["Ukraine war", "Cambodia economy"]) == []
+    assert bot.en_anchors(["Ukraine war", "Ukraine aid"]) == ["ukraine"]
+    assert "Khmer" in bot.en_anchors(["Cambodia politics"])
