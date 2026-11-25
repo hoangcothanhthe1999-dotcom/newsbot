@@ -142,7 +142,8 @@ TOPICS = {
         "feeds": [],
         "gnews_en": ["Funan Techo canal", "Ream naval base Cambodia", "Cambodia Mekong dam water Vietnam", "Cambodia Techo airport Siem Reap",
                      "Cambodia expressway railway project", "Cambodia power plant energy project", "Cambodia Belt and Road project",
-                     "Cambodia port Sihanoukville investment", "Cambodia Vietnam Funan Techo canal"],
+                     "Cambodia port Sihanoukville investment", "Cambodia Vietnam Funan Techo canal",
+                     "Phnom Penh Sihanoukville expressway progress", "Cambodia Siem Reap Angkor airport progress", "Cambodia Bavet expressway", "Funan Techo canal construction progress"],
         "gnews_zh": ["柬埔寨 扶南 运河", "柬埔寨 云壤 海军基地", "柬埔寨 基础设施 项目 中国"],
         "ai_desc": "dự án hạ tầng, năng lượng, cảng, sân bay, kênh đào, đập thủy điện, căn cứ ở quy mô quốc gia hoặc có ý nghĩa chiến lược của Campuchia "
                    "(Funan Techo, Ream, Mekong, nguồn nước, điện, cao tốc, đường sắt, cảng Sihanoukville), cùng tác động tới Việt Nam, Thái Lan, Trung Quốc, "
@@ -156,11 +157,16 @@ TOPICS = {
         "gnews_en": ["Cambodia National Bank NBC", "Cambodia riel dollarization exchange rate", "Cambodia public debt", "Cambodia US tariffs",
                      "Cambodia garment exports", "Cambodia EU EBA trade preference", "Cambodia CDC investment approved", "Cambodia GDP growth forecast",
                      "Cambodia trade deficit exports", "Cambodia Bakong digital payment",
-                     "Cambodia Vietnam bilateral trade", "Vietnam Cambodia trade turnover"],
-        "gnews_zh": ["柬埔寨 经济 增长", "柬埔寨 外资 投资", "柬埔寨 出口 关税"],
+                     "Cambodia Vietnam bilateral trade", "Vietnam Cambodia trade turnover",
+                     "Cambodia national budget law", "Cambodia foreign direct investment", "Cambodia FDI China Japan Korea investors",
+                     "Cambodia economic cooperation agreement", "Cambodia free trade agreement", "Cambodia Pentagonal Strategy",
+                     "Cambodia industrial development policy", "Cambodia Vision 2050 economy", "Cambodia economic diversification policy"],
+        "gnews_zh": ["柬埔寨 经济 增长", "柬埔寨 外资 投资", "柬埔寨 出口 关税", "柬埔寨 国家预算", "中柬 经济合作", "柬埔寨 五角战略 经济发展"],
         "ai_desc": "kinh tế vĩ mô và tài chính cấp quốc gia của Campuchia: Ngân hàng Quốc gia (NBC), tỷ giá và đô la hóa, nợ công, ngân sách, thuế, "
                    "tăng trưởng GDP và dự báo, thương mại và xuất nhập khẩu, thuế quan của Mỹ, ưu đãi thương mại EBA của EU, "
-                   "đầu tư nước ngoài lớn, xếp hạng tín nhiệm, vốn vay và viện trợ, hệ thống thanh toán quốc gia. "
+                   "đầu tư nước ngoài lớn (FDI, nhà đầu tư Trung Quốc, Nhật, Hàn, Mỹ, EU, ASEAN), xếp hạng tín nhiệm, vốn vay và viện trợ, hệ thống thanh toán quốc gia; "
+                   "hợp tác kinh tế, thương mại, hiệp định kinh tế giữa Campuchia với bất kỳ nước nào; chiến lược và chính sách phát triển kinh tế cấp quốc gia "
+                   "(Chiến lược Ngũ giác, chính sách phát triển công nghiệp, Tầm nhìn 2050, đa dạng hóa kinh tế, luật ngân sách). "
                    "LOẠI: giá hàng hóa hoặc nông sản nhỏ lẻ, bất động sản dân dụng, khuyến mãi, quảng bá ngân hàng hoặc doanh nghiệp thương mại, "
                    "bình luận chung chung",
         "hint": "Cambodia economy",
