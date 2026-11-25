@@ -78,8 +78,11 @@ jobs:
         id: verdict
         env:
           SUMMARY: ${{ steps.gemini.outputs.summary }}
+          ERRORS: ${{ steps.gemini.outputs.errors }}
+          OUTCOME: ${{ steps.gemini.outcome }}
         run: |
           printf '%s\n' "$SUMMARY" > .gemini-review/result.md
+          { echo "bước Gemini: ${OUTCOME}"; printf '%s\n' "$ERRORS" | head -c 2000; } > .gemini-review/err.txt
           v=$(grep -E '^KET_LUAN: (PASS|FAIL|INCONCLUSIVE)[[:space:]]*$' .gemini-review/result.md | tail -1 | sed 's/^KET_LUAN: //' | tr -d '[:space:]' || true)
           [ -z "$v" ] && v=INCONCLUSIVE
           echo "verdict=$v" >> "$GITHUB_OUTPUT"
@@ -88,7 +91,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: gemini-result
-          path: .gemini-review/result.md
+          path: |
+            .gemini-review/result.md
+            .gemini-review/err.txt
           retention-days: 7
 
       # Chỉ PASS mới xanh. FAIL và INCONCLUSIVE đều làm check đỏ trên đúng SHA này.
@@ -126,6 +131,7 @@ jobs:
               head -c 60000 result/result.md
             else
               echo "Gemini không trả kết quả (lỗi chạy, hết hạn mức hoặc thiếu khóa). Coi là INCONCLUSIVE: không merge."
+              [ -f result/err.txt ] && { echo; echo '```'; cat result/err.txt; echo '```'; }
             fi
           } > body.md
           gh api "repos/${GITHUB_REPOSITORY}/issues/${PR}/comments" -F body=@body.md
