@@ -3,6 +3,7 @@ name: Gemini review
 # Kiểm định độc lập: Gemini đọc PR và trả PASS / FAIL / INCONCLUSIVE trên đúng SHA đầu PR.
 # Job "review" chỉ có quyền ĐỌC. Job "comment" chỉ có quyền ghi bình luận PR.
 # Không có quyền merge, sửa Secrets, sửa workflow hay đẩy mã. Chỉ PASS mới làm check xanh.
+# Khóa: Secret GEMINI_API_KEY (Boss tự tạo).
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
