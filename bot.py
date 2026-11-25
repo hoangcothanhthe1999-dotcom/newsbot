@@ -1605,12 +1605,29 @@ def collect_topic(key, fetched, now, max_age=None):
     return [it for it in res if fresh(it, now, max_age)]
 
 
+CAMBODIA_ANCHORS = ["Cambodia", "Cambodian", "Cambodians", "Khmer", "Phnom Penh", "Hun Manet", "Hun Sen"]
+
+
+def en_anchors(en_terms):
+    """Từ neo chung của các cụm tiếng Anh do AI sinh (vd 'Cambodia politics', 'Cambodia military' -> 'Cambodia').
+    Trước đây bài tiếng Anh phải chứa NGUYÊN cụm liền ('Cambodia military'), nên 'Cambodia protests Thai military
+    construction' bị chặn trước AI (25/11: 159 tin có Cambodia/Khmer/Thai bị chặn). Có từ neo thì cho qua để AI quyết định."""
+    firsts = {t.split()[0].lower() for t in en_terms if t and t.split()}
+    if len(firsts) != 1:
+        return []
+    a = firsts.pop()
+    if len(a) < 4:
+        return []
+    return list(CAMBODIA_ANCHORS) if a == "cambodia" else [a]
+
+
 def collect_keyword(kw, fetched, now, when="1d", max_age=None, langs=()):
     res = []
     x = kw_expansion(kw)
     en = ", ".join(x["en"])
     vi_all = ([] if x.get("smart") else [kw]) + x["vi"] + list(x.get("native", []))
     foreign = [t for terms in kw_translations(kw, langs).values() for t in terms]
+    anchors = en_anchors(x.get("en", []))
     gn = set(keyword_gnews_urls(kw, when, True, langs))
     for u, items in fetched.items():
         if "news.google.com" in u:
@@ -1620,6 +1637,7 @@ def collect_keyword(kw, fetched, now, when="1d", max_age=None, langs=()):
             if (item_tier(it) == 1      # nguồn chính thức: không chặn bằng chữ, để AI (ai_relevant) quyết định
                     or any(keyword_match(v, text) for v in vi_all)
                     or (not it["vn"] and en and keyword_match(en, text))
+                    or (not it["vn"] and anchors and any(keyword_match(a, text) for a in anchors))
                     or (not it["vn"] and any(keyword_match(t, text) for t in foreign))):
                 res.append(it)
             else:
