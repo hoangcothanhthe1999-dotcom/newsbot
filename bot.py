@@ -1157,7 +1157,7 @@ DEC_MAX = 4000
 DEC_LOW_MAX = 3000   # quyết định ít giá trị (too_old/keyword_mismatch/trùng tiêu đề) chỉ được ghi tới mốc này; 1000 chỗ cuối dành cho quyết định quan trọng (ai_*, event_dedupe...)
 DEC_LOW_REASONS = {"too_old", "keyword_mismatch", "title_dedupe"}
 DEC_DROPPED = {"n": 0, "low": 0}   # số quyết định bị bỏ vì buffer đầy (trước đây im lặng)
-LEDGER_SKIP = {"too_old", "keyword_mismatch"}
+LEDGER_SKIP = {"too_old", "keyword_mismatch", "duplicate_title"}
 TRACE_COUNTS = {}   # (bước, trạng thái, lý do) -> số bài, để in 1 dòng tóm tắt vào log (đọc được mà không cần tải artifact)
 
 
