@@ -55,6 +55,9 @@ jobs:
         id: gemini
         continue-on-error: true
         uses: google-github-actions/run-gemini-cli@v0
+        env:
+          # CLI từ chối chạy ở thư mục chưa tin cậy (log 25/11 22:0x). Runner dùng một lần; công cụ vẫn bị giới hạn chỉ-đọc ở coreTools.
+          GEMINI_CLI_TRUST_WORKSPACE: "true"
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           settings: |-
