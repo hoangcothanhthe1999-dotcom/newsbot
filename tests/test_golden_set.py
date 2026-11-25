@@ -13,7 +13,7 @@ def test_golden_format_and_balance():
     ids = [r["id"] for r in rows]
     assert len(ids) == len(set(ids))
     for r in rows:
-        assert r["label"] in ("keep", "drop") and r["clarity"] in ("clear", "borderline")
+        assert r["label"] in ("keep", "drop") and r["clarity"] in ("clear", "borderline", "C-tu-chon")
         assert r["title"] and r["basis"]
     assert sum(r["label"] == "keep" for r in rows) >= 10
     assert sum(r["label"] == "drop" for r in rows) >= 10

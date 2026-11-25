@@ -46,9 +46,15 @@ jobs:
         # Ngưỡng: sót 0% (recall 1.0), chính xác ≥ 90%, AI phải chấm đủ. Đỏ khi ≥ 2/3 lần đo không đạt (chịu được 1 lần AI dao động).
         run: |
           fails=0
+          hfails=0
           for i in 1 2 3; do
             echo "=== Lần đo $i/3 ==="
-            python eval_golden.py --min-recall 1.0 --min-precision 0.9 || fails=$((fails+1))
+            rc=0
+            python eval_golden.py --min-recall 1.0 --min-precision 0.9 || rc=$?
+            if [ $((rc & 1)) -ne 0 ] || [ $rc -ge 8 ] || [ $rc -eq 2 ]; then fails=$((fails+1)); fi
+            if [ $((rc & 4)) -ne 0 ]; then hfails=$((hfails+1)); fi
           done
           echo "Số lần đo không đạt ngưỡng: $fails/3"
+          echo "HOLDOUT: số lần đo không đạt ngưỡng: $hfails/3 (chỉ tính khi n>=5)"
           if [ "$fails" -ge 2 ]; then echo "::error::EvalGolden không đạt ngưỡng ở $fails/3 lần đo"; exit 1; fi
+          if [ "$hfails" -ge 2 ]; then echo "::error::EvalGolden HOLDOUT không đạt ngưỡng ở $hfails/3 lần đo"; exit 1; fi
