@@ -121,7 +121,7 @@ jobs:
           {
             echo "[Ge soát] ${v} SHA=${SHA}"
             echo
-            if [ -s result/result.md ]; then
+            if [ -f result/result.md ] && grep -q '[^[:space:]]' result/result.md; then
               head -c 60000 result/result.md
             else
               echo "Gemini không trả kết quả (lỗi chạy, hết hạn mức hoặc thiếu khóa). Coi là INCONCLUSIVE: không merge."
