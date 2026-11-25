@@ -17,6 +17,7 @@ VN = timezone(timedelta(hours=7))
 START_H, END_MIN = 6, 16 * 60 + 15  # 06:00 - 16:15
 SILENT_AFTER = timedelta(hours=4)
 ALERT_UNTIL = timedelta(hours=5, minutes=30)
+FAIL_WINDOW = timedelta(minutes=65)  # watchdog chạy mỗi giờ: chỉ báo run lỗi vừa kết thúc trong ~1 giờ qua (không báo lặp)
 
 
 def decide(now: datetime, last_activity: datetime | None) -> str | None:
@@ -61,6 +62,24 @@ def last_activity_from_runs(runs: list[dict]) -> datetime | None:
     return best
 
 
+def failed_runs_alert(now: datetime, runs: list[dict]) -> str | None:
+    """Báo run vừa kết thúc với conclusion=failure (vd. bước 'Lưu trạng thái' lỗi → run sau gửi trùng tin, 25/11).
+
+    Không phụ thuộc giờ trong ngày. Chỉ xét run kết thúc trong FAIL_WINDOW gần nhất.
+    """
+    lines = []
+    for r in runs:
+        if r.get("status") != "completed" or r.get("conclusion") != "failure" or not r.get("updated_at"):
+            continue
+        t = datetime.fromisoformat(r["updated_at"].replace("Z", "+00:00"))
+        if timedelta(0) <= now - t <= FAIL_WINDOW:
+            lines.append(f"#{r.get('run_number', '?')} lúc {t.astimezone(VN):%H:%M}: {r.get('html_url', '')}")
+    if not lines:
+        return None
+    return ("❌ Run bot lỗi (xem log; nếu lỗi ở bước lưu state thì run kế tiếp có thể gửi trùng tin):\n"
+            + "\n".join(lines))
+
+
 def _get(url: str, token: str) -> dict:
     req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}",
                                                "Accept": "application/vnd.github+json"})
@@ -72,7 +91,9 @@ def main() -> int:
     repo, gh_token = os.environ["GITHUB_REPOSITORY"], os.environ["GITHUB_TOKEN"]
     data = _get(f"https://api.github.com/repos/{repo}/actions/workflows/newsbot.yml/runs?per_page=20", gh_token)
     last = last_activity_from_runs(data.get("workflow_runs", []))
-    msg = decide(datetime.now(timezone.utc), last)
+    now = datetime.now(timezone.utc)
+    parts = [m for m in (decide(now, last), failed_runs_alert(now, data.get("workflow_runs", []))) if m]
+    msg = "\n\n".join(parts)
     if not msg:
         print("Bot bình thường (hoặc ngoài giờ/ngoài cửa sổ báo): không gửi gì.")
         return 0

@@ -33,3 +33,21 @@ def test_runs_parse():
             {"status": "completed", "conclusion": "success", "updated_at": "2026-11-24T03:00:00Z"}]
     last = watchdog.last_activity_from_runs(runs)
     assert last is not None and last.hour == 3
+
+
+def _run(conclusion, updated, status="completed", n=54):
+    return {"status": status, "conclusion": conclusion, "updated_at": updated, "run_number": n,
+            "html_url": "https://github.com/x/y/actions/runs/1"}
+
+
+def test_failed_run_alert_recent_only():
+    now = datetime(2026, 11, 25, 0, 10, tzinfo=timezone.utc)
+    assert watchdog.failed_runs_alert(now, [_run("failure", "2026-11-25T00:01:00Z")]) is not None
+    assert watchdog.failed_runs_alert(now, [_run("failure", "2026-11-24T22:00:00Z")]) is None  # quá cũ: đã báo rồi
+    assert watchdog.failed_runs_alert(now, [_run("success", "2026-11-25T00:01:00Z")]) is None
+    assert watchdog.failed_runs_alert(now, [_run(None, "2026-11-25T00:01:00Z", status="in_progress")]) is None
+
+
+def test_failed_run_alert_any_hour():
+    now = datetime(2026, 11, 25, 12, 10, tzinfo=timezone.utc)  # 19:10 VN, ngoài giờ bot
+    assert watchdog.failed_runs_alert(now, [_run("failure", "2026-11-25T12:00:00Z")]) is not None
