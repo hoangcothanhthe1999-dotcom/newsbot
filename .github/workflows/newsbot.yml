@@ -64,7 +64,7 @@ jobs:
           if ! git add state.json; then echo "::error::git add state.json thất bại"; exit 1; fi
           if git diff --cached --quiet; then echo "Không có thay đổi state"; exit 0; fi
           if ! git commit -m "cập nhật state [skip ci]"; then echo "::error::git commit thất bại"; exit 1; fi
-          for i in 1 2 3; do
+          for i in 1 2 3 4 5 6 7; do
             if git pull --rebase --autostash origin main; then
               if git push origin HEAD:main; then echo "Đã lưu state lên remote (lần $i)"; exit 0; fi
               echo "::warning::push thất bại lần $i"
@@ -75,7 +75,7 @@ jobs:
             else
               echo "::warning::pull thất bại lần $i"
             fi
-            sleep $((i*5))
+            sleep $((i*10 > 60 ? 60 : i*10))   # GitHub 500 thường kéo dài hơn vài giây (25/11: 3 lần cách 5-10s đều hỏng)
           done
-          echo "::error::Không lưu được state lên remote sau 3 lần thử"
+          echo "::error::Không lưu được state lên remote sau 7 lần thử"
           exit 1
