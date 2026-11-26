@@ -94,12 +94,19 @@ def build_sources(logs):
                 continue
             tag, name, n, ok, fail, err = m.group(1), m.group(2), int(m.group(3)), int(m.group(4)), int(m.group(5)), m.group(6).strip()
             cur = out.get(name)
-            if cur is None or rank[tag] < rank[cur["tag"]]:
-                out[name] = {"name": name, "tag": tag, "n": n, "ok": ok, "fail": fail, "err": err}
-            else:
-                cur["n"] += n
-                cur["ok"] += ok
-                cur["fail"] += fail
+            if cur is None:
+                cur = out[name] = {"name": name, "tag": tag, "n": 0, "ok": 0, "fail": 0, "err": "",
+                                   "runs": 0, "runs_err": 0}
+            elif rank[tag] < rank[cur["tag"]]:
+                cur["tag"] = tag
+            cur["n"] += n
+            cur["ok"] += ok
+            cur["fail"] += fail
+            cur["runs"] += 1
+            if tag == "LỖI":
+                cur["runs_err"] += 1
+            if err:
+                cur["err"] = err   # lỗi gần nhất
     return sorted(out.values(), key=lambda s: (rank[s["tag"]] == 0, s["name"]), reverse=False)
 
 
@@ -139,6 +146,12 @@ def render(items, sources, matches=None):
     out.append("# NGUỒN (tên | tình trạng | bài | ok | lỗi | ghi chú)")
     for s in sources:
         out.append(" | ".join([s["name"], s["tag"], str(s["n"]), str(s["ok"]), str(s["fail"]), s["err"]]))
+    bad = sorted((x for x in sources if x.get("runs_err")), key=lambda x: (-x["runs_err"] / x["runs"], x["name"]))
+    out.append("# NGUỒN LỖI TRONG NGÀY (tên | run lỗi/tổng run | lỗi gần nhất)")
+    if not bad:
+        out.append("(không có)")
+    for x in bad:
+        out.append(f"{x['name']} | {x['runs_err']}/{x['runs']} | {x['err']}")
     out.append("# ĐẾM THEO TRẠNG THÁI: " + "; ".join(f"{k}={v}" for k, v in sorted(by_status.items())))
     out.append("# ĐẾM LOẠI THEO BƯỚC/LÝ DO: " + "; ".join(f"{k}={v}" for k, v in by_reason.items()))
     if matches is not None:

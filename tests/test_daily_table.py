@@ -70,3 +70,16 @@ def test_counts_and_render_include_no_trace_line():
     assert by_status[dt.SENT] == 1 and by_reason == {"ai_relevance/ai_irrelevant": 1}
     out = dt.render(items, dt.build_sources([LOG1, LOG2]), [("https://khong.co/x", [])])
     assert "KHÔNG DẤU VẾT" in out and "# NGUỒN" in out
+
+
+def test_nguon_loi_trong_ngay_dem_moi_run():
+    logs = ["NGUỒN | LỖI | Nation | bài=0 | ok=0 lỗi=2 HTTP 403",
+            "NGUỒN | ĐỌC ĐƯỢC | Nation | bài=3 | ok=1 lỗi=0",
+            "NGUỒN | LỖI | Nation | bài=0 | ok=0 lỗi=1 timeout",
+            "NGUỒN | ĐỌC ĐƯỢC | Khmer | bài=2 | ok=1 lỗi=0"]
+    src = dt.build_sources(logs)
+    nation = next(x for x in src if x["name"] == "Nation")
+    assert (nation["runs"], nation["runs_err"], nation["fail"], nation["n"]) == (3, 2, 3, 3)
+    out = dt.render([], src)
+    assert "Nation | 2/3 | timeout" in out
+    assert "Khmer | 0/" not in out
