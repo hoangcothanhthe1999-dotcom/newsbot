@@ -462,6 +462,8 @@ def is_ascii(s):
 
 
 def domain_of(url):
+    if not url:
+        return ""
     try:
         d = urlparse(url).netloc.lower()
         return d.removeprefix("www.")
