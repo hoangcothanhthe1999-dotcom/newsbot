@@ -454,7 +454,7 @@ def desc_tokens(it):
 def similar(a, b):
     if not a or not b:
         return False
-    return len(a & b) / len(a | b) >= 0.6
+    return len(a & b) / min(len(a), len(b)) >= 0.6
 
 
 def is_ascii(s):
