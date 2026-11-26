@@ -1252,7 +1252,7 @@ def topic_gnews(key, intl=True):
     t = TOPICS[key]
     urls = [gnews_url(q, lang) for q, lang in topic_gnews_queries(t, intl)]
     hint = t.get("hint", "")
-    for u in t.get("feeds", []):
+    for u in topic_feeds(key):   # topic_feeds gồm cả OFFICIAL_SITES của chủ đề Campuchia (trước đây chỉ t["feeds"] ⇒ MEF/Nội vụ/mpwt lỗi 403 không có đường bù)
         # báo Khmer/Trung chặn bot đọc trực tiếp -> lấy bài của báo đó qua Google News (bản tiếng Anh)
         if u.startswith("src:") and is_unhealthy(u):
             urls.append(gnews_url(f"site:{domain_of(u[4:])}", "en"))
@@ -1656,6 +1656,10 @@ def vn_press(it):
     return is_vn(it.get("domain") or "")
 
 
+KH_OFFICIAL_SITE_DOMAINS = tuple(sorted({d for d in (domain_of(s["url"]) for s in OFFICIAL_SITES)
+                                         if d.endswith((".gov.kh", ".org.kh"))}))   # trang cơ quan nhà nước Campuchia bot theo dõi (MEF, Nội vụ, mpwt…)
+
+
 def scope_ok(it, scope):
     if vn_press(it):
         return False
@@ -1664,7 +1668,9 @@ def scope_ok(it, scope):
         return False
     if not it["vn"] and not scope.get("intl", True):
         return False
-    return not (scope.get("trusted", True) and (blocked(it.get("domain", "")) or (it["gnews"] and not trusted(it["domain"]))))
+    # tin Google News của chính trang cơ quan nhà nước Campuchia (đường bù site: khi trang bị chặn) vẫn được nhận dù không nằm trong TRUSTED_DOMAINS
+    return not (scope.get("trusted", True) and (blocked(it.get("domain", "")) or (
+        it["gnews"] and not trusted(it["domain"]) and not domain_in(it["domain"], KH_OFFICIAL_SITE_DOMAINS))))
 
 
 def chat_urls(c):
