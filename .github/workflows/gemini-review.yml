@@ -83,8 +83,8 @@ jobs:
           GEMINI_CLI_TRUST_WORKSPACE: "true"
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
-          # Mô hình mặc định bị 503 quá tải (log 25/11); đổi được bằng biến repo GEMINI_MODEL mà không sửa mã.
-          gemini_model: ${{ vars.GEMINI_MODEL || 'gemini-3.8-flash' }}
+          # Thử lại bằng mô hình dự phòng (biến repo GEMINI_MODEL_FALLBACK) để né mô hình đang 503; chưa đặt thì dùng GEMINI_MODEL.
+          gemini_model: ${{ vars.GEMINI_MODEL_FALLBACK || vars.GEMINI_MODEL || 'gemini-3.8-flash' }}
           settings: |-
             {
               "coreTools": ["ReadFileTool", "ReadManyFilesTool", "GlobTool", "GrepTool", "LSTool"]
