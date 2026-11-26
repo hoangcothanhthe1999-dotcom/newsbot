@@ -477,7 +477,7 @@ def is_vn(domain):
 
 
 def domain_in(domain, lst):
-    return any(domain == d or domain.endswith("." + d) for d in lst)
+    return any(d in domain for d in lst)
 
 
 def item_tier(it):
