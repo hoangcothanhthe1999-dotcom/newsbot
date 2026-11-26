@@ -83,3 +83,12 @@ def test_nguon_loi_trong_ngay_dem_moi_run():
     out = dt.render([], src)
     assert "Nation | 2/3 | timeout" in out
     assert "Khmer | 0/" not in out
+
+
+def test_nguon_moi_ngoai_bang_nguon():
+    g = "news.google.com/rss/articles/x"
+    items = [{"src": "Khmer Times", "status": dt.SENT, "link": g}, {"src": "Cambodianess", "status": dt.SENT, "link": g},
+             {"src": "Cambodianess", "status": dt.DROPPED, "link": g}, {"src": "?", "status": dt.SEEN, "link": g},
+             {"src": "Senate", "status": dt.SENT, "link": "senate.gov.kh/a"}]
+    sources = [{"name": "Khmer Times"}]
+    assert dt.new_sources(items, sources) == [("Cambodianess", 2, 1, 1)]

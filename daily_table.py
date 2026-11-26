@@ -138,6 +138,25 @@ def counts(items):
     return by_status, dict(sorted(by_reason.items(), key=lambda kv: -kv[1]))
 
 
+def new_sources(items, sources):
+    """Nguồn có tin trong sổ quyết định mà không có dòng NGUỒN riêng: thường là báo bot chỉ thấy qua Google News
+    (ứng viên nguồn mới để thêm vào sources.py). Trả về [(tên, số tin, số gửi, số qua lọc)], nhiều tin gửi lên trước."""
+    # tên trong DEC bị cắt 24 ký tự, tên trong NGUỒN cắt 40: so theo 24 ký tự đầu
+    known = {s["name"].strip().lower()[:24] for s in sources}
+    agg = {}
+    for i in items:
+        if "news.google.com" not in (i.get("link") or ""):
+            continue   # chỉ tin bot thấy qua Google News: nguồn trực tiếp đã có trong sources.py
+        name = (i["src"] or "").strip()
+        if not name or name == "?" or name.lower()[:24] in known:
+            continue
+        a = agg.setdefault(name, [0, 0, 0])
+        a[0] += 1
+        a[1] += i["status"] == SENT
+        a[2] += i["status"] in (SENT, SEND_ERR, PASSED)
+    return sorted(((k, *v) for k, v in agg.items()), key=lambda r: (-r[2], -r[3], -r[1], r[0]))
+
+
 def render(items, sources, matches=None):
     by_status, by_reason = counts(items)
     out = ["# TIN (mã | nguồn | trạng thái | bước | lý do | tiêu đề | link)"]
@@ -152,6 +171,12 @@ def render(items, sources, matches=None):
         out.append("(không có)")
     for x in bad:
         out.append(f"{x['name']} | {x['runs_err']}/{x['runs']} | {x['err']}")
+    out.append("# NGUỒN MỚI QUA GOOGLE NEWS (báo bot chưa đọc trực tiếp) (tên | tin | gửi | qua lọc)")
+    cand = new_sources(items, sources)
+    if not cand:
+        out.append("(không có)")
+    for name, n, sent, passed in cand[:30]:
+        out.append(f"{name} | {n} | {sent} | {passed}")
     out.append("# ĐẾM THEO TRẠNG THÁI: " + "; ".join(f"{k}={v}" for k, v in sorted(by_status.items())))
     out.append("# ĐẾM LOẠI THEO BƯỚC/LÝ DO: " + "; ".join(f"{k}={v}" for k, v in by_reason.items()))
     if matches is not None:
