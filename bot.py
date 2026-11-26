@@ -1252,7 +1252,7 @@ def topic_gnews(key, intl=True):
     t = TOPICS[key]
     urls = [gnews_url(q, lang) for q, lang in topic_gnews_queries(t, intl)]
     hint = t.get("hint", "")
-    for u in t.get("feeds", []):
+    for u in topic_feeds(key):   # topic_feeds gồm cả OFFICIAL_SITES của chủ đề Campuchia (trước đây chỉ t["feeds"] ⇒ MEF/Nội vụ/mpwt lỗi 403 không có đường bù)
         # báo Khmer/Trung chặn bot đọc trực tiếp -> lấy bài của báo đó qua Google News (bản tiếng Anh)
         if u.startswith("src:") and is_unhealthy(u):
             urls.append(gnews_url(f"site:{domain_of(u[4:])}", "en"))
