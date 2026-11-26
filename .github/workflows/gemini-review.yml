@@ -7,6 +7,10 @@ name: Gemini review
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+    # Hạn mức Gemini free rất nhỏ: chỉ soát PR đụng code Python hoặc thư viện.
+    paths:
+      - '**/*.py'
+      - 'requirements.txt'
 
 permissions:
   contents: read
