@@ -83,8 +83,8 @@ jobs:
           GEMINI_CLI_TRUST_WORKSPACE: "true"
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
-          # Thử lại bằng mô hình dự phòng (biến repo GEMINI_MODEL_FALLBACK) để né mô hình đang 503; chưa đặt thì dùng GEMINI_MODEL.
-          gemini_model: ${{ vars.GEMINI_MODEL_FALLBACK || vars.GEMINI_MODEL || 'gemini-3.8-flash' }}
+          # Thử lại bằng mô hình dự phòng (biến repo GEMINI_MODEL_FALLBACK) để né mô hình đang 503; mặc định gemini-3.5-flash-lite (hạn mức riêng).
+          gemini_model: ${{ vars.GEMINI_MODEL_FALLBACK || 'gemini-3.5-flash-lite' }}
           settings: |-
             {
               "coreTools": ["ReadFileTool", "ReadManyFilesTool", "GlobTool", "GrepTool", "LSTool"]
