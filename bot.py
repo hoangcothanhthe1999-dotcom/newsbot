@@ -2405,9 +2405,14 @@ def is_greeting_only(it):
 
 
 DRUG_ACTION_WORDS = (
-    "drug bust", "drug seizure", "drug raid", "drug arrest",
-    "seize", "seizes", "seized", "confiscate", "confiscated",
-    "arrest", "arrested", "detain", "detained", "raided",
+    # Require an action verb; noun phrases such as "drug bust policy" are not enforcement events.
+    "seize", "seizes", "seized", "seizing",
+    "confiscate", "confiscates", "confiscated", "confiscating",
+    "arrest", "arrests", "arrested", "arresting",
+    "detain", "detains", "detained", "detaining",
+    "raid", "raids", "raided", "raiding",
+    "intercept", "intercepts", "intercepted", "intercepting",
+    "nab", "nabs", "nabbed", "net", "nets", "netted",
     "បង្ក្រាប", "ចាប់ខ្លួន", "រឹបអូស", "ឃាត់ខ្លួន",
     "จับกุม", "ยึด", "ตรวจยึด", "ปราบปราม",
     "查获", "缴获", "抓获", "逮捕",
