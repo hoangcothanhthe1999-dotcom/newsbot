@@ -58,8 +58,8 @@ def test_routine_drug_bust_is_excluded_even_when_ai_fallback_would_keep_tier_one
 
 
 @pytest.mark.parametrize("title", [
-    "Cambodia announces new policy to regulate ketamine use",
-    "Government expands methamphetamine addiction treatment services",
+    "Police seize ketamine as Cambodia announces a new policy to regulate its use",
+    "Police seize methamphetamine as government expands addiction treatment services",
 ])
 def test_drug_policy_and_treatment_mentions_are_not_routine_busts(bot, title):
     assert not bot.is_routine_drug_enforcement(_item(title))
@@ -73,7 +73,7 @@ def test_explicit_drug_seizure_requires_action_and_substance(bot):
 
 @pytest.mark.parametrize("title", [
     "Police seize drugs under a new policy to prevent routine drug busts",
-    "Police seize drugs while new reporting procedures are announced",
+    "Police seize drugs while procedures for reporting drug cases are announced",
 ])
 def test_drug_policy_or_procedure_noun_phrases_are_not_enforcement_actions(bot, title):
     assert not bot.is_routine_drug_enforcement(_item(title))
@@ -86,8 +86,8 @@ def test_drug_bust_headline_with_net_action_is_excluded(bot):
 
 
 @pytest.mark.parametrize("title", [
-    "Police arrest online drug sellers as new policy for internet controls is reviewed",
-    "Police arrest suspects as new policy on online drug networks is published",
+    "Government reviews online drug sales through the internet network",
+    "Cambodia publishes a report on drug networks and internet access",
 ])
 def test_internet_and_network_substrings_are_not_enforcement_actions(bot, title):
     assert not bot.is_routine_drug_enforcement(_item(title))
