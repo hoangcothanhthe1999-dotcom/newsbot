@@ -2302,11 +2302,6 @@ def strong_match(tag, it):
     return any(keyword_match(t, text) for t in terms if t)
 
 
-def foreign_official(it):
-    """Tin do cơ quan / tổ chức nước ngoài (Mỹ, LHQ, ADB, EU, Trung Quốc…) đăng: luôn giữ, không để AI loại."""
-    return domain_in(it.get("domain", ""), FOREIGN_OFFICIAL_DOMAINS)
-
-
 HARD_WORDS = ["biên giới", "bien gioi", "cột mốc", "cửa khẩu", "thái lan", "thailand", "thai-cambodia",
               "border", "trừng phạt", "sanction", "hun manet", "hun sen", "samdech", "cpp", "quốc hội", "senate",
               "national assembly", "ព្រំដែន", "ថៃ", "ទណ្ឌកម្ម",
@@ -2324,6 +2319,11 @@ def hard_official(it):
     liên quan, khỏi hỏi AI (tiết kiệm lượt AI). Tin chính thức không có từ cốt lõi vẫn qua AI như cũ."""
     d = it.get("domain", "")
     if not (domain_in(d, OFFICIAL_DOMAINS) and not domain_in(d, ["tvk.gov.kh"])):
+        return False
+    # Nguồn chính thức nước ngoài phải qua AI; "border/sanction/senate" đơn lẻ
+    # không đủ chứng minh bài nói về Campuchia hoặc an ninh khu vực liên quan.
+    if (domain_in(d, FOREIGN_OFFICIAL_DOMAINS) or domain_in(d, THAI_GOV_SELF_DOMAINS)
+            or domain_in(d, ["mod.go.th", "rta.mi.th"])):
         return False
     text = (it["title"] + " " + it.get("desc", "")).lower()
     words = HARD_WORDS
