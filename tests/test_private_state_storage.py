@@ -1,13 +1,13 @@
-from pathlib import Path
+ROOT = __file__.replace("\\", "/").rsplit("/tests/", 1)[0]
 
 
-ROOT = Path(__file__).resolve().parents[1]
+def read_project_file(path):
+    with open(f"{ROOT}/{path}", encoding="utf-8") as file:
+        return file.read()
 
 
 def test_newsbot_workflow_reads_and_writes_state_only_in_private_repository():
-    workflow = (ROOT / ".github" / "workflows" / "newsbot.yml").read_text(
-        encoding="utf-8"
-    )
+    workflow = read_project_file(".github/workflows/newsbot.yml")
     assert "repository: hoangcothanhthe1999-dotcom/newsbot-ops" in workflow
     assert "secrets.NEWSBOT_STATE_TOKEN" in workflow
     assert "runtime-state/state.json" in workflow
@@ -18,12 +18,12 @@ def test_newsbot_workflow_reads_and_writes_state_only_in_private_repository():
 
 
 def test_runtime_state_is_ignored_by_public_repository():
-    gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
+    gitignore = read_project_file(".gitignore").splitlines()
     assert "state.json" in gitignore
     assert "state.json.tmp" in gitignore
 
 
 def test_public_readme_documents_private_state_token_requirement():
-    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    readme = read_project_file("README.md")
     assert "newsbot-ops" in readme
     assert "NEWSBOT_STATE_TOKEN" in readme
