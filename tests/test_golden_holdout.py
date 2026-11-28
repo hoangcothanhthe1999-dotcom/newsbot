@@ -1,7 +1,9 @@
-"""Test offline: tập giữ riêng golden_holdout.jsonl được đọc đúng và ngưỡng n>=5 chạy đúng."""
+"""Test offline cho tập holdout và bảo đảm thiếu golden chính không tạo CI xanh giả."""
 import json
 import os
 import sys
+
+import pytest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
@@ -24,6 +26,20 @@ def test_load_holdout_reads_file(tmp_path, monkeypatch):
     assert [r["id"] for r in eval_golden.load_holdout()] == ["h0", "h1", "h2"]
 
 
+def test_missing_main_golden_file_fails_closed(tmp_path, monkeypatch):
+    missing = str(tmp_path / "missing-golden.jsonl")
+    monkeypatch.setattr(eval_golden, "GOLDEN", missing)
+    with pytest.raises(FileNotFoundError, match="Thiếu tệp dữ liệu đánh giá bắt buộc"):
+        eval_golden.load()
+
+
+def test_malformed_jsonl_is_not_silently_ignored(tmp_path, monkeypatch):
+    p = tmp_path / "broken.jsonl"
+    p.write_text('{"id":"ok"}\nnot-json\n', encoding="utf-8")
+    with pytest.raises(json.JSONDecodeError):
+        eval_golden.load(str(p))
+
+
 def test_repo_holdout_not_overlapping_golden_set():
     ids = {r["id"] for r in eval_golden.load()}
     hold = eval_golden.load_holdout()
@@ -32,8 +48,8 @@ def test_repo_holdout_not_overlapping_golden_set():
 
 
 def test_holdout_threshold_applies_only_from_n5():
-    bad4 = eval_golden.score(_rows(4), set())  # sót 100%, n=4
-    bad5 = eval_golden.score(_rows(5), set())  # sót 100%, n=5
+    bad4 = eval_golden.score(_rows(4), set())
+    bad5 = eval_golden.score(_rows(5), set())
     assert eval_golden.holdout_fails(bad4, 1.0, 0.9) is False
     assert eval_golden.holdout_fails(bad5, 1.0, 0.9) is True
     ok5 = eval_golden.score(_rows(5), {r["id"] for r in _rows(5)})
