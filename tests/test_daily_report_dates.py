@@ -44,8 +44,10 @@ def test_main_passes_explicit_report_day_without_sending_telegram():
 
 
 def test_report_day_naive_datetime_uses_vietnam_wall_time():
-    assert daily_alert.report_day(datetime(2026, 11, 28, 16, 14)) == "2026-11-27"
-    assert daily_alert.report_day(datetime(2026, 11, 28, 16, 15)) == "2026-11-28"
+    before_cutoff = datetime(2026, 11, 28, 16, 14, tzinfo=daily_alert.VN_TZ).replace(tzinfo=None)
+    at_cutoff = datetime(2026, 11, 28, 16, 15, tzinfo=daily_alert.VN_TZ).replace(tzinfo=None)
+    assert daily_alert.report_day(before_cutoff) == "2026-11-27"
+    assert daily_alert.report_day(at_cutoff) == "2026-11-28"
 
 
 def test_list_day_run_ids_skips_non_dict_and_invalid_payload_records():
