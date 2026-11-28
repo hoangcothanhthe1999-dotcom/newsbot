@@ -2449,7 +2449,7 @@ def pre_decide(tag, it):
 
 
 FALLBACK_CAMBODIA_MARKERS = (
-    "cambodia", "campuchia", "phnom penh", "hun manet", "hun sen",
+    "cambodia", "cambodian", "campuchia", "khmer", "phnom penh", "hun manet", "hun sen",
     "កម្ពុជា", "กัมพูชา", "เขมร", "柬埔寨",
 )
 FALLBACK_TOPIC_WORDS = tuple(THEME_WORDS) + (
