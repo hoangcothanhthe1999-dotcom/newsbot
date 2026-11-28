@@ -91,3 +91,12 @@ def test_drug_bust_headline_with_net_action_is_excluded(bot):
 ])
 def test_internet_and_network_substrings_are_not_enforcement_actions(bot, title):
     assert not bot.is_routine_drug_enforcement(_item(title))
+
+
+@pytest.mark.parametrize("title", [
+    "Government proposes new regulations on drug arrests",
+    "Cambodia reviews rules governing drug raids",
+    "New guidelines on narcotics enforcement are announced",
+])
+def test_drug_law_and_procedure_articles_are_not_routine_busts(bot, title):
+    assert not bot.is_routine_drug_enforcement(_item(title))
