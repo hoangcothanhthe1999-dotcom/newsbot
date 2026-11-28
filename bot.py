@@ -2472,8 +2472,7 @@ FALLBACK_PRIORITY_WORDS = (
     "security", "sovereignty", "ceasefire", "army", "troops", "weapon",
     "procurement", "diplomacy", "foreign affairs", "foreign minister", "ambassador",
     "envoy", "delegation", "bilateral", "diplomatic", "prime minister",
-    "deputy prime minister", "foreign minister", "ambassador", "envoy", "delegation",
-    "bilateral", "diplomatic", "hun manet", "hun sen", "កងទ័ព", "ព្រំដែន",
+    "deputy prime minister", "hun manet", "hun sen", "កងទ័ព", "ព្រំដែន",
     "រដ្ឋមន្ត្រី", "หยุดยิง", "ชายแดน", "制裁", "边境",
 )
 THAI_MILITARY_FALLBACK_WORDS = (
