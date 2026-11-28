@@ -679,8 +679,8 @@ def _reader_links(url):
 def fetch_page(url, name=""):
     """Theo dõi trang chủ báo không có RSS: lấy các link bài viết, bài nào MỚI xuất hiện thì coi là tin mới."""
     if not robots_allows(url):
-        mark_fail("src:" + url, "robots.txt không cho phép theo dõi")
-        return []
+        # Báo lỗi cho fetch_source(); không trả [] vì caller sẽ hiểu nhầm là feed rỗng hợp lệ.
+        raise PermissionError("robots.txt không cho phép theo dõi")
     links, text, dom, err = None, "", domain_of(url), None
     try:
         with domain_slot(url):
@@ -879,9 +879,9 @@ def fetch_channel(username):
     conf = next((c for c in STATE["channels"] if c["u"].lower() == username.lower()), {})
     try:
         msgs = r.fetch(username, 25) if r else cast(Any, web_reader).fetch(username, 25)   # không có tài khoản phụ -> đọc qua t.me/s
-        mark_ok(key)
     except Exception as e:
         mark_fail(key, e)
+        stat_src(key, err=e)
         log.warning("Lỗi đọc kênh @%s: %s", username, e)
         return cache.get("items", [])
     items = []
@@ -895,6 +895,8 @@ def fetch_channel(username):
                       "lang": detect_lang(m["text"][:300]), "official": bool(conf.get("official", True)),
                       "photo": m["photo"]})
     _feed_cache[key] = {"items": items, "at": time.time()}
+    mark_ok(key)
+    stat_src(key, items=items)
     return items
 
 
