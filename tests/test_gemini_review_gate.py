@@ -16,7 +16,7 @@ def test_two_failed_gemini_steps_cannot_pass_from_stale_summary():
 def test_first_successful_step_is_the_only_accepted_summary():
     summary = select_summary(
         "success",
-        "Review complete\\nKET_LUAN: PASS",
+        "Review complete\nKET_LUAN: PASS",
         "skipped",
         "",
     )
@@ -28,7 +28,7 @@ def test_successful_retry_is_used_after_first_step_fails():
         "failure",
         "KET_LUAN: PASS",
         "success",
-        "Review complete\\nKET_LUAN: FAIL",
+        "Review complete\nKET_LUAN: FAIL",
     )
     assert parse_verdict(summary) == "FAIL"
 
