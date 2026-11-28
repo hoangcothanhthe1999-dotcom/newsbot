@@ -1,7 +1,6 @@
 """Fail-closed verdict selection for the Gemini PR review workflow."""
 import os
 import re
-from pathlib import Path
 
 
 _VERDICT_RE = re.compile(r"^KET_LUAN: (PASS|FAIL|INCONCLUSIVE)\s*$", re.MULTILINE)
@@ -32,22 +31,22 @@ def main() -> None:
     )
     verdict = parse_verdict(summary)
 
-    result_dir = Path(".gemini-review")
-    result_dir.mkdir(parents=True, exist_ok=True)
+    result_dir = ".gemini-review"
+    os.makedirs(result_dir, exist_ok=True)
+    result_path = os.path.join(result_dir, "result.md")
     if summary.strip():
-        (result_dir / "result.md").write_text(summary, encoding="utf-8")
+        with open(result_path, "w", encoding="utf-8") as result_file:
+            result_file.write(summary)
     else:
-        (result_dir / "result.md").write_text(
-            "Gemini không trả kết quả hợp lệ từ một bước chạy thành công. "
-            "Coi là INCONCLUSIVE: không merge.\n",
-            encoding="utf-8",
-        )
+        with open(result_path, "w", encoding="utf-8") as result_file:
+            result_file.write(
+                "Gemini không trả kết quả hợp lệ từ một bước chạy thành công. "
+                "Coi là INCONCLUSIVE: không merge.\n"
+            )
 
     errors = os.environ.get("GEMINI_ERRORS", "")
-    (result_dir / "err.txt").write_text(
-        f"bước Gemini: {first_outcome}/{second_outcome}\n{errors[:2000]}",
-        encoding="utf-8",
-    )
+    with open(os.path.join(result_dir, "err.txt"), "w", encoding="utf-8") as error_file:
+        error_file.write(f"bước Gemini: {first_outcome}/{second_outcome}\n{errors[:2000]}")
 
     output_path = os.environ.get("GITHUB_OUTPUT")
     if not output_path:
