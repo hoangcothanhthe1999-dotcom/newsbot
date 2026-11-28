@@ -125,3 +125,12 @@ def test_unknown_official_channel_does_not_pass_only_by_official_flag(bot):
         official=True,
     )
     assert bot.fallback_ok(story) is False
+
+
+def test_cambodian_mainstream_border_report_is_kept(bot):
+    story = item(
+        "Cambodian army reports troop deployment near border",
+        "www.khmertimeskh.com",
+        source="Khmer Times",
+    )
+    assert bot.fallback_ok(story) is True
