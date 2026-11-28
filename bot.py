@@ -2424,7 +2424,7 @@ def note_dropped(reason, it):
 def drop_irrelevant(entries):
     """entries = [(item, tags)]. Bỏ tag mà AI cho là lạc đề; bỏ hẳn bài nếu hết tag."""
     pairs = [(it, tag_criterion(t)) for it, tags in entries for t in tags
-             if tag_criterion(t) and not strong_match(t, it) and not foreign_official(it) and not hard_official(it)
+             if tag_criterion(t) and not strong_match(t, it) and not hard_official(it)
              and pre_decide(t, it) is None]
     if not pairs:
         return entries, []
@@ -2437,8 +2437,6 @@ def drop_irrelevant(entries):
             return True, "no_criterion"
         if strong_match(t, it):
             return True, "strong_keyword_match"
-        if foreign_official(it):
-            return True, "foreign_official_bypass"
         if hard_official(it):
             return True, "hard_word_official_bypass"
         pd = pre_decide(t, it)
