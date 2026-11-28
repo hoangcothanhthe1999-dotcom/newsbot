@@ -150,3 +150,35 @@ def test_thai_military_exercise_and_border_deployment_are_kept(bot):
         "www.mod.go.th",
     )
     assert bot.fallback_ok(story) is True
+
+
+def test_foreign_official_small_cambodia_trade_workshop_is_dropped(bot):
+    story = item(
+        "U.S. Embassy hosts a small workshop on Cambodia trade promotion",
+        "kh.usembassy.gov",
+    )
+    assert bot.fallback_ok(story) is False
+
+
+def test_cambodian_foreign_minister_bilateral_border_meeting_is_kept(bot):
+    story = item(
+        "Foreign Minister meets ASEAN delegation for Cambodia-Thailand border talks",
+        "mfaic.gov.kh",
+    )
+    assert bot.fallback_ok(story) is True
+
+
+def test_cambodian_official_minister_at_cultural_exhibition_is_dropped(bot):
+    story = item(
+        "Minister attends cultural exhibition in Phnom Penh",
+        "pressocm.gov.kh",
+    )
+    assert bot.fallback_ok(story) is False
+
+
+def test_thai_military_myanmar_border_story_is_dropped_without_cambodia_link(bot):
+    story = item(
+        "Royal Thai Army secures Myanmar border after new clashes",
+        "www.mod.go.th",
+    )
+    assert bot.fallback_ok(story) is False
