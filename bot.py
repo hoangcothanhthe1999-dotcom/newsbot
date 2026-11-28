@@ -2385,7 +2385,7 @@ def is_greeting_only(it):
 
 
 DRUG_ENFORCEMENT_WORDS = (
-    "drug bust", "drug seizure", "drug raid", "drug arrest", "seizes", "seized",
+    "drug bust", "drug seizure", "drug raid", "drug arrest",
     "ketamine", "methamphetamine", "narcotics", "cocaine", "heroin",
     "គ្រឿងញៀន", "ថ្នាំញៀន", "ยาเสพติด", "ยาไอซ์", "毒品",
 )
