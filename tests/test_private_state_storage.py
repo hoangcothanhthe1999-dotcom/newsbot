@@ -36,3 +36,12 @@ def test_state_save_is_skipped_if_private_checkout_fails():
     workflow = (ROOT / ".github" / "workflows" / "newsbot.yml").read_text(encoding="utf-8")
     assert "id: private_state_checkout" in workflow
     assert "steps.private_state_checkout.outcome == 'success'" in workflow
+
+
+def test_private_state_workflows_fail_clearly_when_secret_is_missing():
+    production = (ROOT / ".github" / "workflows" / "newsbot.yml").read_text(encoding="utf-8")
+    access_check = (
+        ROOT / ".github" / "workflows" / "private-state-access-check.yml"
+    ).read_text(encoding="utf-8")
+    assert "Thiếu Actions secret NEWSBOT_STATE_TOKEN" in production
+    assert "Configure Actions secret NEWSBOT_STATE_TOKEN" in access_check
