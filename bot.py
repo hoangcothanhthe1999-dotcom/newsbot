@@ -2405,9 +2405,14 @@ def is_greeting_only(it):
 
 
 DRUG_ACTION_WORDS = (
-    "drug bust", "drug seizure", "drug raid", "drug arrest",
-    "seize", "seizes", "seized", "confiscate", "confiscated",
-    "arrest", "arrested", "detain", "detained", "raided",
+    # Require an action verb; noun phrases such as "drug bust policy" are not enforcement events.
+    "seize", "seizes", "seized", "seizing",
+    "confiscate", "confiscates", "confiscated", "confiscating",
+    "arrest", "arrests", "arrested", "arresting",
+    "detain", "detains", "detained", "detaining",
+    "raid", "raids", "raided", "raiding",
+    "intercept", "intercepts", "intercepted", "intercepting",
+    "nab", "nabs", "nabbed", "net", "nets", "netted",
     "បង្ក្រាប", "ចាប់ខ្លួន", "រឹបអូស", "ឃាត់ខ្លួន",
     "จับกุม", "ยึด", "ตรวจยึด", "ปราบปราม",
     "查获", "缴获", "抓获", "逮捕",
@@ -2417,6 +2422,13 @@ DRUG_SUBSTANCE_WORDS = (
     "cocaine", "heroin", "គ្រឿងញៀន", "ថ្នាំញៀន",
     "ยาเสพติด", "ยาไอซ์", "毒品",
 )
+def _drug_term_present(text, term):
+    """Use word boundaries for English terms; retain substring matching for Khmer/Thai/Chinese."""
+    if term.isascii():
+        return re.search(rf"(?<![a-z0-9]){re.escape(term)}(?![a-z0-9])", text) is not None
+    return term in text
+
+
 DRUG_CASE_EXCEPTIONS = (
     "transnational", "cross-border", "cross border", "international drug network",
     "transnational network", "cross-border network", "drug syndicate", "drug cartel",
@@ -2436,9 +2448,9 @@ def is_routine_drug_enforcement(it):
     # Require both an enforcement action and an explicit drug/substance marker.
     # This prevents drug-policy or treatment articles from being dropped merely
     # because they mention ketamine, narcotics, or another substance.
-    if not any(w in text for w in DRUG_ACTION_WORDS):
+    if not any(_drug_term_present(text, w) for w in DRUG_ACTION_WORDS):
         return False
-    if not any(w in text for w in DRUG_SUBSTANCE_WORDS):
+    if not any(_drug_term_present(text, w) for w in DRUG_SUBSTANCE_WORDS):
         return False
     return not any(w in text for w in DRUG_CASE_EXCEPTIONS)
 
