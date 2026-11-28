@@ -2404,12 +2404,40 @@ def is_greeting_only(it):
     return any(w in t for w in GREETING_TITLE_WORDS) and not any(w in t for w in GREETING_SAFE_WORDS)
 
 
+DRUG_ENFORCEMENT_WORDS = (
+    "drug bust", "drug seizure", "drug raid", "drug arrest",
+    "ketamine", "methamphetamine", "narcotics", "cocaine", "heroin",
+    "គ្រឿងញៀន", "ថ្នាំញៀន", "ยาเสพติด", "ยาไอซ์", "毒品",
+)
+DRUG_CASE_EXCEPTIONS = (
+    "transnational", "cross-border", "cross border", "international drug network",
+    "transnational network", "cross-border network", "drug syndicate", "drug cartel",
+    "organized crime network", "organized criminal network", "cambodia-thailand",
+    "cambodia-vietnam", "border security", "border area", "border crossing",
+    "protection racket", "official protection", "high-level corruption",
+    "national campaign", "nationwide campaign", "national strategy", "national policy",
+    "ឆ្លងដែន", "ព្រំដែន", "បណ្តាញឧក្រិដ្ឋកម្ម", "ពុករលួយ",
+    "ข้ามชาติ", "ชายแดน", "เครือข่ายข้ามชาติ", "ทุจริต",
+    "跨国", "跨境", "边境", "腐败",
+)
+
+
+def is_routine_drug_enforcement(it):
+    """Loại tin bắt giữ/thu giữ ma túy theo vụ việc; không suy diễn từ số lượng hay chức vụ."""
+    text = _cambo_text(it)
+    if not any(w in text for w in DRUG_ENFORCEMENT_WORDS):
+        return False
+    return not any(w in text for w in DRUG_CASE_EXCEPTIONS)
+
+
 def pre_decide(tag, it):
     """Chủ đề Campuchia: True = chắc chắn giữ, False = chắc chắn bỏ (tin thể thao/giải trí rõ ràng), None = hỏi AI.
     Chỉ áp dụng cho bài có nhắc Campuchia để không giữ nhầm tin về nước khác."""
     if tag != CAMBO_TAG:
         return None
     if is_greeting_only(it):
+        return False
+    if is_routine_drug_enforcement(it):
         return False
     text = _cambo_text(it)
     has_core = any(w in text for w in CORE_WORDS)
@@ -2422,6 +2450,8 @@ def pre_decide(tag, it):
 
 def fallback_ok(it):
     """AI hết lượt: nguồn chuyên Campuchia (tầng 1-2) thì giữ; nguồn khác giữ khi có chữ thuộc 4 chủ đề."""
+    if is_routine_drug_enforcement(it):
+        return False
     if item_tier(it) <= 1:
         return True
     text = _cambo_text(it)
