@@ -22,7 +22,6 @@ EXTRA_WHY = {
     "duplicate_title": "trùng tiêu đề với tin đã có (không gửi lại)",
     "no_criterion": "tag không cần AI kiểm (giữ)",
     "strong_keyword_match": "khớp đúng cụm từ khóa (giữ, khỏi hỏi AI)",
-    "foreign_official_bypass": "nguồn chính thức nước ngoài (luôn giữ)",
     "hard_word_official_bypass": "nguồn chính thức có từ cốt lõi (giữ)",
     "ai_relevant": "AI cho là liên quan (giữ)",
     "ai_unavailable_strict_keep": "AI không chấm được, lọc chặt dự phòng GIỮ",
