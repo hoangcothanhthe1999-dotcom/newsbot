@@ -1,4 +1,6 @@
 """Tests for fail-closed Gemini review verdict selection."""
+from pathlib import Path
+
 from scripts.gemini_review_gate import parse_verdict, select_summary
 
 
@@ -36,3 +38,16 @@ def test_successful_retry_is_used_after_first_step_fails():
 def test_successful_step_without_valid_final_marker_is_inconclusive():
     summary = select_summary("success", "No verdict was returned", "skipped", "")
     assert parse_verdict(summary) == "INCONCLUSIVE"
+
+
+def test_review_workflow_covers_its_own_config_and_policy_changes():
+    workflow = (
+        Path(__file__).resolve().parents[1]
+        / ".github"
+        / "workflows"
+        / "gemini-review.yml"
+    ).read_text(encoding="utf-8")
+    assert "'GEMINI.md'" in workflow
+    assert "'.github/workflows/**'" in workflow
+    assert "'**/*.yml'" in workflow
+    assert "'**/*.yaml'" in workflow
