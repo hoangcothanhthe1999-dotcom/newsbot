@@ -189,11 +189,21 @@ def summarize_day(day_runs):
 def list_day_run_ids(day):
     """Run đã xong của ngày `day` (YYYY-MM-DD, giờ VN) theo created_at UTC."""
     raw = subprocess.run(["gh", "api", f"repos/{REPO}/actions/runs?per_page=100&status=completed"], capture_output=True, check=True).stdout
+    payload = json.loads(raw)
+    runs = payload.get("workflow_runs", []) if isinstance(payload, dict) else []
+    if not isinstance(runs, list):
+        return []
     ids = []
-    for r in json.loads(raw).get("workflow_runs", []):
-        created = datetime.strptime(r["created_at"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc) + timedelta(hours=7)
-        if created.strftime("%Y-%m-%d") == day:
-            ids.append(r["id"])
+    for r in runs:
+        if not isinstance(r, dict) or r.get("name") != "NewsBot":
+            continue
+        try:
+            created = datetime.strptime(r["created_at"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc) + timedelta(hours=7)
+        except (KeyError, TypeError, ValueError):
+            continue
+        run_id = r.get("id")
+        if created.strftime("%Y-%m-%d") == day and isinstance(run_id, int):
+            ids.append(run_id)
     return sorted(ids)
 
 

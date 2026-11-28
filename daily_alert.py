@@ -13,8 +13,21 @@ import subprocess
 import sys
 import urllib.parse
 import urllib.request
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 MAX_CHARS = 900
+VN_TZ = ZoneInfo("Asia/Ho_Chi_Minh")
+
+
+def report_day(now: datetime | None = None) -> str:
+    """Report date in Vietnam time; naive datetimes are interpreted as VN wall time."""
+    if now is None:
+        now = datetime.now(timezone.utc)
+    local_now = now.replace(tzinfo=VN_TZ) if now.tzinfo is None else now.astimezone(VN_TZ)
+    if (local_now.hour, local_now.minute) < (16, 15):
+        local_now -= timedelta(days=1)
+    return local_now.date().isoformat()
 
 
 def build_alert(report: str) -> str | None:
@@ -32,7 +45,8 @@ def build_alert(report: str) -> str | None:
 
 
 def main() -> int:
-    out = subprocess.run([sys.executable, "check_run.py", "--day"], capture_output=True, text=True, timeout=600, check=False)
+    day = report_day()
+    out = subprocess.run([sys.executable, "check_run.py", "--day", day], capture_output=True, text=True, timeout=600, check=False)
     report = out.stdout.strip()
     print(report or "(báo cáo trống)")
     if out.returncode != 0:
