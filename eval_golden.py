@@ -20,9 +20,12 @@ HOLDOUT_MIN_N = 5  # n dưới mức này chỉ in, không làm đỏ
 
 
 def load(path=None):
+    """Đọc JSONL; bộ chuẩn chính phải tồn tại để tránh CI xanh giả khi mất dữ liệu."""
     path = path or GOLDEN
     if not os.path.exists(path):
-        return []
+        if path == HOLDOUT:
+            return []
+        raise FileNotFoundError(f"Thiếu tệp dữ liệu đánh giá bắt buộc: {path}")
     with open(path, encoding="utf-8") as f:
         return [json.loads(ln) for ln in f if ln.strip()]
 
