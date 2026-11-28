@@ -2229,6 +2229,7 @@ def ai_relevant(pairs):
                 "y tế / giáo dục / văn hoá / du lịch / môi trường / quảng bá doanh nghiệp / hội thảo nhỏ / bình luận chung chung / "
                 "tội phạm địa phương / thể thao / từ thiện / tôn giáo, không phải tin cấp quốc gia thuộc các mảng CẦN => KHÔNG, "
                 "kể cả khi không chắc. Chỉ trả CÓ khi bài RÕ RÀNG thuộc các mảng CẦN.\n"
+                "- Riêng tin bắt giữ / đột kích / thu giữ ma túy theo từng vụ việc (kể cả số lượng lớn, hoặc có lãnh đạo / cấp cao công an trực tiếp chỉ đạo hay công bố thành tích), nếu nội dung chỉ là hoạt động nghiệp vụ xử lý vụ án địa phương => KHÔNG. Chỉ giữ khi trọng tâm thực chất là đường dây tội phạm xuyên quốc gia có liên hệ Campuchia hoặc biên giới, tham nhũng / bảo kê cấp cao, an ninh quốc gia, hoặc chính sách / chiến dịch cấp quốc gia có tác động lớn; không suy diễn chỉ từ số lượng ma túy hay chức vụ người phát biểu.\\n"
                 "- Dòng có «Nguồn: cơ quan chính thức»: thông báo hành chính / nghiệp vụ nội ngành (thuế, hải quan, đào tạo, tập huấn, "
                 "dịch vụ công, mục menu / trang chủ, lời chúc lễ tết, sinh nhật, chúc mừng cá nhân, sự kiện văn hoá / giao lưu nhỏ) => KHÔNG, trừ khi gắn với an ninh, quốc phòng, biên giới, "
                 "ngoại giao hoặc chính sách kinh tế cấp quốc gia. "
