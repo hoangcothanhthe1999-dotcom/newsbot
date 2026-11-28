@@ -16,7 +16,7 @@ def test_kampucheathmey_en_va_thestar():
 
 
 def test_truy_van_thai_chu_quyen():
-    assert "อธิปไตย (site:khaosod.co.th OR site:thairath.co.th OR site:matichon.co.th)" in _all("gnews_th")
+    assert "อธิปไตย ชายแดน (site:khaosod.co.th OR site:thairath.co.th OR site:matichon.co.th)" in _all("gnews_th")
 
 
 def test_khong_trung_truy_van():
