@@ -36,7 +36,7 @@ jobs:
       verdict: ${{ steps.verdict.outputs.verdict }}
       sha: ${{ github.event.pull_request.head.sha }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
@@ -110,7 +110,7 @@ jobs:
           GEMINI_ERRORS: ${{ steps.gemini2.outputs.errors || steps.gemini.outputs.errors }}
         run: python scripts/gemini_review_gate.py
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: gemini-result-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
@@ -133,7 +133,7 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         continue-on-error: true
         with:
           name: gemini-result-${{ github.run_id }}-${{ github.run_attempt }}
