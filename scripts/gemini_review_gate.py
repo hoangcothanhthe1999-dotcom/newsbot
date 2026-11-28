@@ -2,8 +2,6 @@
 import os
 
 
-
-
 def select_summary(first_outcome: str, first_summary: str, second_outcome: str, second_summary: str) -> str:
     """Only accept output from an action step that completed successfully."""
     if first_outcome == "success":
