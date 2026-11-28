@@ -182,3 +182,19 @@ def test_thai_military_myanmar_border_story_is_dropped_without_cambodia_link(bot
         "www.mod.go.th",
     )
     assert bot.fallback_ok(story) is False
+
+
+def test_thai_military_office_supply_procurement_is_dropped(bot):
+    story = item(
+        "Royal Thai Army announces procurement of new office chairs",
+        "www.mod.go.th",
+    )
+    assert bot.fallback_ok(story) is False
+
+
+def test_thai_military_fighter_procurement_is_kept(bot):
+    story = item(
+        "Royal Thai Army plans to procure F-16 fighter aircraft",
+        "www.mod.go.th",
+    )
+    assert bot.fallback_ok(story) is True
