@@ -27,3 +27,9 @@ def test_public_readme_documents_private_state_token_requirement():
     readme = read_project_file("README.md")
     assert "newsbot-ops" in readme
     assert "NEWSBOT_STATE_TOKEN" in readme
+
+
+def test_state_save_is_skipped_if_private_checkout_fails():
+    workflow = read_project_file(".github/workflows/newsbot.yml")
+    assert "id: private_state_checkout" in workflow
+    assert "steps.private_state_checkout.outcome == 'success'" in workflow
