@@ -26,6 +26,7 @@ jobs:
           cache: pip
 
       - name: Checkout kho state riêng tư
+        id: private_state_checkout
         uses: actions/checkout@v7
         with:
           repository: hoangcothanhthe1999-dotcom/newsbot-ops
@@ -96,7 +97,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Lưu trạng thái vào kho riêng tư
-        if: always()
+        if: always() && steps.private_state_checkout.outcome == 'success'
         shell: bash
         run: |
           set -euo pipefail
