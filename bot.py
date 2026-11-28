@@ -2476,10 +2476,12 @@ FALLBACK_PRIORITY_WORDS = (
     "រដ្ឋមន្ត្រី", "หยุดยิง", "ชายแดน", "制裁", "边境",
 )
 THAI_MILITARY_FALLBACK_WORDS = (
-    "defense procurement", "defence procurement", "weapon", "weapons", "arms",
-    "tank", "artillery", "fighter", "aircraft", "drone", "missile", "troop",
-    "troops", "deployment", "deploy", "border", "ceasefire",
-    "military exercise", "procurement", "warship", "submarine",
+    "defense procurement", "defence procurement", "defense equipment", "defence equipment",
+    "military equipment", "weapon", "weapons", "arms", "tank", "artillery",
+    "fighter", "aircraft", "f-16", "f16", "gripen", "jas 39", "drone", "missile",
+    "radar", "air defense", "air defence", "howitzer", "armored vehicle", "armoured vehicle",
+    "troop", "troops", "deployment", "deploy", "border", "ceasefire",
+    "military exercise", "warship", "submarine",
     "อาวุธ", "รถถัง", "ชายแดน", "หยุดยิง", "ซ้อมรบ", "ฝึกซ้อม",
 )
 
