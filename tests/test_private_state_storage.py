@@ -33,3 +33,10 @@ def test_state_save_is_skipped_if_private_checkout_fails():
     workflow = read_project_file(".github/workflows/newsbot.yml")
     assert "id: private_state_checkout" in workflow
     assert "steps.private_state_checkout.outcome == 'success'" in workflow
+
+
+def test_private_checkout_credentials_are_scoped_to_state_repo():
+    workflow = read_project_file(".github/workflows/newsbot.yml")
+    assert "persist-credentials: false" in workflow
+    assert "path: .newsbot-state\\n          persist-credentials: true" in workflow
+    assert "STATE_FILE: ${{ github.workspace }}/.newsbot-state/runtime-state/state.json" in workflow
