@@ -20,6 +20,16 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Check private-state credential is configured
+        env:
+          NEWSBOT_STATE_TOKEN: ${{ secrets.NEWSBOT_STATE_TOKEN }}
+        shell: bash
+        run: |
+          if [ -z "$NEWSBOT_STATE_TOKEN" ]; then
+            echo "::error::Configure Actions secret NEWSBOT_STATE_TOKEN with access to newsbot-ops."
+            exit 1
+          fi
+
       - name: Checkout private runtime state (read-only test)
         uses: actions/checkout@v7
         with:
