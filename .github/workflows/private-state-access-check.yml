@@ -16,12 +16,12 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout public bot source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       - name: Checkout private runtime state (read-only test)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: hoangcothanhthe1999-dotcom/newsbot-ops
           ref: main
