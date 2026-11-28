@@ -99,16 +99,12 @@ jobs:
       - name: Rút kết luận
         id: verdict
         env:
-          SUMMARY: ${{ steps.gemini2.outputs.summary || steps.gemini.outputs.summary }}
-          ERRORS: ${{ steps.gemini2.outputs.errors || steps.gemini.outputs.errors }}
-          OUTCOME: ${{ steps.gemini.outcome }}/${{ steps.gemini2.outcome }}
-        run: |
-          printf '%s\n' "$SUMMARY" > .gemini-review/result.md
-          { echo "bước Gemini: ${OUTCOME}"; printf '%s\n' "$ERRORS" | head -c 2000; } > .gemini-review/err.txt
-          v=$(grep -E '^KET_LUAN: (PASS|FAIL|INCONCLUSIVE)[[:space:]]*$' .gemini-review/result.md | tail -1 | sed 's/^KET_LUAN: //' | tr -d '[:space:]' || true)
-          [ -z "$v" ] && v=INCONCLUSIVE
-          echo "verdict=$v" >> "$GITHUB_OUTPUT"
-          echo "Kết luận: $v"
+          GEMINI1_OUTCOME: ${{ steps.gemini.outcome }}
+          GEMINI1_SUMMARY: ${{ steps.gemini.outputs.summary }}
+          GEMINI2_OUTCOME: ${{ steps.gemini2.outcome }}
+          GEMINI2_SUMMARY: ${{ steps.gemini2.outputs.summary }}
+          GEMINI_ERRORS: ${{ steps.gemini2.outputs.errors || steps.gemini.outputs.errors }}
+        run: python scripts/gemini_review_gate.py
 
       - uses: actions/upload-artifact@v4
         with:
