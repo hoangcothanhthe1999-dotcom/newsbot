@@ -1009,11 +1009,13 @@ def fetch_proxy(url):
     now = time.time()
     items = []
     data = [d for d in data if isinstance(d, dict)]   # phần tử lạ trong JSON web app: bỏ qua, không làm hỏng cả nguồn
+    src_errors = {}
+    src_success = set()
     with state_lock:
         for d in data:
             src = str(d.get("source", ""))
             if d.get("error") or not d.get("link"):
-                stat_src("px:" + src, err=d.get("error") or "không có bài")
+                src_errors[src] = str(d.get("error") or "không có bài")[:100]
                 continue
             link = d["link"]
             seen = STATE["pg"].setdefault("px:" + src, {})
@@ -1029,7 +1031,9 @@ def fetch_proxy(url):
             dom = domain_of(link)
             title = strip_html(str(d.get("title", ""))).strip()
             if not title:
+                src_errors[src] = "proxy trả bài thiếu tiêu đề"
                 continue
+            src_success.add(src)
             need = PX_NEED.get(src)
             if need and not any(w in title.lower() for w in need):
                 continue   # nguồn đọc rộng (ADB, ASEAN, Quốc phòng Thái): chỉ giữ bài có nhắc Campuchia/biên giới
@@ -1040,7 +1044,11 @@ def fetch_proxy(url):
             if seen and len(seen) > 800:
                 for k in sorted(seen, key=seen.get)[:len(seen) - 800]:
                     seen.pop(k)
-    for src in {i["source"] for i in items}:
+    for src, err in src_errors.items():
+        mark_fail("px:" + src, err)
+        stat_src("px:" + src, err=err)
+    for src in src_success - src_errors.keys():
+        mark_ok("px:" + src)
         stat_src("px:" + src, items=[i for i in items if i["source"] == src])
     _feed_cache[url] = {"items": items, "at": now}
     return items
