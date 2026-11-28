@@ -43,6 +43,14 @@ def test_cross_border_or_national_campaign_drug_news_is_not_auto_excluded(bot, t
     assert not bot.is_routine_drug_enforcement(_item(title))
 
 
+@pytest.mark.parametrize("title", [
+    "Customs police seizes illegal weapons and smuggled electronics at border checkpoint",
+    "Forest rangers seized illegal timber and wildlife products in protected zone",
+])
+def test_non_drug_seizures_are_not_classified_as_drug_enforcement(bot, title):
+    assert not bot.is_routine_drug_enforcement(_item(title))
+
+
 def test_routine_drug_bust_is_excluded_even_when_ai_fallback_would_keep_tier_one(bot, monkeypatch):
     item = _item("Senior police chief seizes 874kg of ketamine in largest drug bust")
     monkeypatch.setattr(bot, "item_tier", lambda _item: 1)
