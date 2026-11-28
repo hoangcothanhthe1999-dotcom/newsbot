@@ -41,7 +41,7 @@ TOPICS = {
         "gnews_th": ["กัมพูชา", "ชายแดนไทยกัมพูชา", "ฮุน มาเนต", "ฮุน เซน", "ทหารกัมพูชา", "หยุดยิง กัมพูชา",
                      "GBC RBC JBC กัมพูชา", "กองทัพภาคที่ 2 กัมพูชา", "ช่องบก ด่านชายแดน", "ทุ่นระเบิด ชายแดน", "โผทหาร", "แต่งตั้ง ผบ.ทบ.", "โยกย้ายนายพล",
                      "กัมพูชา (site:thairath.co.th OR site:matichon.co.th OR site:khaosod.co.th OR site:thaipbs.or.th OR site:dailynews.co.th OR site:bangkokbiznews.com)",
-                     "อธิปไตย ชายแดน (site:khaosod.co.th OR site:thairath.co.th OR site:matichon.co.th)",
+                     "อธิปไตย ชายแดน กัมพูชา (site:khaosod.co.th OR site:thairath.co.th OR site:matichon.co.th)",
                      "กัมพูชา (site:posttoday.com OR site:prachachat.net OR site:thansettakij.com OR site:tnnthailand.com OR site:mgronline.com OR site:komchadluek.net)"],
         "gnews_zh": ["柬埔寨", "洪玛奈", "洪森", "柬泰边境", "柬埔寨 经济",
                      "柬埔寨 (site:xinhuanet.com OR site:news.cn OR site:globaltimes.cn OR site:zaobao.com.sg OR site:cctv.com)", "柬埔寨 (site:people.com.cn OR site:chinadaily.com.cn OR site:cgtn.com OR site:thepaper.cn OR site:guancha.cn OR site:caixin.com)"],
