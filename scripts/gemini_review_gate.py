@@ -1,6 +1,4 @@
 """Fail-closed verdict selection for the Gemini PR review workflow."""
-from __future__ import annotations
-
 import os
 import re
 from pathlib import Path
