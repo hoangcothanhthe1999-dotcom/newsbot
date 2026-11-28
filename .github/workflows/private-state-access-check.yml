@@ -1,0 +1,68 @@
+name: Private state access check
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/newsbot.yml"
+      - ".github/workflows/private-state-access-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-private-state-access:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout public bot source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Check private-state credential is configured
+        env:
+          NEWSBOT_STATE_TOKEN: ${{ secrets.NEWSBOT_STATE_TOKEN }}
+        shell: bash
+        run: |
+          if [ -z "$NEWSBOT_STATE_TOKEN" ]; then
+            echo "::error::Configure Actions secret NEWSBOT_STATE_TOKEN with access to newsbot-ops."
+            exit 1
+          fi
+
+      - name: Checkout private runtime state (read-only test)
+        uses: actions/checkout@v7
+        with:
+          repository: hoangcothanhthe1999-dotcom/newsbot-ops
+          ref: main
+          token: ${{ secrets.NEWSBOT_STATE_TOKEN }}
+          path: .newsbot-state
+          persist-credentials: false
+
+      - name: Validate private state without exposing data
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s .newsbot-state/runtime-state/state.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path(".newsbot-state/runtime-state/state.json")
+          with path.open(encoding="utf-8") as stream:
+              state = json.load(stream)
+          required_types = {
+              "offset": (int, float),
+              "owner": (str, int, type(None)),
+              "chats": dict,
+              "items": dict,
+              "meta": dict,
+              "channels": list,
+          }
+          if not isinstance(state, dict):
+              raise SystemExit("Private state must be a JSON object.")
+          for key, expected in required_types.items():
+              if key not in state or not isinstance(state[key], expected):
+                  raise SystemExit(f"Private state field has invalid structure: {key}")
+          print("Private state access and structural validation: PASS.")
+          PY

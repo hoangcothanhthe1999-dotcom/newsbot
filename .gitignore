@@ -5,3 +5,6 @@ __pycache__/
 newsbot.log*
 3x_reader.session*
 decisions.jsonl
+
+state.json
+state.json.tmp
