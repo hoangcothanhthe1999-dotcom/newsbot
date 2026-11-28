@@ -11,6 +11,10 @@ on:
     paths:
       - '**/*.py'
       - 'requirements.txt'
+      - 'GEMINI.md'
+      - '.github/workflows/**'
+      - '**/*.yml'
+      - '**/*.yaml'
 
 permissions:
   contents: read
