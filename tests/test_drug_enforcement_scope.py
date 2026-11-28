@@ -55,3 +55,17 @@ def test_routine_drug_bust_is_excluded_even_when_ai_fallback_would_keep_tier_one
     item = _item("Senior police chief seizes 874kg of ketamine in largest drug bust")
     monkeypatch.setattr(bot, "item_tier", lambda _item: 1)
     assert bot.fallback_ok(item) is False
+
+
+@pytest.mark.parametrize("title", [
+    "Cambodia announces new policy to regulate ketamine use",
+    "Government expands methamphetamine addiction treatment services",
+])
+def test_drug_policy_and_treatment_mentions_are_not_routine_busts(bot, title):
+    assert not bot.is_routine_drug_enforcement(_item(title))
+
+
+def test_explicit_drug_seizure_requires_action_and_substance(bot):
+    assert bot.is_routine_drug_enforcement(
+        _item("Police seized 40kg of methamphetamine in provincial raid")
+    )
