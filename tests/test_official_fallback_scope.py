@@ -134,3 +134,19 @@ def test_cambodian_mainstream_border_report_is_kept(bot):
         source="Khmer Times",
     )
     assert bot.fallback_ok(story) is True
+
+
+def test_thai_military_routine_staff_training_is_dropped(bot):
+    story = item(
+        "Royal Thai Army holds annual staff training workshop",
+        "www.mod.go.th",
+    )
+    assert bot.fallback_ok(story) is False
+
+
+def test_thai_military_exercise_and_border_deployment_are_kept(bot):
+    story = item(
+        "Royal Thai Army conducts military exercise near the border",
+        "www.mod.go.th",
+    )
+    assert bot.fallback_ok(story) is True
