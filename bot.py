@@ -2461,16 +2461,100 @@ def pre_decide(tag, it):
     return None
 
 
+FALLBACK_CAMBODIA_MARKERS = (
+    "cambodia", "cambodian", "campuchia", "khmer", "phnom penh", "hun manet", "hun sen",
+    "កម្ពុជា", "กัมพูชา", "เขมร", "柬埔寨",
+)
+FALLBACK_TOPIC_WORDS = tuple(THEME_WORDS) + (
+    "policy", "law", "legislation", "regulation", "prakas", "sub-decree",
+    "royal decree", "national strategy", "national plan", "foreign affairs",
+    "international relations", "sovereignty", "territorial integrity",
+)
+FALLBACK_ROUTINE_ADMIN_WORDS = (
+    "training", "workshop", "seminar", "capacity building", "capacity-building",
+    "staff development", "orientation", "tourism", "exhibition", "festival",
+    "cultural", "culture", "school", "student", "sports", "charity", "donation",
+    "birthday", "celebration", "goodwill", "courtesy call",
+)
+FALLBACK_PRIORITY_WORDS = (
+    "new policy", "policy change", "new law", "draft law", "legislation",
+    "new regulation", "prakas", "sub-decree", "royal decree", "national strategy",
+    "national plan", "national budget", "budget", "tax rate", "tariff",
+    "customs duty", "trade agreement", "free trade", "investment law",
+    "foreign investment", "sanction", "border", "military", "defense", "defence",
+    "security", "sovereignty", "ceasefire", "army", "troops", "weapon",
+    "procurement", "diplomacy", "foreign affairs", "foreign minister", "ambassador",
+    "envoy", "delegation", "bilateral", "diplomatic", "prime minister",
+    "deputy prime minister", "hun manet", "hun sen", "កងទ័ព", "ព្រំដែន",
+    "រដ្ឋមន្ត្រី", "หยุดยิง", "ชายแดน", "制裁", "边境",
+)
+THAI_MILITARY_FALLBACK_WORDS = (
+    "defense procurement", "defence procurement", "defense equipment", "defence equipment",
+    "military equipment", "weapon", "weapons", "arms", "tank", "artillery",
+    "fighter", "aircraft", "f-16", "f16", "gripen", "jas 39", "drone", "missile",
+    "radar", "air defense", "air defence", "howitzer", "armored vehicle", "armoured vehicle",
+    "troop", "troops", "deployment", "deploy", "border", "ceasefire",
+    "military exercise", "warship", "submarine",
+    "อาวุธ", "รถถัง", "ชายแดน", "หยุดยิง", "ซ้อมรบ", "ฝึกซ้อม",
+)
+
+
 def fallback_ok(it):
-    """AI hết lượt: nguồn chuyên Campuchia (tầng 1-2) thì giữ; nguồn khác giữ khi có chữ thuộc 4 chủ đề."""
+    """AI hết lượt: chỉ giữ bài có tín hiệu chủ đề rõ; không coi nguồn chính thức là bằng chứng đủ về liên quan."""
     if is_routine_drug_enforcement(it):
         return False
-    if item_tier(it) <= 1:
-        return True
+
     text = _cambo_text(it)
-    if any(w in it["title"].lower() for w in JUNK_TITLE_WORDS):
+    title = str(it.get("title", "")).lower()
+    domain = str(it.get("domain", "")).lower()
+    source = str(it.get("source", "")).lower()
+    has_cambodia = any(w in text for w in FALLBACK_CAMBODIA_MARKERS)
+    has_topic = any(w in text for w in FALLBACK_TOPIC_WORDS)
+    has_priority = any(w in text for w in FALLBACK_PRIORITY_WORDS)
+    routine_admin = any(w in text for w in FALLBACK_ROUTINE_ADMIN_WORDS)
+
+    # Tin của quân đội Thái về vũ khí, lực lượng, triển khai và an ninh vẫn có giá trị khu vực
+    # ngay cả khi tiêu đề không nhắc Campuchia; không mở rộng quy tắc này sang mọi cơ quan Thái.
+    if domain_in(domain, ("mod.go.th", "rta.mi.th")):
+        # Explicitly unrelated neighboring borders are outside this feed unless Cambodia is involved.
+        if any(w in text for w in ("myanmar", "burma", "laos", "malaysia", "vietnam")) and not has_cambodia:
+            return False
+        # Generic mentions of the army/military are insufficient: routine staff
+        # training and ceremonial notices must not bypass the relevance gate.
+        has_military_signal = any(w in text for w in THAI_MILITARY_FALLBACK_WORDS)
+        if routine_admin and not has_military_signal:
+            return False
+        return has_military_signal
+
+    # Cơ quan nước ngoài/Thái Lan khác phải có liên hệ thực chất với Campuchia và đúng chủ đề.
+    if (domain_in(domain, FOREIGN_OFFICIAL_DOMAINS)
+            or domain_in(domain, THAI_GOV_SELF_DOMAINS)):
+        if routine_admin and not has_priority:
+            return False
+        return has_cambodia and has_topic
+
+    # Nhận diện nguồn chính thức Campuchia và các kênh chính thức mặc định của Campuchia.
+    cambodian_official_domain = domain_in(domain, ("gov.kh", "national-assembly.org.kh", "nac.org.kh", "senate.gov.kh"))
+    cambodian_official_channel = bool(it.get("official")) and any(
+        marker in source for marker in (
+            "campuchia", "cambodia", "hun manet", "hun sen", "mfaic", "mef",
+            "royal cambodian", "lục quân hoàng gia",
+        )
+    )
+    if cambodian_official_domain or cambodian_official_channel:
+        if routine_admin and not has_priority:
+            return False
+        return has_topic
+
+    # Nguồn tầng 1 khác không được tự động giữ chỉ vì có cờ official.
+    if item_tier(it) <= 1:
+        if routine_admin and not has_priority:
+            return False
+        return has_cambodia and has_topic
+
+    if any(w in title for w in JUNK_TITLE_WORDS) and not has_priority:
         return False
-    return any(w in text for w in THEME_WORDS) and any(w in text for w in _KH_WORDS)
+    return has_cambodia and has_topic
 
 
 def note_dropped(reason, it):
