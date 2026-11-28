@@ -22,14 +22,14 @@ def bot(monkeypatch, tmp_path):
     sys.path.remove(ROOT)
 
 
-def _item(item_id, title):
+def _item(item_id, title, domain="state.gov"):
     return {
         "id": item_id,
         "title": title,
         "desc": "",
-        "link": f"https://state.gov/{item_id}",
+        "link": f"https://{domain}/{item_id}",
         "source": "US Government",
-        "domain": "state.gov",
+        "domain": domain,
         "ts": 1_795_000_000,
         "gnews": False,
         "vn": False,
@@ -49,6 +49,27 @@ def test_unrelated_foreign_official_item_is_still_relevance_filtered(bot, monkey
     kept, dropped = bot.drop_irrelevant([(item, {bot.CAMBO_TAG})])
 
     assert calls, "foreign official domain must not skip relevance evaluation"
+    assert kept == []
+    assert dropped == [item]
+
+
+
+@pytest.mark.parametrize("domain,title", [
+    ("state.gov", "Ukraine border tensions escalate"),
+    ("thailand.go.th", "Thailand border measures with Myanmar"),
+])
+def test_foreign_official_generic_border_word_does_not_bypass_ai(bot, monkeypatch, domain, title):
+    item = _item("foreign-border", title, domain=domain)
+    calls = []
+
+    def irrelevant(pairs):
+        calls.extend(pairs)
+        return set(), set()
+
+    monkeypatch.setattr(bot, "ai_relevant", irrelevant)
+    kept, dropped = bot.drop_irrelevant([(item, {bot.CAMBO_TAG})])
+
+    assert calls
     assert kept == []
     assert dropped == [item]
 
