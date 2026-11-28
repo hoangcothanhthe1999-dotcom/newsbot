@@ -46,7 +46,7 @@ Cập nhật bản mới: chép file mới vào thư mục rồi chạy lại `D
 
 Từ giờ GitHub tự khởi động bot mỗi 20 phút, mỗi phiên chạy 55 phút nối tiếp nhau, nên bot gần như luôn trực. Lúc chuyển phiên có thể trễ 1–2 phút; lệnh bạn gõ lúc đó sẽ được xử lý ngay khi phiên mới bắt đầu.
 
-> Lưu ý: file `state.json` (chủ đề, từ khoá bạn theo dõi) sẽ nằm công khai trong repo. Nếu GitHub lịch chạy bị chậm hoặc bị tạm dừng, bạn chuyển sang Cách B.
+> Lưu ý: với GitHub Actions, trạng thái vận hành của bot được lưu trong repository riêng tư `newsbot-ops`, không lưu trong repository mã nguồn công khai. Cần cấu hình Actions secret `NEWSBOT_STATE_TOKEN` có quyền Contents Read/Write trên repository riêng tư này trước khi bật workflow. Với VPS, file state được lưu cục bộ trên máy chủ.
 
 ### Cách B: Chạy trên máy tính Windows
 
