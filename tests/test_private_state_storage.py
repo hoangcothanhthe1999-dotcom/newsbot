@@ -30,3 +30,9 @@ def test_private_state_access_check_is_read_only_and_uses_scoped_secret():
     assert "secrets.NEWSBOT_STATE_TOKEN" in workflow
     assert "persist-credentials: false" in workflow
     assert "Private state access and structural validation: PASS." in workflow
+
+
+def test_state_save_is_skipped_if_private_checkout_fails():
+    workflow = (ROOT / ".github" / "workflows" / "newsbot.yml").read_text(encoding="utf-8")
+    assert "id: private_state_checkout" in workflow
+    assert "steps.private_state_checkout.outcome == 'success'" in workflow
