@@ -2475,9 +2475,9 @@ FALLBACK_PRIORITY_WORDS = (
     "រដ្ឋមន្ត្រី", "หยุดยิง", "ชายแดน", "制裁", "边境",
 )
 THAI_MILITARY_FALLBACK_WORDS = (
-    "army", "military", "defense", "defence", "weapon", "weapons", "arms",
+    "defense procurement", "defence procurement", "weapon", "weapons", "arms",
     "tank", "artillery", "fighter", "aircraft", "drone", "missile", "troop",
-    "troops", "deployment", "deploy", "border", "security", "ceasefire",
+    "troops", "deployment", "deploy", "border", "ceasefire",
     "military exercise", "procurement", "navy", "air force",
     "กองทัพ", "ทหาร", "อาวุธ", "รถถัง", "ชายแดน", "หยุดยิง",
 )
@@ -2500,6 +2500,10 @@ def fallback_ok(it):
     # Tin của quân đội Thái về vũ khí, lực lượng, triển khai và an ninh vẫn có giá trị khu vực
     # ngay cả khi tiêu đề không nhắc Campuchia; không mở rộng quy tắc này sang mọi cơ quan Thái.
     if domain_in(domain, ("mod.go.th", "rta.mi.th")):
+        # Generic mentions of the army/military are insufficient: routine staff
+        # training and ceremonial notices must not bypass the relevance gate.
+        if routine_admin and not has_priority:
+            return False
         return any(w in text for w in THAI_MILITARY_FALLBACK_WORDS)
 
     # Cơ quan nước ngoài/Thái Lan khác phải có liên hệ thực chất với Campuchia và đúng chủ đề.
