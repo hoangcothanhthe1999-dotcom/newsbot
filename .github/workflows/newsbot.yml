@@ -15,18 +15,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 75
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: main
           persist-credentials: false
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
 
       - name: Checkout kho state riêng tư
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: hoangcothanhthe1999-dotcom/newsbot-ops
           ref: main
@@ -80,7 +80,7 @@ jobs:
 
       - name: Lưu sổ quyết định (artifact, giữ 1 ngày)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: decisions-${{ github.run_id }}
           path: decisions.jsonl
