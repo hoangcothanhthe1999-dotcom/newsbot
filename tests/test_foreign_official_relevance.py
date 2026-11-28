@@ -38,7 +38,7 @@ def _item(item_id, title):
 
 
 def test_unrelated_foreign_official_item_is_still_relevance_filtered(bot, monkeypatch):
-    item = _item("foreign-unrelated", "Government announces a routine tourism roadshow")
+    item = _item("foreign-unrelated", "Government announces routine administrative procedure for passport renewal")
     calls = []
 
     def irrelevant(pairs):
