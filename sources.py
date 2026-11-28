@@ -231,7 +231,7 @@ TRUSTED_DOMAINS = [
 LANG_SOURCES = {
     "km": [  # 🇰🇭 Báo tiếng Khmer
         {"name": "Fresh News", "url": "https://www.freshnewsasia.com/"},
-        {"name": "AKP (Thông tấn xã Campuchia)", "url": "https://www.akp.gov.kh/"},
+        {"name": "AKP (Thông tấn xã Campuchia)", "url": "https://v2.akp.gov.kh/"},
         {"name": "DAP News", "url": "https://www.dap-news.com/"},
         {"name": "Kampuchea Thmey", "url": "https://www.kampucheathmey.com/"},
         {"name": "Thmey Thmey", "url": "https://thmeythmey.com/"},
@@ -286,7 +286,7 @@ OFFICIAL_SITES = [   # tầng 1 – bot tự dò RSS, không có thì theo dõi 
     {"name": "Quốc hội Campuchia", "url": "https://en.nac.org.kh/"},
     {"name": "Thượng viện Campuchia", "url": "https://www.senate.gov.kh/"},
     {"name": "ODC – tổng hợp thông cáo các bộ (thay cho MEF bị chặn)", "url": "https://opendevelopmentcambodia.net/en/public_announcement_source/government"},
-    {"name": "AKP – Thông tấn xã Campuchia", "url": "https://www.akp.gov.kh/"},
+    {"name": "AKP – Thông tấn xã Campuchia", "url": "https://v2.akp.gov.kh/"},
     {"name": "Truyền hình quốc gia TVK", "url": "https://www.tvk.gov.kh/"},
     {"name": "Tổng cục Xuất nhập cảnh", "url": "https://immigration.gov.kh/"},
     {"name": "Tổng cục Thuế", "url": "https://www.tax.gov.kh/"},
