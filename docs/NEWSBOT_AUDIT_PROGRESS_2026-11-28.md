@@ -22,9 +22,9 @@
 | #93 | Bổ sung endpoint AKP v2 |
 | #94 | Nâng cấp GitHub Actions lên các major tương thích Node.js 24 |
 | #95 | Gemini review gate fail-closed, tránh dùng kết quả cũ hoặc PASS giả |
-| #97 | Yêu cầu đồng thời dấu hiệu hành động và chất ma túy để tránh loại nhầm tin chính sách/điều trị |
+| #97 | Yêu cầu đồng thời dấu hiệu hành động và chất ma túy để tránh loại nhầm tin chính sách/điều trị; Gemini hết quota nên G kiểm tra thủ công |
 | #98 | Fallback AI theo chủ đề và loại nguồn; không tự giữ mọi tin chỉ vì nguồn chính thức |
-| #102 | Dùng ranh giới từ tiếng Anh cho bộ lọc vụ bắt giữ ma túy, tránh nhầm “internet/network” với hành động “net” |
+| #102 | Dùng ranh giới từ tiếng Anh cho bộ lọc vụ bắt giữ ma túy, tránh nhầm “internet/network” với hành động “net”; Gemini hết quota nên G kiểm tra thủ công |
 
 ## 3. Baseline production gần nhất – Run #93
 
