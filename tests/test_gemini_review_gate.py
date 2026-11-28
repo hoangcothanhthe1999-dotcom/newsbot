@@ -1,0 +1,38 @@
+"""Tests for fail-closed Gemini review verdict selection."""
+from scripts.gemini_review_gate import parse_verdict, select_summary
+
+
+def test_two_failed_gemini_steps_cannot_pass_from_stale_summary():
+    summary = select_summary(
+        "failure",
+        "KET_LUAN: PASS",
+        "failure",
+        "KET_LUAN: PASS",
+    )
+    assert summary == ""
+    assert parse_verdict(summary) == "INCONCLUSIVE"
+
+
+def test_first_successful_step_is_the_only_accepted_summary():
+    summary = select_summary(
+        "success",
+        "Review complete\\nKET_LUAN: PASS",
+        "skipped",
+        "",
+    )
+    assert parse_verdict(summary) == "PASS"
+
+
+def test_successful_retry_is_used_after_first_step_fails():
+    summary = select_summary(
+        "failure",
+        "KET_LUAN: PASS",
+        "success",
+        "Review complete\\nKET_LUAN: FAIL",
+    )
+    assert parse_verdict(summary) == "FAIL"
+
+
+def test_successful_step_without_valid_final_marker_is_inconclusive():
+    summary = select_summary("success", "No verdict was returned", "skipped", "")
+    assert parse_verdict(summary) == "INCONCLUSIVE"
