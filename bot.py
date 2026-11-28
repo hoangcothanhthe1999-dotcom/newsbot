@@ -2585,22 +2585,25 @@ def drop_irrelevant(entries):
     pairs = [(it, tag_criterion(t)) for it, tags in entries for t in tags
              if tag_criterion(t) and not strong_match(t, it) and not hard_official(it)
              and pre_decide(t, it) is None]
-    if not pairs:
-        return entries, []
-    ok, unknown = ai_relevant(pairs)
+    if pairs:
+        ok, unknown = ai_relevant(pairs)
+    else:
+        ok, unknown = set(), set()
 
     def route(it, t):
         """(giữ?, lý do) cho một cặp (bài, tag) – lý do được ghi vào sổ quyết định."""
         crit = tag_criterion(t)
         if not crit:
             return True, "no_criterion"
+        # Deterministic exclusions (greeting/routine drug enforcement) must
+        # take precedence over keyword and official-source bypasses.
+        pd = pre_decide(t, it)
+        if pd is not None:
+            return pd, "pre_decide_keep" if pd else "pre_decide_drop"
         if strong_match(t, it):
             return True, "strong_keyword_match"
         if hard_official(it):
             return True, "hard_word_official_bypass"
-        pd = pre_decide(t, it)
-        if pd is not None:
-            return pd, "pre_decide_keep" if pd else "pre_decide_drop"
         if (it["id"], crit) in unknown:
             sk = strict_ok(t, it)
             return sk, "ai_unavailable_strict_keep" if sk else "ai_unavailable_strict_drop"
