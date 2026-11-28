@@ -19,9 +19,8 @@ def bot(monkeypatch, tmp_path):
     mod = importlib.import_module("bot")
     monkeypatch.setattr(mod, "STATE_FILE", str(tmp_path / "state.json"))
     monkeypatch.setattr(mod, "save_state", lambda: None)
-    stats = getattr(mod, "SESSION_STATS")
-    stats.clear()
-    stats.update({"src": {}, "sent": 0, "ai_offtopic": 0, "ai_dup": 0, "ai": {}})
+    mod.SESSION_STATS.clear()
+    mod.SESSION_STATS.update({"src": {}, "sent": 0, "ai_offtopic": 0, "ai_dup": 0, "ai": {}})
     yield mod
     sys.path.remove(ROOT)
 
