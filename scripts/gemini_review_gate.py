@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 
 
-_VERDICT_RE = re.compile(r"^KET_LUAN: (PASS|FAIL|INCONCLUSIVE)\\s*$", re.MULTILINE)
+_VERDICT_RE = re.compile(r"^KET_LUAN: (PASS|FAIL|INCONCLUSIVE)\s*$", re.MULTILINE)
 
 
 def select_summary(first_outcome, first_summary, second_outcome, second_summary):
@@ -41,13 +41,13 @@ def main():
     else:
         (result_dir / "result.md").write_text(
             "Gemini không trả kết quả hợp lệ từ một bước chạy thành công. "
-            "Coi là INCONCLUSIVE: không merge.\\n",
+            "Coi là INCONCLUSIVE: không merge.\n",
             encoding="utf-8",
         )
 
     errors = os.environ.get("GEMINI_ERRORS", "")
     (result_dir / "err.txt").write_text(
-        f"bước Gemini: {first_outcome}/{second_outcome}\\n{errors[:2000]}",
+        f"bước Gemini: {first_outcome}/{second_outcome}\n{errors[:2000]}",
         encoding="utf-8",
     )
 
@@ -55,7 +55,7 @@ def main():
     if not output_path:
         raise RuntimeError("GITHUB_OUTPUT is not set")
     with open(output_path, "a", encoding="utf-8") as output:
-        output.write(f"verdict={verdict}\\n")
+        output.write(f"verdict={verdict}\n")
     print(f"Kết luận: {verdict}")
 
 
