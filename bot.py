@@ -2436,12 +2436,21 @@ DRUG_CASE_EXCEPTIONS = (
     "cambodia-vietnam", "border security", "border area", "border crossing",
     "protection racket", "official protection", "high-level corruption",
     "national campaign", "nationwide campaign", "national strategy", "national policy",
-    "policy", "strategy", "law", "legislation", "regulation", "regulations",
-    "rule", "rules", "procedure", "procedures", "guideline", "guidelines",
-    "protocol", "treatment", "rehabilitation", "addiction", "health", "medical",
-    "គោលនយោបាយ", "ច្បាប់", "បទប្បញ្ញត្តិ", "យុទ្ធសាស្ត្រ", "ការព្យាបាល",
-    "นโยบาย", "กฎหมาย", "กฎระเบียบ", "ยุทธศาสตร์", "การบำบัด", "ฟื้นฟู",
-    "政策", "法律", "法规", "战略", "治疗", "康复",
+    "new policy", "policy on", "policy for", "policy to", "drug policy", "narcotics policy",
+    "new law", "draft law", "law reform", "law amendment", "new legislation",
+    "draft legislation", "legislation on", "new regulation", "new regulations",
+    "regulations on", "regulation of", "new rule", "new rules", "rules governing",
+    "rules on", "rules for", "procedure for", "procedures for", "guidelines on",
+    "guidelines for", "protocol for", "drug treatment", "addiction treatment",
+    "methamphetamine treatment", "drug rehabilitation", "substance abuse treatment",
+    "addiction rehabilitation", "treatment program", "rehabilitation program",
+    "addiction services", "addiction research", "public health", "health policy",
+    "medical research",
+    "គោលនយោបាយ", "ច្បាប់ថ្មី", "សេចក្តីព្រាងច្បាប់", "វិសោធនកម្មច្បាប់",
+    "បទប្បញ្ញត្តិថ្មី", "យុទ្ធសាស្ត្រ", "ការព្យាបាលគ្រឿងញៀន", "ការស្តារនីតិសម្បទា",
+    "นโยบายยาเสพติด", "ร่างกฎหมาย", "แก้ไขกฎหมาย", "กฎระเบียบใหม่",
+    "ยุทธศาสตร์ยาเสพติด", "การบำบัดยาเสพติด", "ฟื้นฟูผู้ติดยา",
+    "禁毒政策", "毒品政策", "新法", "修订法律", "新规", "药物治疗", "戒毒康复",
     "ឆ្លងដែន", "ព្រំដែន", "បណ្តាញឧក្រិដ្ឋកម្ម", "ពុករលួយ",
     "ข้ามชาติ", "ชายแดน", "เครือข่ายข้ามชาติ", "ทุจริต",
     "跨国", "跨境", "边境", "腐败",
@@ -2458,7 +2467,7 @@ def is_routine_drug_enforcement(it):
         return False
     if not any(_drug_term_present(text, w) for w in DRUG_SUBSTANCE_WORDS):
         return False
-    return not any(w in text for w in DRUG_CASE_EXCEPTIONS)
+    return not any(_drug_term_present(text, w) for w in DRUG_CASE_EXCEPTIONS)
 
 
 def pre_decide(tag, it):
