@@ -2,7 +2,6 @@
 import os
 
 
-_VERDICT_RE = re.compile(r"^KET_LUAN: (PASS|FAIL|INCONCLUSIVE)\s*$", re.MULTILINE)
 
 
 def select_summary(first_outcome: str, first_summary: str, second_outcome: str, second_summary: str) -> str:
