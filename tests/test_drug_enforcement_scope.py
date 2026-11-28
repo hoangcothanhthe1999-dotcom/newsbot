@@ -69,3 +69,25 @@ def test_explicit_drug_seizure_requires_action_and_substance(bot):
     assert bot.is_routine_drug_enforcement(
         _item("Police seized 40kg of methamphetamine in provincial raid")
     )
+
+
+@pytest.mark.parametrize("title", [
+    "Cambodia announces policy to prevent routine drug busts",
+    "Government reviews drug seizure reporting procedures",
+])
+def test_drug_policy_or_procedure_noun_phrases_are_not_enforcement_actions(bot, title):
+    assert not bot.is_routine_drug_enforcement(_item(title))
+
+
+def test_drug_bust_headline_with_net_action_is_excluded(bot):
+    assert bot.is_routine_drug_enforcement(
+        _item("Drug bust nets 100kg of ketamine in provincial raid")
+    )
+
+
+@pytest.mark.parametrize("title", [
+    "Government reviews policy for online drug sales and internet controls",
+    "Cambodia publishes a new policy on online drug networks",
+])
+def test_internet_and_network_substrings_are_not_enforcement_actions(bot, title):
+    assert not bot.is_routine_drug_enforcement(_item(title))
