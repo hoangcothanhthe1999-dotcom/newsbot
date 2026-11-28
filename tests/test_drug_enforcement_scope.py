@@ -72,8 +72,8 @@ def test_explicit_drug_seizure_requires_action_and_substance(bot):
 
 
 @pytest.mark.parametrize("title", [
-    "Cambodia announces policy to prevent routine drug busts",
-    "Government reviews drug seizure reporting procedures",
+    "Police seize drugs under a new policy to prevent routine drug busts",
+    "Police seize drugs while new reporting procedures are announced",
 ])
 def test_drug_policy_or_procedure_noun_phrases_are_not_enforcement_actions(bot, title):
     assert not bot.is_routine_drug_enforcement(_item(title))
@@ -86,8 +86,8 @@ def test_drug_bust_headline_with_net_action_is_excluded(bot):
 
 
 @pytest.mark.parametrize("title", [
-    "Government reviews policy for online drug sales and internet controls",
-    "Cambodia publishes a new policy on online drug networks",
+    "Police arrest online drug sellers as new policy for internet controls is reviewed",
+    "Police arrest suspects as new policy on online drug networks is published",
 ])
 def test_internet_and_network_substrings_are_not_enforcement_actions(bot, title):
     assert not bot.is_routine_drug_enforcement(_item(title))
@@ -96,7 +96,7 @@ def test_internet_and_network_substrings_are_not_enforcement_actions(bot, title)
 @pytest.mark.parametrize("title", [
     "Government proposes new regulations on drug arrests",
     "Cambodia reviews rules governing drug raids",
-    "New guidelines on narcotics enforcement are announced",
+    "Police seize narcotics as new guidelines on enforcement are announced",
 ])
 def test_drug_law_and_procedure_articles_are_not_routine_busts(bot, title):
     assert not bot.is_routine_drug_enforcement(_item(title))
@@ -111,7 +111,7 @@ def test_law_enforcement_phrase_does_not_exempt_a_routine_drug_bust(bot):
 @pytest.mark.parametrize("title", [
     "Government proposes new regulations on drug arrests",
     "Cambodia reviews rules governing drug raids",
-    "New guidelines on narcotics enforcement",
+    "Police seize narcotics as new guidelines on enforcement are announced",
 ])
 def test_contextual_law_and_policy_phrases_are_preserved(bot, title):
     assert not bot.is_routine_drug_enforcement(_item(title))
