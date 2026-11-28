@@ -1,6 +1,5 @@
 """Fail-closed verdict selection for the Gemini PR review workflow."""
 import os
-import re
 
 
 _VERDICT_RE = re.compile(r"^KET_LUAN: (PASS|FAIL|INCONCLUSIVE)\s*$", re.MULTILINE)
@@ -16,8 +15,14 @@ def select_summary(first_outcome: str, first_summary: str, second_outcome: str, 
 
 
 def parse_verdict(summary: str) -> str:
-    matches = _VERDICT_RE.findall(summary)
-    return matches[-1] if matches else "INCONCLUSIVE"
+    lines = [line.strip() for line in summary.splitlines() if line.strip()]
+    if not lines or lines[-1] not in {
+        "KET_LUAN: PASS",
+        "KET_LUAN: FAIL",
+        "KET_LUAN: INCONCLUSIVE",
+    }:
+        return "INCONCLUSIVE"
+    return lines[-1].split(": ", 1)[1]
 
 
 def main() -> None:
