@@ -231,7 +231,7 @@ TRUSTED_DOMAINS = [
 LANG_SOURCES = {
     "km": [  # 🇰🇭 Báo tiếng Khmer
         {"name": "Fresh News", "url": "https://www.freshnewsasia.com/"},
-        {"name": "AKP (Thông tấn xã Campuchia)", "url": "https://v2.akp.gov.kh/"},
+        {"name": "AKP (Thông tấn xã Campuchia)", "url": "https://www.akp.gov.kh/"},
         {"name": "DAP News", "url": "https://www.dap-news.com/"},
         {"name": "Kampuchea Thmey", "url": "https://www.kampucheathmey.com/"},
         {"name": "Thmey Thmey", "url": "https://thmeythmey.com/"},
