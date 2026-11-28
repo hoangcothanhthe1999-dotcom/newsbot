@@ -2384,10 +2384,18 @@ def is_greeting_only(it):
     return any(w in t for w in GREETING_TITLE_WORDS) and not any(w in t for w in GREETING_SAFE_WORDS)
 
 
-DRUG_ENFORCEMENT_WORDS = (
+DRUG_ACTION_WORDS = (
     "drug bust", "drug seizure", "drug raid", "drug arrest",
-    "ketamine", "methamphetamine", "narcotics", "cocaine", "heroin",
-    "គ្រឿងញៀន", "ថ្នាំញៀន", "ยาเสพติด", "ยาไอซ์", "毒品",
+    "seize", "seizes", "seized", "confiscate", "confiscated",
+    "arrest", "arrested", "detain", "detained", "raided",
+    "បង្ក្រាប", "ចាប់ខ្លួន", "រឹបអូស", "ឃាត់ខ្លួន",
+    "จับกุม", "ยึด", "ตรวจยึด", "ปราบปราม",
+    "查获", "缴获", "抓获", "逮捕",
+)
+DRUG_SUBSTANCE_WORDS = (
+    "drug", "drugs", "narcotics", "ketamine", "methamphetamine",
+    "cocaine", "heroin", "គ្រឿងញៀន", "ថ្នាំញៀន",
+    "ยาเสพติด", "ยาไอซ์", "毒品",
 )
 DRUG_CASE_EXCEPTIONS = (
     "transnational", "cross-border", "cross border", "international drug network",
@@ -2405,7 +2413,12 @@ DRUG_CASE_EXCEPTIONS = (
 def is_routine_drug_enforcement(it):
     """Loại tin bắt giữ/thu giữ ma túy theo vụ việc; không suy diễn từ số lượng hay chức vụ."""
     text = _cambo_text(it)
-    if not any(w in text for w in DRUG_ENFORCEMENT_WORDS):
+    # Require both an enforcement action and an explicit drug/substance marker.
+    # This prevents drug-policy or treatment articles from being dropped merely
+    # because they mention ketamine, narcotics, or another substance.
+    if not any(w in text for w in DRUG_ACTION_WORDS):
+        return False
+    if not any(w in text for w in DRUG_SUBSTANCE_WORDS):
         return False
     return not any(w in text for w in DRUG_CASE_EXCEPTIONS)
 
