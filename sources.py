@@ -362,7 +362,7 @@ PROBATION_UNTIL = 1795280400
 PROBATION_URLS = ['https://freshnews.com.kh/', 'https://kh.usembassy.gov/', 'https://ccc.gov.kh/', 'https://acu.gov.kh/', 'https://nacd.gov.kh/', 'https://mop.gov.kh/', 'https://mme.gov.kh/', 'https://mptc.gov.kh/', 'https://mlmupc.gov.kh/', 'https://misti.gov.kh/', 'https://www.thailand.go.th/', 'https://thailand.prd.go.th/en']
 
 
-# Cơ quan / tổ chức NƯỚC NGOÀI: tin của họ nói về Campuchia luôn được gửi (không qua bộ lọc "lạc đề" của AI)
+# Cơ quan / tổ chức NƯỚC NGOÀI: nguồn được tin cậy về xuất xứ; nội dung vẫn phải qua bộ lọc liên quan để loại tin nội địa không thuộc phạm vi.
 FOREIGN_OFFICIAL_DOMAINS = ['state.gov', 'treasury.gov', 'justice.gov', 'fincen.gov', 'usembassy.gov', 'whitehouse.gov', 'congress.gov', 'un.org', 'ohchr.org', 'unodc.org', 'icj-cij.org', 'interpol.int', 'fatf-gafi.org', 'adb.org', 'imf.org', 'worldbank.org', 'aiib.org', 'eeas.europa.eu', 'europa.eu', 'europarl.europa.eu', 'gov.uk', 'diplomatie.gouv.fr', 'auswaertiges-amt.de', 'fmprc.gov.cn', 'gov.cn', 'mofa.go.jp', 'go.jp', 'mofa.go.kr', 'dfat.gov.au', 'mea.gov.in', 'kln.gov.my', 'mfa.gov.sg', 'mfa.go.th', 'thaigov.go.th']
 
 
