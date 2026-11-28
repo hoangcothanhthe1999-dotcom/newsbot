@@ -830,8 +830,18 @@ def fetch_source(home, name=""):
     try:
         if res["type"] == "rss":
             items = fetch_feed(res["url"])
-            if is_unhealthy(res["url"]):
-                resolve_source(home, force=True)
+            endpoint_health = health(res["url"])
+            if endpoint_health.get("fail", 0):
+                endpoint_error = endpoint_health.get("err") or "RSS endpoint đang lỗi"
+                stat_src("rss:" + res["url"], err=endpoint_error)
+                if is_unhealthy(res["url"]):
+                    resolve_source(home, force=True)
+                mark_fail(key, "RSS endpoint lỗi: " + endpoint_error)
+                stat_src(key, err=endpoint_error)
+                items = cache.get("items", items)
+                _feed_cache[key] = {"items": items, "at": time.time()}
+                return items
+            stat_src("rss:" + res["url"], items=items)
         else:
             items = fetch_page(res["url"], name or res.get("name", ""))
         if name:
