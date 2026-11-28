@@ -25,6 +25,16 @@ jobs:
           python-version: "3.12"
           cache: pip
 
+      - name: Kiểm tra secret truy cập kho state
+        env:
+          NEWSBOT_STATE_TOKEN: ${{ secrets.NEWSBOT_STATE_TOKEN }}
+        shell: bash
+        run: |
+          if [ -z "$NEWSBOT_STATE_TOKEN" ]; then
+            echo "::error::Thiếu Actions secret NEWSBOT_STATE_TOKEN; không chạy bot để tránh mất state."
+            exit 1
+          fi
+
       - name: Checkout kho state riêng tư
         id: private_state_checkout
         uses: actions/checkout@v7
