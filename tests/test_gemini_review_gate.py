@@ -65,4 +65,4 @@ def test_review_artifact_is_unique_per_run_attempt():
 
 
 def test_verdict_marker_must_be_the_final_nonempty_line():
-    assert parse_verdict("KET_LUAN: PASS\\nAdditional text") == "INCONCLUSIVE"
+    assert parse_verdict("KET_LUAN: PASS\nAdditional text") == "INCONCLUSIVE"
