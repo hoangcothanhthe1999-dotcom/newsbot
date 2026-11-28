@@ -2478,8 +2478,8 @@ THAI_MILITARY_FALLBACK_WORDS = (
     "defense procurement", "defence procurement", "weapon", "weapons", "arms",
     "tank", "artillery", "fighter", "aircraft", "drone", "missile", "troop",
     "troops", "deployment", "deploy", "border", "ceasefire",
-    "military exercise", "procurement", "navy", "air force",
-    "กองทัพ", "ทหาร", "อาวุธ", "รถถัง", "ชายแดน", "หยุดยิง",
+    "military exercise", "procurement", "warship", "submarine",
+    "อาวุธ", "รถถัง", "ชายแดน", "หยุดยิง", "ซ้อมรบ", "ฝึกซ้อม",
 )
 
 
@@ -2502,9 +2502,10 @@ def fallback_ok(it):
     if domain_in(domain, ("mod.go.th", "rta.mi.th")):
         # Generic mentions of the army/military are insufficient: routine staff
         # training and ceremonial notices must not bypass the relevance gate.
-        if routine_admin and not has_priority:
+        has_military_signal = any(w in text for w in THAI_MILITARY_FALLBACK_WORDS)
+        if routine_admin and not has_military_signal:
             return False
-        return any(w in text for w in THAI_MILITARY_FALLBACK_WORDS)
+        return has_military_signal
 
     # Cơ quan nước ngoài/Thái Lan khác phải có liên hệ thực chất với Campuchia và đúng chủ đề.
     if (domain_in(domain, FOREIGN_OFFICIAL_DOMAINS)
