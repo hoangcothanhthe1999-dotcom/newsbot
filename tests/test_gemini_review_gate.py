@@ -51,3 +51,14 @@ def test_review_workflow_covers_its_own_config_and_policy_changes():
     assert "'.github/workflows/**'" in workflow
     assert "'**/*.yml'" in workflow
     assert "'**/*.yaml'" in workflow
+
+
+def test_review_artifact_is_unique_per_run_attempt():
+    workflow = (
+        Path(__file__).resolve().parents[1]
+        / ".github"
+        / "workflows"
+        / "gemini-review.yml"
+    ).read_text(encoding="utf-8")
+    artifact_name = "gemini-result-${{ github.run_id }}-${{ github.run_attempt }}"
+    assert workflow.count(artifact_name) == 2
