@@ -62,3 +62,7 @@ def test_review_artifact_is_unique_per_run_attempt():
     ).read_text(encoding="utf-8")
     artifact_name = "gemini-result-${{ github.run_id }}-${{ github.run_attempt }}"
     assert workflow.count(artifact_name) == 2
+
+
+def test_verdict_marker_must_be_the_final_nonempty_line():
+    assert parse_verdict("KET_LUAN: PASS\\nAdditional text") == "INCONCLUSIVE"
