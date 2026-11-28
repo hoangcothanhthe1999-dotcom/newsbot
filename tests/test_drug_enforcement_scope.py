@@ -83,3 +83,11 @@ def test_drug_bust_headline_with_net_action_is_excluded(bot):
     assert bot.is_routine_drug_enforcement(
         _item("Drug bust nets 100kg of ketamine in provincial raid")
     )
+
+
+@pytest.mark.parametrize("title", [
+    "Government reviews policy for online drug sales and internet controls",
+    "Cambodia publishes a new policy on online drug networks",
+])
+def test_internet_and_network_substrings_are_not_enforcement_actions(bot, title):
+    assert not bot.is_routine_drug_enforcement(_item(title))
