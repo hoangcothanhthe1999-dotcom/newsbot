@@ -19,7 +19,7 @@ TOPICS = {
     "campuchia": {
         "name": "🇰🇭 Campuchia: chính trị – quân sự – ngoại giao – kinh tế",
         # Nguồn chuyên về Campuchia: lấy HẾT, để AI lọc đúng 4 mảng (không lọc bằng chữ -> không sót)
-        "feeds": ["px:docho", "src:https://www.freshnewsasia.com/", "src:https://freshnews.com.kh/", "src:https://www.akp.gov.kh/",
+        "feeds": ["px:docho", "src:https://www.freshnewsasia.com/", "src:https://freshnews.com.kh/", "src:https://v2.akp.gov.kh/",
                   "src:https://www.dap-news.com/", "src:https://www.kampucheathmey.com/",
                   "src:https://thmeythmey.com/", "src:https://kohsantepheapdaily.com.kh/",
                   "src:https://www.postkhmer.com/", "src:https://www.cnc.com.kh/",
