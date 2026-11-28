@@ -9,7 +9,7 @@ from pathlib import Path
 _VERDICT_RE = re.compile(r"^KET_LUAN: (PASS|FAIL|INCONCLUSIVE)\s*$", re.MULTILINE)
 
 
-def select_summary(first_outcome, first_summary, second_outcome, second_summary):
+def select_summary(first_outcome: str, first_summary: str, second_outcome: str, second_summary: str) -> str:
     """Only accept output from an action step that completed successfully."""
     if first_outcome == "success":
         return first_summary
@@ -18,12 +18,12 @@ def select_summary(first_outcome, first_summary, second_outcome, second_summary)
     return ""
 
 
-def parse_verdict(summary):
+def parse_verdict(summary: str) -> str:
     matches = _VERDICT_RE.findall(summary)
     return matches[-1] if matches else "INCONCLUSIVE"
 
 
-def main():
+def main() -> None:
     first_outcome = os.environ.get("GEMINI1_OUTCOME", "")
     second_outcome = os.environ.get("GEMINI2_OUTCOME", "")
     summary = select_summary(
