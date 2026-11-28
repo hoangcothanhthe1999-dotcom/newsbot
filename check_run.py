@@ -191,8 +191,13 @@ def list_day_run_ids(day):
     raw = subprocess.run(["gh", "api", f"repos/{REPO}/actions/runs?per_page=100&status=completed"], capture_output=True, check=True).stdout
     ids = []
     for r in json.loads(raw).get("workflow_runs", []):
-        created = datetime.strptime(r["created_at"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc) + timedelta(hours=7)
-        if created.strftime("%Y-%m-%d") == day:
+        if r.get("name") != "NewsBot":
+            continue
+        try:
+            created = datetime.strptime(r["created_at"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc) + timedelta(hours=7)
+        except (KeyError, TypeError, ValueError):
+            continue
+        if created.strftime("%Y-%m-%d") == day and "id" in r:
             ids.append(r["id"])
     return sorted(ids)
 
